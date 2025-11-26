@@ -1,4 +1,5 @@
 import { useSignal } from "@preact/signals";
+import { useEffect } from "preact/hooks";
 import type { KeyboardLayout, Key } from "../types/keyboard-simple.ts";
 import { KeyboardLayout as KeyboardLayoutComponent } from "../components/KeyboardLayout.tsx";
 
@@ -8,6 +9,50 @@ interface KeyboardViewerProps {
 
 export default function KeyboardViewer({ layout }: KeyboardViewerProps) {
   const text = useSignal("");
+  const pressedKeyId = useSignal<string | null>(null);
+
+  // Find a key in the layout by its physical key code
+  const findKeyByCode = (code: string): Key | undefined => {
+    for (const row of layout.rows) {
+      const key = row.keys.find(k => k.id === code);
+      if (key) return key;
+    }
+    return undefined;
+  };
+
+  // Handle physical keyboard input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle if user is typing in the textarea
+      if (e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      e.preventDefault();
+
+      const key = findKeyByCode(e.code);
+      if (key) {
+        pressedKeyId.value = key.id;
+        handleKeyClick(key);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      pressedKeyId.value = null;
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [layout]);
 
   const handleKeyClick = (key: Key) => {
     // Handle special keys
@@ -69,7 +114,11 @@ export default function KeyboardViewer({ layout }: KeyboardViewerProps) {
 
       {/* Keyboard */}
       <div class="flex justify-center">
-        <KeyboardLayoutComponent layout={layout} onKeyClick={handleKeyClick} />
+        <KeyboardLayoutComponent
+          layout={layout}
+          onKeyClick={handleKeyClick}
+          pressedKeyId={pressedKeyId.value}
+        />
       </div>
 
       {/* Info */}

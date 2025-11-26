@@ -3,9 +3,10 @@ import type { Key as KeyType } from "../types/keyboard-simple.ts";
 interface KeyProps {
   keyData: KeyType;
   onClick?: (key: KeyType) => void;
+  isPressed?: boolean;
 }
 
-export function Key({ keyData, onClick }: KeyProps) {
+export function Key({ keyData, onClick, isPressed }: KeyProps) {
   const width = keyData.width ?? 1.0;
   const height = keyData.height ?? 1.0;
   const type = keyData.type ?? "normal";
@@ -34,10 +35,7 @@ export function Key({ keyData, onClick }: KeyProps) {
       class={`
         relative
         rounded
-        border-2 border-gray-300
-        bg-white
-        hover:bg-gray-100
-        active:bg-gray-200
+        border-2
         shadow-sm
         hover:shadow-md
         transition-all
@@ -46,9 +44,14 @@ export function Key({ keyData, onClick }: KeyProps) {
         cursor-pointer
         select-none
         flex items-center justify-center
-        ${type === "modifier" ? "bg-gray-50 text-gray-600 font-semibold" : ""}
-        ${type === "space" ? "bg-gray-50" : ""}
-        ${type === "function" ? "bg-blue-50 text-blue-700 text-xs" : ""}
+        ${isPressed
+          ? "bg-blue-500 text-white border-blue-600 shadow-inner"
+          : "bg-white border-gray-300 hover:bg-gray-100 active:bg-gray-200"
+        }
+        ${type === "modifier" && !isPressed ? "bg-gray-50 text-gray-600 font-semibold" : ""}
+        ${type === "space" && !isPressed ? "bg-gray-50" : ""}
+        ${type === "function" && !isPressed ? "bg-blue-50 text-blue-700 text-xs" : ""}
+        ${type === "modifier" || type === "function" ? "font-semibold" : ""}
       `}
       title={keyData.id}
     >

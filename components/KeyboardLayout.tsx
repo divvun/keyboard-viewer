@@ -7,9 +7,10 @@ import { Key } from "./Key.tsx";
 interface KeyboardLayoutProps {
   layout: LayoutType;
   onKeyClick?: (key: KeyType) => void;
+  pressedKeyId?: string | null;
 }
 
-export function KeyboardLayout({ layout, onKeyClick }: KeyboardLayoutProps) {
+export function KeyboardLayout({ layout, onKeyClick, pressedKeyId }: KeyboardLayoutProps) {
   const baseWidth = 3.5; // rem - matches Key component
   const gap = 0.25; // rem - gap between keys
 
@@ -101,7 +102,14 @@ export function KeyboardLayout({ layout, onKeyClick }: KeyboardLayoutProps) {
                 return null;
               }
 
-              return <Key key={key.id} keyData={key} onClick={onKeyClick} />;
+              return (
+                <Key
+                  key={key.id}
+                  keyData={key}
+                  onClick={onKeyClick}
+                  isPressed={pressedKeyId === key.id}
+                />
+              );
             })}
           </div>
         ))}
@@ -116,7 +124,11 @@ export function KeyboardLayout({ layout, onKeyClick }: KeyboardLayoutProps) {
               zIndex: 10,
             }}
           >
-            <Key keyData={enterKeyInfo.enterKey} onClick={onKeyClick} />
+            <Key
+              keyData={enterKeyInfo.enterKey}
+              onClick={onKeyClick}
+              isPressed={pressedKeyId === enterKeyInfo.enterKey.id}
+            />
           </div>
         )}
       </div>
