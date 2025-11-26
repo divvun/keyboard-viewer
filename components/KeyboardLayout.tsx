@@ -8,9 +8,10 @@ interface KeyboardLayoutProps {
   layout: LayoutType;
   onKeyClick?: (key: KeyType) => void;
   pressedKeyId?: string | null;
+  isShiftActive?: boolean;
 }
 
-export function KeyboardLayout({ layout, onKeyClick, pressedKeyId }: KeyboardLayoutProps) {
+export function KeyboardLayout({ layout, onKeyClick, pressedKeyId, isShiftActive }: KeyboardLayoutProps) {
   const baseWidth = 3.5; // rem - matches Key component
   const gap = 0.25; // rem - gap between keys
 
@@ -108,6 +109,7 @@ export function KeyboardLayout({ layout, onKeyClick, pressedKeyId }: KeyboardLay
                   keyData={key}
                   onClick={onKeyClick}
                   isPressed={pressedKeyId === key.id}
+                  isShiftActive={isShiftActive}
                 />
               );
             })}
@@ -128,6 +130,7 @@ export function KeyboardLayout({ layout, onKeyClick, pressedKeyId }: KeyboardLay
               keyData={enterKeyInfo.enterKey}
               onClick={onKeyClick}
               isPressed={pressedKeyId === enterKeyInfo.enterKey.id}
+              isShiftActive={isShiftActive}
             />
           </div>
         )}

@@ -4,13 +4,26 @@ interface KeyProps {
   keyData: KeyType;
   onClick?: (key: KeyType) => void;
   isPressed?: boolean;
+  isShiftActive?: boolean;
 }
 
-export function Key({ keyData, onClick, isPressed }: KeyProps) {
+export function Key({ keyData, onClick, isPressed, isShiftActive }: KeyProps) {
   const width = keyData.width ?? 1.0;
   const height = keyData.height ?? 1.0;
   const type = keyData.type ?? "normal";
-  const label = keyData.label ?? keyData.output;
+
+  // Determine which label to show based on shift state
+  let label: string;
+  if (isShiftActive && keyData.shiftLabel) {
+    label = keyData.shiftLabel;
+  } else if (isShiftActive && keyData.shiftOutput) {
+    label = keyData.shiftOutput;
+  } else {
+    label = keyData.label ?? keyData.output;
+  }
+
+  // Check if this is a Shift key
+  const isShiftKey = keyData.id === "ShiftLeft" || keyData.id === "ShiftRight";
 
   const handleClick = () => {
     if (onClick) {
@@ -46,9 +59,11 @@ export function Key({ keyData, onClick, isPressed }: KeyProps) {
         flex items-center justify-center
         ${isPressed
           ? "bg-blue-500 text-white border-blue-600 shadow-inner"
+          : isShiftKey && isShiftActive
+          ? "bg-yellow-200 text-gray-800 border-yellow-400"
           : "bg-white border-gray-300 hover:bg-gray-100 active:bg-gray-200"
         }
-        ${type === "modifier" && !isPressed ? "bg-gray-50 text-gray-600 font-semibold" : ""}
+        ${type === "modifier" && !isPressed && !(isShiftKey && isShiftActive) ? "bg-gray-50 text-gray-600 font-semibold" : ""}
         ${type === "space" && !isPressed ? "bg-gray-50" : ""}
         ${type === "function" && !isPressed ? "bg-blue-50 text-blue-700 text-xs" : ""}
         ${type === "modifier" || type === "function" ? "font-semibold" : ""}

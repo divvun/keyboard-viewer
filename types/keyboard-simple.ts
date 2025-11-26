@@ -10,8 +10,12 @@ export interface Key {
   id: string;
   /** Character to output when clicked */
   output: string;
+  /** Character to output when shift is active */
+  shiftOutput?: string;
   /** Display label (defaults to output if not provided) */
   label?: string;
+  /** Display label when shift is active */
+  shiftLabel?: string;
   /** Relative width (1.0 = standard key) */
   width?: number;
   /** Relative height (1.0 = standard key) */
