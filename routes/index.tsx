@@ -4,17 +4,16 @@ import KeyboardViewer from "../islands/KeyboardViewer.tsx";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 
 export default define.page(async function Home() {
-  // Load all available keyboard layouts
-  const layoutFiles = [
-    "iso-qwerty.json",
-    "sme-macos.json"
-  ];
-
+  // Automatically discover and load all keyboard layouts
+  const layoutsDir = new URL("../data/layouts/", import.meta.url);
   const layouts: KeyboardLayout[] = [];
-  for (const file of layoutFiles) {
-    const layoutPath = new URL(`../data/layouts/${file}`, import.meta.url);
-    const layoutJson = await Deno.readTextFile(layoutPath);
-    layouts.push(JSON.parse(layoutJson));
+
+  for await (const entry of Deno.readDir(layoutsDir)) {
+    if (entry.isFile && entry.name.endsWith(".json")) {
+      const layoutPath = new URL(`../data/layouts/${entry.name}`, import.meta.url);
+      const layoutJson = await Deno.readTextFile(layoutPath);
+      layouts.push(JSON.parse(layoutJson));
+    }
   }
 
   return (
