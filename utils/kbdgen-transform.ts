@@ -286,19 +286,18 @@ export function transformKbdgenToLayout(
 }
 
 /**
- * Returns a list of platforms available in a kbdgen layout.
+ * Returns a list of supported platforms available in a kbdgen layout.
+ * Only returns platforms supported by the viewer: macOS, Windows, and ChromeOS.
  *
  * @param kbdgenData - The parsed kbdgen YAML layout data
- * @returns Array of platform names (e.g., ["macOS", "windows", "android"])
+ * @returns Array of platform names (e.g., ["macOS", "windows", "chromeOS"])
  */
 export function getAvailablePlatforms(kbdgenData: KbdgenLayout): string[] {
   const platforms: string[] = [];
 
+  // Only include platforms supported by the viewer
   if (kbdgenData.macOS) platforms.push("macOS");
   if (kbdgenData.windows) platforms.push("windows");
-  if (kbdgenData.android) platforms.push("android");
-  if (kbdgenData.iOS) platforms.push("iOS");
-  if (kbdgenData.chrome) platforms.push("chrome");
   if (kbdgenData.chromeOS) platforms.push("chromeOS");
 
   return platforms;
