@@ -126,10 +126,10 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
         </div>
       )}
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="flex flex-col gap-4">
         {/* Repo selector */}
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
+        <div class="flex items-center gap-4">
+          <label class="text-sm font-semibold text-gray-700 w-32 flex-shrink-0">
             1. Select Language
           </label>
           <select
@@ -138,7 +138,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
               selectedRepo.value = (e.target as HTMLSelectElement).value;
             }}
             disabled={loading.value || repos.value.length === 0}
-            class="w-full p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
+            class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           >
             <option value="">-- Select a language --</option>
             {repos.value.map((repo) => {
@@ -157,8 +157,8 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
         </div>
 
         {/* Layout selector */}
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
+        <div class="flex items-center gap-4">
+          <label class="text-sm font-semibold text-gray-700 w-32 flex-shrink-0">
             2. Select Layout
           </label>
           <select
@@ -167,7 +167,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
               selectedLayout.value = (e.target as HTMLSelectElement).value;
             }}
             disabled={loading.value || layouts.value.length === 0}
-            class="w-full p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
+            class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           >
             <option value="">-- Select a layout --</option>
             {layouts.value.map((layout) => (
@@ -179,8 +179,8 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
         </div>
 
         {/* Platform selector */}
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
+        <div class="flex items-center gap-4">
+          <label class="text-sm font-semibold text-gray-700 w-32 flex-shrink-0">
             3. Select Platform
           </label>
           <select
@@ -189,7 +189,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
               selectedPlatform.value = (e.target as HTMLSelectElement).value;
             }}
             disabled={loading.value || platforms.value.length === 0}
-            class="w-full p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
+            class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           >
             {platforms.value.length === 0 ? (
               <option value="">-- Select platform --</option>
