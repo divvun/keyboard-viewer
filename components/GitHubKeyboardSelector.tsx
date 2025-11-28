@@ -40,7 +40,10 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
       error.value = null;
       try {
         const response = await fetch("/api/github/repos");
-        if (!response.ok) throw new Error("Failed to fetch repos");
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: response.statusText }));
+          throw new Error(errorData.error || `Failed to fetch repos (${response.status})`);
+        }
         const data = await response.json();
         repos.value = data;
       } catch (e) {
@@ -63,7 +66,10 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
       selectedLayout.value = "";
       try {
         const response = await fetch(`/api/github/layouts?repo=${selectedRepo.value}`);
-        if (!response.ok) throw new Error("Failed to fetch layouts");
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: response.statusText }));
+          throw new Error(errorData.error || `Failed to fetch layouts (${response.status})`);
+        }
         const data: LayoutFile[] = await response.json();
         layouts.value = data;
 
@@ -91,7 +97,10 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
         const response = await fetch(
           `/api/github/layout?repo=${selectedRepo.value}&file=${selectedLayout.value}&platform=${selectedPlatform.value}`
         );
-        if (!response.ok) throw new Error("Failed to fetch layout");
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: response.statusText }));
+          throw new Error(errorData.error || `Failed to fetch layout (${response.status})`);
+        }
         const data: LayoutResponse = await response.json();
 
         platforms.value = data.availablePlatforms;
@@ -129,7 +138,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
       <div class="flex flex-col gap-4">
         {/* Repo selector */}
         <div class="flex items-center gap-4">
-          <label class="text-sm font-semibold text-gray-700 w-32 flex-shrink-0">
+          <label class="text-sm font-semibold text-gray-700 w-40 flex-shrink-0 text-right">
             1. Select Language
           </label>
           <select
@@ -158,7 +167,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
 
         {/* Layout selector */}
         <div class="flex items-center gap-4">
-          <label class="text-sm font-semibold text-gray-700 w-32 flex-shrink-0">
+          <label class="text-sm font-semibold text-gray-700 w-40 flex-shrink-0 text-right">
             2. Select Layout
           </label>
           <select
@@ -180,7 +189,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
 
         {/* Platform selector */}
         <div class="flex items-center gap-4">
-          <label class="text-sm font-semibold text-gray-700 w-32 flex-shrink-0">
+          <label class="text-sm font-semibold text-gray-700 w-40 flex-shrink-0 text-right">
             3. Select Platform
           </label>
           <select
