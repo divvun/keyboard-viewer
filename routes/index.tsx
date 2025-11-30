@@ -16,7 +16,7 @@ export default define.page(function Home() {
       <div class="max-w-7xl mx-auto">
         <div class="text-center mb-8">
           <h1 class="text-4xl font-bold text-gray-900 mb-2">
-            Interactive Keyboard Viewer
+            Divvun Keyboard Viewer
           </h1>
           <p class="text-gray-600">
             Click keys or use your keyboard to type into the text area
