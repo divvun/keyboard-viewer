@@ -17,10 +17,11 @@ interface LayoutResponse {
   layout: KeyboardLayout;
   availablePlatforms: string[];
   selectedPlatform: string;
+  rawYaml: string;
 }
 
 interface GitHubKeyboardSelectorProps {
-  onLayoutLoaded: (layout: KeyboardLayout) => void;
+  onLayoutLoaded: (layout: KeyboardLayout, rawYaml: string) => void;
 }
 
 export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelectorProps) {
@@ -115,7 +116,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
           return; // Will trigger another fetch with the new platform
         }
 
-        onLayoutLoaded(data.layout);
+        onLayoutLoaded(data.layout, data.rawYaml);
       } catch (e) {
         error.value = e.message;
       } finally {

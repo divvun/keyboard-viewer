@@ -34,6 +34,9 @@ export default function KeyboardViewer(
   const yamlDefaultPlatform = useSignal("macOS");
   const yamlAvailablePlatforms = useSignal<string[]>([]);
 
+  // Track the last GitHub layout YAML
+  const lastGitHubYaml = useSignal<string | null>(null);
+
   const clearState = () => {
     text.value = "";
     pendingDeadkey.value = null;
@@ -43,7 +46,10 @@ export default function KeyboardViewer(
     pressedKeyId.value = null;
   };
 
-  const handleGitHubLayoutLoaded = (layout: KeyboardLayout) => {
+  const handleGitHubLayoutLoaded = (layout: KeyboardLayout, rawYaml: string) => {
+    // Store the raw YAML for later use
+    lastGitHubYaml.value = rawYaml;
+
     // Check if this layout is already in the list
     const existingIndex = allLayouts.value.findIndex((l) => l.id === layout.id);
     if (existingIndex >= 0) {
@@ -205,6 +211,14 @@ export default function KeyboardViewer(
     }
     return undefined;
   };
+
+  // Load stored YAML when switching to YAML tab
+  useEffect(() => {
+    if (activeTab.value === "yaml" && lastGitHubYaml.value && !yamlContent.value) {
+      yamlContent.value = lastGitHubYaml.value;
+      parseAndLoadYaml();
+    }
+  }, [activeTab.value]);
 
   // Handle physical keyboard input
   useEffect(() => {

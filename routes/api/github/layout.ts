@@ -68,6 +68,7 @@ export const handler = define.handlers({
         layout: transformedLayout,
         availablePlatforms,
         selectedPlatform,
+        rawYaml: yamlContent,
       });
     } catch (error) {
       return Response.json(
