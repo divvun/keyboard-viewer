@@ -4,9 +4,28 @@ interface KeyProps {
   keyData: KeyType;
   onClick?: (key: KeyType) => void;
   isPressed?: boolean;
+  activeLayer: string;
   isShiftActive?: boolean;
   isCapsLockActive?: boolean;
+  isAltActive?: boolean;
+  isCmdActive?: boolean;
+  isCtrlActive?: boolean;
   pendingDeadkey?: string | null;
+}
+
+/**
+ * Gets the output character for a key in the active layer,
+ * with fallback logic if the layer doesn't exist.
+ */
+function getKeyOutput(keyData: KeyType, activeLayer: string): string {
+  // Try to get the character from the active layer
+  const output = keyData.layers[activeLayer as keyof typeof keyData.layers];
+  if (output !== undefined) {
+    return output;
+  }
+
+  // Fallback to default layer
+  return keyData.layers.default;
 }
 
 export function Key(
@@ -14,8 +33,12 @@ export function Key(
     keyData,
     onClick,
     isPressed,
+    activeLayer,
     isShiftActive,
     isCapsLockActive,
+    isAltActive,
+    isCmdActive,
+    isCtrlActive,
     pendingDeadkey,
   }: KeyProps,
 ) {
@@ -23,35 +46,23 @@ export function Key(
   const height = keyData.height ?? 1.0;
   const type = keyData.type ?? "normal";
 
-  // Determine which label to show based on shift and caps lock state
-  let label: string;
-  // Use Unicode property escape to match all lowercase letters (including accented and non-Latin)
-  const isLetter = keyData.output.length === 1 &&
-    /\p{Ll}/u.test(keyData.output);
+  // Get the output character for the active layer
+  const output = getKeyOutput(keyData, activeLayer);
 
-  if (isLetter) {
-    // For letters, show uppercase if caps lock XOR shift is active
-    const shouldBeUppercase = isCapsLockActive !== isShiftActive;
-    label = shouldBeUppercase ? keyData.output.toUpperCase() : keyData.output;
-  } else if (isShiftActive && keyData.shiftLabel) {
-    label = keyData.shiftLabel;
-  } else if (isShiftActive && keyData.shiftOutput) {
-    label = keyData.shiftOutput;
-  } else {
-    label = keyData.label ?? keyData.output;
-  }
+  // Determine the label to display
+  const label = keyData.label ?? output;
 
-  // Check if this is a Shift key
+  // Check if this is a modifier key
   const isShiftKey = keyData.id === "ShiftLeft" || keyData.id === "ShiftRight";
-
-  // Check if this is the Caps Lock key
   const isCapsLockKey = keyData.id === "CapsLock";
+  const isAltKey = keyData.id === "AltLeft" || keyData.id === "AltRight";
+  const isCmdKey = keyData.id === "MetaLeft" || keyData.id === "MetaRight";
+  const isCtrlKey = keyData.id === "ControlLeft" ||
+    keyData.id === "ControlRight";
 
-  // Check if this key is the pending deadkey
-  // A key is the pending deadkey if its output (normal or shift) matches the pending deadkey character
+  // Check if this key produces the pending deadkey in any layer
   const isPendingDeadkey = pendingDeadkey !== null &&
-    (keyData.output === pendingDeadkey ||
-      keyData.shiftOutput === pendingDeadkey);
+    Object.values(keyData.layers).some((char) => char === pendingDeadkey);
 
   const handleClick = () => {
     if (onClick) {
@@ -65,8 +76,13 @@ export function Key(
   const gap = 0.25; // gap between keys
 
   // Check if key should show active state
-  const isActive = isPressed || (isShiftKey && isShiftActive) ||
-    (isCapsLockKey && isCapsLockActive) || isPendingDeadkey;
+  const isActive = isPressed ||
+    (isShiftKey && isShiftActive) ||
+    (isCapsLockKey && isCapsLockActive) ||
+    (isAltKey && isAltActive) ||
+    (isCmdKey && isCmdActive) ||
+    (isCtrlKey && isCtrlActive) ||
+    isPendingDeadkey;
 
   const style = {
     width: `${width * baseWidth}rem`,

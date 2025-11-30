@@ -8,12 +8,27 @@ interface KeyboardLayoutProps {
   layout: LayoutType;
   onKeyClick?: (key: KeyType) => void;
   pressedKeyId?: string | null;
+  activeLayer: string;
   isShiftActive?: boolean;
   isCapsLockActive?: boolean;
+  isAltActive?: boolean;
+  isCmdActive?: boolean;
+  isCtrlActive?: boolean;
   pendingDeadkey?: string | null;
 }
 
-export function KeyboardLayout({ layout, onKeyClick, pressedKeyId, isShiftActive, isCapsLockActive, pendingDeadkey }: KeyboardLayoutProps) {
+export function KeyboardLayout({
+  layout,
+  onKeyClick,
+  pressedKeyId,
+  activeLayer,
+  isShiftActive,
+  isCapsLockActive,
+  isAltActive,
+  isCmdActive,
+  isCtrlActive,
+  pendingDeadkey
+}: KeyboardLayoutProps) {
   const baseWidth = 3.5; // rem - matches Key component
   const gap = 0.25; // rem - gap between keys
 
@@ -111,8 +126,12 @@ export function KeyboardLayout({ layout, onKeyClick, pressedKeyId, isShiftActive
                   keyData={key}
                   onClick={onKeyClick}
                   isPressed={pressedKeyId === key.id}
+                  activeLayer={activeLayer}
                   isShiftActive={isShiftActive}
                   isCapsLockActive={isCapsLockActive}
+                  isAltActive={isAltActive}
+                  isCmdActive={isCmdActive}
+                  isCtrlActive={isCtrlActive}
                   pendingDeadkey={pendingDeadkey}
                 />
               );
@@ -134,8 +153,12 @@ export function KeyboardLayout({ layout, onKeyClick, pressedKeyId, isShiftActive
               keyData={enterKeyInfo.enterKey}
               onClick={onKeyClick}
               isPressed={pressedKeyId === enterKeyInfo.enterKey.id}
+              activeLayer={activeLayer}
               isShiftActive={isShiftActive}
               isCapsLockActive={isCapsLockActive}
+              isAltActive={isAltActive}
+              isCmdActive={isCmdActive}
+              isCtrlActive={isCtrlActive}
               pendingDeadkey={pendingDeadkey}
             />
           </div>

@@ -3,19 +3,34 @@
  */
 
 /**
+ * All possible keyboard layers across platforms
+ */
+export interface KeyLayers {
+  default: string;
+  shift?: string;
+  caps?: string;
+  "caps+shift"?: string;
+  alt?: string;
+  "alt+shift"?: string;
+  ctrl?: string;
+  "ctrl+shift"?: string;
+  cmd?: string;
+  "cmd+shift"?: string;
+  "cmd+alt"?: string;
+  "cmd+alt+shift"?: string;
+  "alt+caps"?: string;
+}
+
+/**
  * A single key on the keyboard
  */
 export interface Key {
   /** Unique identifier (e.g., "KeyA", "Digit1") */
   id: string;
-  /** Character to output when clicked */
-  output: string;
-  /** Character to output when shift is active */
-  shiftOutput?: string;
-  /** Display label (defaults to output if not provided) */
+  /** Character outputs for different modifier combinations */
+  layers: KeyLayers;
+  /** Display label (defaults to layers.default if not provided) */
   label?: string;
-  /** Display label when shift is active */
-  shiftLabel?: string;
   /** Relative width (1.0 = standard key) */
   width?: number;
   /** Relative height (1.0 = standard key) */

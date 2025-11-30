@@ -1,4 +1,4 @@
-import { useSignal } from "@preact/signals";
+import { useComputed, useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import type { Key, KeyboardLayout } from "../types/keyboard-simple.ts";
 import { KeyboardLayout as KeyboardLayoutComponent } from "../components/KeyboardLayout.tsx";
@@ -6,10 +6,15 @@ import { GitHubKeyboardSelector } from "../components/GitHubKeyboardSelector.tsx
 import { parse as parseYaml } from "jsr:@std/yaml";
 import {
   getAvailablePlatforms,
-  transformKbdgenToLayout,
   type KbdgenLayout,
+  transformKbdgenToLayout,
 } from "../utils/kbdgen-transform.ts";
 import { getErrorMessage } from "../utils.ts";
+import {
+  getActiveLayer,
+  getLayerDisplayName,
+  type ModifierState,
+} from "../utils/modifiers.ts";
 
 interface KeyboardViewerProps {
   layouts: KeyboardLayout[];
@@ -22,9 +27,18 @@ export default function KeyboardViewer(
 ) {
   const text = useSignal("");
   const pressedKeyId = useSignal<string | null>(null);
+
+  // Modifier states
   const isShiftActive = useSignal(false);
   const shiftClickMode = useSignal(false); // true if shift was clicked, false if held
   const isCapsLockActive = useSignal(false);
+  const isAltActive = useSignal(false);
+  const altClickMode = useSignal(false);
+  const isCmdActive = useSignal(false);
+  const cmdClickMode = useSignal(false);
+  const isCtrlActive = useSignal(false);
+  const ctrlClickMode = useSignal(false);
+
   const pendingDeadkey = useSignal<string | null>(null); // Holds the deadkey character waiting for combination
   const allLayouts = useSignal<KeyboardLayout[]>(initialLayouts);
   const selectedLayoutId = useSignal(initialLayouts[0]?.id ?? "");
@@ -39,12 +53,30 @@ export default function KeyboardViewer(
   // Track the last GitHub layout YAML
   const lastGitHubYaml = useSignal<string | null>(null);
 
+  // Compute the active layer based on modifier state
+  const activeLayer = useComputed(() => {
+    const modifiers: ModifierState = {
+      shift: isShiftActive.value,
+      caps: isCapsLockActive.value,
+      alt: isAltActive.value,
+      cmd: isCmdActive.value,
+      ctrl: isCtrlActive.value,
+    };
+    return getActiveLayer(modifiers);
+  });
+
   const clearState = () => {
     text.value = "";
     pendingDeadkey.value = null;
     isShiftActive.value = false;
     shiftClickMode.value = false;
     isCapsLockActive.value = false;
+    isAltActive.value = false;
+    altClickMode.value = false;
+    isCmdActive.value = false;
+    cmdClickMode.value = false;
+    isCtrlActive.value = false;
+    ctrlClickMode.value = false;
     pressedKeyId.value = null;
   };
 
@@ -165,29 +197,49 @@ export default function KeyboardViewer(
     return key.id === "CapsLock";
   };
 
-  // Helper: Get the character to output based on shift and caps lock state
-  const getOutputChar = (key: Key): string => {
-    // For letter keys, caps lock affects output
-    // Use Unicode property escape to match all lowercase letters (including accented and non-Latin)
-    const isLetter = key.output.length === 1 && /\p{Ll}/u.test(key.output);
-
-    if (isLetter) {
-      // Shift inverts caps lock for letters
-      const shouldBeUppercase = isCapsLockActive.value !== isShiftActive.value;
-      return shouldBeUppercase ? key.output.toUpperCase() : key.output;
-    } else {
-      // For non-letters, only shift matters
-      return isShiftActive.value && key.shiftOutput
-        ? key.shiftOutput
-        : key.output;
-    }
+  // Helper: Check if a key is an Alt key
+  const isAltKey = (key: Key): boolean => {
+    return key.id === "AltLeft" || key.id === "AltRight";
   };
 
-  // Helper: Exit shift mode if in click mode (one-shot shift)
-  const exitShiftClickMode = () => {
+  // Helper: Check if a key is a Cmd/Meta key
+  const isCmdKey = (key: Key): boolean => {
+    return key.id === "MetaLeft" || key.id === "MetaRight";
+  };
+
+  // Helper: Check if a key is a Ctrl key
+  const isCtrlKey = (key: Key): boolean => {
+    return key.id === "ControlLeft" || key.id === "ControlRight";
+  };
+
+  // Helper: Get the character to output based on the active layer
+  const getOutputChar = (key: Key): string => {
+    const layer = activeLayer.value;
+    const output = key.layers[layer as keyof typeof key.layers];
+    if (output !== undefined) {
+      return output;
+    }
+    // Fallback to default layer
+    return key.layers.default;
+  };
+
+  // Helper: Exit click mode for all modifiers (one-shot modifiers)
+  const exitClickModes = () => {
     if (shiftClickMode.value) {
       isShiftActive.value = false;
       shiftClickMode.value = false;
+    }
+    if (altClickMode.value) {
+      isAltActive.value = false;
+      altClickMode.value = false;
+    }
+    if (cmdClickMode.value) {
+      isCmdActive.value = false;
+      cmdClickMode.value = false;
+    }
+    if (ctrlClickMode.value) {
+      isCtrlActive.value = false;
+      ctrlClickMode.value = false;
     }
   };
 
@@ -254,6 +306,30 @@ export default function KeyboardViewer(
           return;
         }
 
+        // Handle Alt key - activate alt mode but don't call handleKeyClick
+        if (isAltKey(key)) {
+          pressedKeyId.value = key.id;
+          isAltActive.value = true;
+          altClickMode.value = false; // Physical hold, not click
+          return;
+        }
+
+        // Handle Cmd key - activate cmd mode but don't call handleKeyClick
+        if (isCmdKey(key)) {
+          pressedKeyId.value = key.id;
+          isCmdActive.value = true;
+          cmdClickMode.value = false; // Physical hold, not click
+          return;
+        }
+
+        // Handle Ctrl key - activate ctrl mode but don't call handleKeyClick
+        if (isCtrlKey(key)) {
+          pressedKeyId.value = key.id;
+          isCtrlActive.value = true;
+          ctrlClickMode.value = false; // Physical hold, not click
+          return;
+        }
+
         pressedKeyId.value = key.id;
         handleKeyClick(key);
       }
@@ -266,9 +342,20 @@ export default function KeyboardViewer(
 
       const key = findKeyByCode(e.code);
 
-      // If releasing Shift and not in click mode, deactivate shift
-      if (key && isShiftKey(key) && !shiftClickMode.value) {
-        isShiftActive.value = false;
+      if (key) {
+        // Release modifiers when physical key is released (if not in click mode)
+        if (isShiftKey(key) && !shiftClickMode.value) {
+          isShiftActive.value = false;
+        }
+        if (isAltKey(key) && !altClickMode.value) {
+          isAltActive.value = false;
+        }
+        if (isCmdKey(key) && !cmdClickMode.value) {
+          isCmdActive.value = false;
+        }
+        if (isCtrlKey(key) && !ctrlClickMode.value) {
+          isCtrlActive.value = false;
+        }
       }
 
       pressedKeyId.value = null;
@@ -297,6 +384,11 @@ export default function KeyboardViewer(
       return;
     }
 
+    // Ignore other modifier keys (Alt, Cmd, Ctrl) - they can only be toggled via toggle buttons
+    if (isAltKey(key) || isCmdKey(key) || isCtrlKey(key)) {
+      return;
+    }
+
     // Handle special keys
     if (key.id === "Backspace") {
       // If there's a pending deadkey, just cancel it instead of deleting
@@ -305,7 +397,7 @@ export default function KeyboardViewer(
       } else {
         text.value = text.value.slice(0, -1);
       }
-      exitShiftClickMode();
+      exitClickModes();
       return;
     }
 
@@ -316,7 +408,7 @@ export default function KeyboardViewer(
         pendingDeadkey.value = null;
       }
       text.value += "\n";
-      exitShiftClickMode();
+      exitClickModes();
       return;
     }
 
@@ -327,17 +419,20 @@ export default function KeyboardViewer(
         pendingDeadkey.value = null;
       }
       text.value += "\t";
-      exitShiftClickMode();
+      exitClickModes();
       return;
     }
 
-    // Ignore modifier keys that don't produce output
-    if (!key.output || key.output === "") {
+    // Get the output for this key
+    const output = getOutputChar(key);
+
+    // Ignore keys with no output
+    if (!output || output === "") {
       return;
     }
 
     // Get the character that would be output
-    const charToAdd = getOutputChar(key);
+    const charToAdd = output;
 
     // Check if we have a pending deadkey
     if (pendingDeadkey.value !== null) {
@@ -353,22 +448,22 @@ export default function KeyboardViewer(
         text.value += pendingDeadkey.value + charToAdd;
       }
       pendingDeadkey.value = null;
-      exitShiftClickMode();
+      exitClickModes();
       return;
     }
 
     // Check if the current character is a deadkey
     if (isDeadkey(charToAdd)) {
       pendingDeadkey.value = charToAdd;
-      exitShiftClickMode();
+      exitClickModes();
       return;
     }
 
     // Normal character - just add it
     text.value += charToAdd;
 
-    // Exit shift mode if in click mode (one-shot shift)
-    exitShiftClickMode();
+    // Exit click modes (one-shot modifiers)
+    exitClickModes();
   };
 
   const handleClear = () => {
@@ -417,14 +512,72 @@ export default function KeyboardViewer(
         </div>
       </div>
 
+      {/* Modifier Toggle Buttons */}
+      <div class="flex justify-center">
+        <div class="keyboard-width-container">
+          <div class="flex flex-wrap gap-2 items-center mb-4">
+            <span class="text-sm font-semibold text-gray-700 mr-2">
+              Modifiers:
+            </span>
+            <button
+              onClick={() => {
+                isAltActive.value = !isAltActive.value;
+                altClickMode.value = isAltActive.value;
+              }}
+              class={`px-4 py-2 rounded border-2 font-mono text-sm transition-all ${
+                isAltActive.value
+                  ? "key-active"
+                  : "bg-white border-gray-300 hover:bg-gray-200"
+              }`}
+            >
+              Alt
+            </button>
+            <button
+              onClick={() => {
+                isCmdActive.value = !isCmdActive.value;
+                cmdClickMode.value = isCmdActive.value;
+              }}
+              class={`px-4 py-2 rounded border-2 font-mono text-sm transition-all ${
+                isCmdActive.value
+                  ? "key-active"
+                  : "bg-white border-gray-300 hover:bg-gray-200"
+              }`}
+            >
+              Cmd
+            </button>
+            <button
+              onClick={() => {
+                isCtrlActive.value = !isCtrlActive.value;
+                ctrlClickMode.value = isCtrlActive.value;
+              }}
+              class={`px-4 py-2 rounded border-2 font-mono text-sm transition-all ${
+                isCtrlActive.value
+                  ? "key-active"
+                  : "bg-white border-gray-300 hover:bg-gray-200"
+              }`}
+            >
+              Ctrl
+            </button>
+            <div class="ml-auto text-sm text-gray-600">
+              <strong>Active Layer:</strong>{" "}
+              {getLayerDisplayName(activeLayer.value)}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Keyboard */}
       <div class="flex justify-center">
         <KeyboardLayoutComponent
           layout={layout}
           onKeyClick={handleKeyClick}
           pressedKeyId={pressedKeyId.value}
+          activeLayer={activeLayer.value}
           isShiftActive={isShiftActive.value}
           isCapsLockActive={isCapsLockActive.value}
+          isAltActive={isAltActive.value}
+          isCmdActive={isCmdActive.value}
+          isCtrlActive={isCtrlActive.value}
           pendingDeadkey={pendingDeadkey.value}
         />
       </div>

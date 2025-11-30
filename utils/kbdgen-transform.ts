@@ -1,4 +1,4 @@
-import type { KeyboardLayout, Key } from "../types/keyboard-simple.ts";
+import type { KeyboardLayout, Key, KeyLayers } from "../types/keyboard-simple.ts";
 
 /**
  * Transforms keyboard layouts from kbdgen format (used by giellalt)
@@ -89,19 +89,19 @@ const ISO_KEY_POSITIONS = {
  * These keys don't produce regular character output but have special functions.
  */
 const SPECIAL_KEYS: Record<string, Key> = {
-  backspace: { id: "Backspace", output: "\b", label: "⌫", width: 2.0, type: "modifier" },
-  tab: { id: "Tab", output: "\t", label: "Tab", width: 1.5, type: "modifier" },
-  enter: { id: "Enter", output: "\n", label: "Enter", width: 1.3, height: 2.075, type: "enter" },
-  capsLock: { id: "CapsLock", output: "", label: "Caps", width: 1.75, type: "modifier" },
-  shiftLeft: { id: "ShiftLeft", output: "", label: "Shift", width: 1.25, type: "modifier" },
-  shiftRight: { id: "ShiftRight", output: "", label: "Shift", width: 2.75, type: "modifier" },
-  controlLeft: { id: "ControlLeft", output: "", label: "Ctrl", width: 1.25, type: "modifier" },
-  metaLeft: { id: "MetaLeft", output: "", label: "⌘", width: 1.25, type: "modifier" },
-  altLeft: { id: "AltLeft", output: "", label: "Alt", width: 1.25, type: "modifier" },
-  space: { id: "Space", output: " ", label: "", width: 6.25, type: "space" },
-  altRight: { id: "AltRight", output: "", label: "Alt", width: 1.25, type: "modifier" },
-  metaRight: { id: "MetaRight", output: "", label: "⌘", width: 1.25, type: "modifier" },
-  controlRight: { id: "ControlRight", output: "", label: "Ctrl", width: 1.25, type: "modifier" },
+  backspace: { id: "Backspace", layers: { default: "\b" }, label: "⌫", width: 2.0, type: "modifier" },
+  tab: { id: "Tab", layers: { default: "\t" }, label: "Tab", width: 1.5, type: "modifier" },
+  enter: { id: "Enter", layers: { default: "\n" }, label: "Enter", width: 1.3, height: 2.075, type: "enter" },
+  capsLock: { id: "CapsLock", layers: { default: "" }, label: "Caps", width: 1.75, type: "modifier" },
+  shiftLeft: { id: "ShiftLeft", layers: { default: "" }, label: "Shift", width: 1.25, type: "modifier" },
+  shiftRight: { id: "ShiftRight", layers: { default: "" }, label: "Shift", width: 2.75, type: "modifier" },
+  controlLeft: { id: "ControlLeft", layers: { default: "" }, label: "Ctrl", width: 1.25, type: "modifier" },
+  metaLeft: { id: "MetaLeft", layers: { default: "" }, label: "⌘", width: 1.25, type: "modifier" },
+  altLeft: { id: "AltLeft", layers: { default: "" }, label: "Alt", width: 1.25, type: "modifier" },
+  space: { id: "Space", layers: { default: " " }, label: "", width: 6.25, type: "space" },
+  altRight: { id: "AltRight", layers: { default: "" }, label: "Alt", width: 1.25, type: "modifier" },
+  metaRight: { id: "MetaRight", layers: { default: "" }, label: "⌘", width: 1.25, type: "modifier" },
+  controlRight: { id: "ControlRight", layers: { default: "" }, label: "Ctrl", width: 1.25, type: "modifier" },
 };
 
 /**
@@ -159,18 +159,41 @@ function extractPlatformData(
 
 /**
  * Creates a keyboard row from layer data and key positions.
+ * Extracts characters from all available layers for each key position.
  */
 function createKeyboardRow(
   keyPositions: string[],
-  defaultLayerRow: string[],
-  shiftLayerRow: string[] | undefined,
+  layersData: { [layerName: string]: string[][] },
+  rowIndex: number,
 ) {
-  return keyPositions.map((keyId, index) => ({
-    id: keyId,
-    output: defaultLayerRow[index] || "",
-    shiftOutput: shiftLayerRow?.[index] || undefined,
-    width: 1.0,
-  }));
+  return keyPositions.map((keyId, keyIndex): Key => {
+    const layers: KeyLayers = {
+      default: layersData.default?.[rowIndex]?.[keyIndex] || "",
+    };
+
+    // Extract all available layers
+    const layerNames: (keyof KeyLayers)[] = [
+      "shift", "caps", "caps+shift", "alt", "alt+shift",
+      "ctrl", "ctrl+shift", "cmd", "cmd+shift",
+      "cmd+alt", "cmd+alt+shift", "alt+caps"
+    ];
+
+    for (const layerName of layerNames) {
+      const layerData = layersData[layerName];
+      if (layerData && layerData[rowIndex]) {
+        const char = layerData[rowIndex][keyIndex];
+        if (char && char !== "") {
+          layers[layerName] = char;
+        }
+      }
+    }
+
+    return {
+      id: keyId,
+      layers,
+      width: 1.0,
+    };
+  });
 }
 
 /**
@@ -191,9 +214,17 @@ export function transformKbdgenToLayout(
   // Extract layers and transforms for the requested platform
   const { layers, transforms } = extractPlatformData(kbdgenData, platform);
 
-  // Parse the multi-line layer strings into 2D arrays
-  const defaultLayer = parseLayerString(layers.default!);
-  const shiftLayer = layers.shift ? parseLayerString(layers.shift) : null;
+  // Parse all available layers into 2D arrays
+  const parsedLayers: { [layerName: string]: string[][] } = {};
+
+  // Parse each layer that exists in the kbdgen data
+  const layerNames = Object.keys(layers) as (keyof KbdgenLayers)[];
+  for (const layerName of layerNames) {
+    const layerString = layers[layerName];
+    if (layerString) {
+      parsedLayers[layerName] = parseLayerString(layerString);
+    }
+  }
 
   // Convert transforms to deadkeys (both are the same structure)
   const deadkeys = transforms;
@@ -202,58 +233,42 @@ export function transformKbdgenToLayout(
   const rows = [];
 
   // Row 1: Number row + Backspace
-  if (defaultLayer[0]) {
+  if (parsedLayers.default?.[0]) {
     rows.push({
       keys: [
-        ...createKeyboardRow(
-          ISO_KEY_POSITIONS.row1,
-          defaultLayer[0],
-          shiftLayer?.[0],
-        ),
+        ...createKeyboardRow(ISO_KEY_POSITIONS.row1, parsedLayers, 0),
         SPECIAL_KEYS.backspace,
       ],
     });
   }
 
   // Row 2: Tab + QWERTY row + Enter
-  if (defaultLayer[1]) {
+  if (parsedLayers.default?.[1]) {
     rows.push({
       keys: [
         SPECIAL_KEYS.tab,
-        ...createKeyboardRow(
-          ISO_KEY_POSITIONS.row2,
-          defaultLayer[1],
-          shiftLayer?.[1],
-        ),
+        ...createKeyboardRow(ISO_KEY_POSITIONS.row2, parsedLayers, 1),
         SPECIAL_KEYS.enter,
       ],
     });
   }
 
   // Row 3: CapsLock + ASDF row
-  if (defaultLayer[2]) {
+  if (parsedLayers.default?.[2]) {
     rows.push({
       keys: [
         SPECIAL_KEYS.capsLock,
-        ...createKeyboardRow(
-          ISO_KEY_POSITIONS.row3,
-          defaultLayer[2],
-          shiftLayer?.[2],
-        ),
+        ...createKeyboardRow(ISO_KEY_POSITIONS.row3, parsedLayers, 2),
       ],
     });
   }
 
   // Row 4: ShiftLeft + ZXCV row + ShiftRight
-  if (defaultLayer[3]) {
+  if (parsedLayers.default?.[3]) {
     rows.push({
       keys: [
         SPECIAL_KEYS.shiftLeft,
-        ...createKeyboardRow(
-          ISO_KEY_POSITIONS.row4,
-          defaultLayer[3],
-          shiftLayer?.[3],
-        ),
+        ...createKeyboardRow(ISO_KEY_POSITIONS.row4, parsedLayers, 3),
         SPECIAL_KEYS.shiftRight,
       ],
     });
