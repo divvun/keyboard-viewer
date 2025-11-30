@@ -298,27 +298,44 @@ export default function KeyboardViewer(
       </div>
 
       {/* Output text area */}
-      <div class="w-full">
-        <div class="flex justify-between items-center mb-2">
-          <label class="block text-sm font-semibold text-gray-700">
-            Output
-          </label>
-          <button
-            onClick={handleClear}
-            class="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-          >
-            Clear
-          </button>
+      <div class="flex justify-center">
+        <div style="width: 50rem; max-width: 100%;">
+          <div class="mb-2">
+            <label class="block text-sm font-semibold text-gray-700">
+              Output
+            </label>
+          </div>
+          <div style="position: relative;">
+            <textarea
+              value={text.value}
+              onInput={(e) => {
+                text.value = (e.target as HTMLTextAreaElement).value;
+                pendingDeadkey.value = null; // Clear deadkey state when typing directly
+              }}
+              style="width: 100%;"
+              class="h-32 p-3 pr-10 border-2 border-gray-300 rounded font-mono text-sm resize-y focus:outline-none focus:border-blue-500"
+              placeholder="Click keys on the keyboard below to type..."
+            />
+            {text.value && (
+              <button
+                onClick={handleClear}
+                style="position: absolute; top: 0.5rem; right: 0.5rem; z-index: 10; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background-color: #e5e7eb; border-radius: 50%;"
+                class="text-gray-600 hover:text-gray-900 hover:bg-gray-300 transition-colors"
+                title="Clear"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
-        <textarea
-          value={text.value}
-          onInput={(e) => {
-            text.value = (e.target as HTMLTextAreaElement).value;
-            pendingDeadkey.value = null; // Clear deadkey state when typing directly
-          }}
-          class="w-full h-32 p-3 border-2 border-gray-300 rounded font-mono text-sm resize-y focus:outline-none focus:border-blue-500"
-          placeholder="Click keys on the keyboard below to type..."
-        />
       </div>
 
       {/* Keyboard */}
