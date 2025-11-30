@@ -512,11 +512,30 @@ export default function KeyboardViewer(
         </div>
       </div>
 
-      {/* Modifier Toggle Buttons */}
+      {/* Keyboard */}
+      <div class="flex justify-center">
+        <KeyboardLayoutComponent
+          layout={layout}
+          onKeyClick={handleKeyClick}
+          pressedKeyId={pressedKeyId.value}
+          activeLayer={activeLayer.value}
+          isShiftActive={isShiftActive.value}
+          isCapsLockActive={isCapsLockActive.value}
+          isAltActive={isAltActive.value}
+          isCmdActive={isCmdActive.value}
+          isCtrlActive={isCtrlActive.value}
+          pendingDeadkey={pendingDeadkey.value}
+        />
+      </div>
+
+      {/* Info */}
       <div class="flex justify-center">
         <div class="keyboard-width-container">
-          <div class="flex flex-wrap gap-2 items-center mb-4">
-            <span class="text-sm font-semibold text-gray-700 mr-2">
+          <div class="flex flex-wrap gap-2 items-center text-sm text-gray-600">
+            <span>
+              Layout: <strong>{layout.name}</strong>
+            </span>
+            <span class="text-gray-700 mr-2">
               Modifiers:
             </span>
             <button
@@ -558,35 +577,11 @@ export default function KeyboardViewer(
             >
               Ctrl
             </button>
-            <div class="ml-auto text-sm text-gray-600">
-              <strong>Active Layer:</strong>{" "}
-              {getLayerDisplayName(activeLayer.value)}
-            </div>
+            <span class="text-gray-600 ml-2">
+              Active Layer: <strong>{getLayerDisplayName(activeLayer.value)}</strong>
+            </span>
           </div>
         </div>
-      </div>
-
-      {/* Keyboard */}
-      <div class="flex justify-center">
-        <KeyboardLayoutComponent
-          layout={layout}
-          onKeyClick={handleKeyClick}
-          pressedKeyId={pressedKeyId.value}
-          activeLayer={activeLayer.value}
-          isShiftActive={isShiftActive.value}
-          isCapsLockActive={isCapsLockActive.value}
-          isAltActive={isAltActive.value}
-          isCmdActive={isCmdActive.value}
-          isCtrlActive={isCtrlActive.value}
-          pendingDeadkey={pendingDeadkey.value}
-        />
-      </div>
-
-      {/* Info */}
-      <div class="text-center text-sm text-gray-600">
-        <p>
-          Layout: <strong>{layout.name}</strong>
-        </p>
       </div>
 
       {/* Tabs */}
