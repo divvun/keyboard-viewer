@@ -1,4 +1,4 @@
-import { define } from "../../../utils.ts";
+import { define, getErrorMessage } from "../../../utils.ts";
 
 export const handler = define.handlers({
   async GET() {
@@ -18,7 +18,7 @@ export const handler = define.handlers({
       // Fetch all repos from giellalt organization
       const response = await fetch(
         "https://api.github.com/orgs/giellalt/repos?per_page=100",
-        { headers }
+        { headers },
       );
 
       if (!response.ok) {
@@ -42,8 +42,8 @@ export const handler = define.handlers({
       return Response.json(keyboardRepos);
     } catch (error) {
       return Response.json(
-        { error: error.message },
-        { status: 500 }
+        { error: getErrorMessage(error) },
+        { status: 500 },
       );
     }
   },

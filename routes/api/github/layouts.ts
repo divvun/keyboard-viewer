@@ -1,4 +1,4 @@
-import { define } from "../../../utils.ts";
+import { define, getErrorMessage } from "../../../utils.ts";
 
 export const handler = define.handlers({
   async GET(req) {
@@ -59,7 +59,7 @@ export const handler = define.handlers({
       return Response.json(layoutFiles);
     } catch (error) {
       return Response.json(
-        { error: error.message },
+        { error: getErrorMessage(error) },
         { status: 500 },
       );
     }

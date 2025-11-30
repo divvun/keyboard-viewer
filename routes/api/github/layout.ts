@@ -1,7 +1,8 @@
-import { define } from "../../../utils.ts";
+import { define, getErrorMessage } from "../../../utils.ts";
 import { parse as parseYaml } from "jsr:@std/yaml";
 import {
   getAvailablePlatforms,
+  type KbdgenLayout,
   transformKbdgenToLayout,
 } from "../../../utils/kbdgen-transform.ts";
 
@@ -48,7 +49,7 @@ export const handler = define.handlers({
       }
 
       const yamlContent = await response.text();
-      const kbdgenData = parseYaml(yamlContent);
+      const kbdgenData = parseYaml(yamlContent) as KbdgenLayout;
 
       // Get available platforms
       const availablePlatforms = getAvailablePlatforms(kbdgenData);
@@ -82,7 +83,7 @@ export const handler = define.handlers({
       });
     } catch (error) {
       return Response.json(
-        { error: error.message },
+        { error: getErrorMessage(error) },
         { status: 500 },
       );
     }

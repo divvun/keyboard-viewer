@@ -7,7 +7,9 @@ import { parse as parseYaml } from "jsr:@std/yaml";
 import {
   getAvailablePlatforms,
   transformKbdgenToLayout,
+  type KbdgenLayout,
 } from "../utils/kbdgen-transform.ts";
+import { getErrorMessage } from "../utils.ts";
 
 interface KeyboardViewerProps {
   layouts: KeyboardLayout[];
@@ -79,7 +81,7 @@ export default function KeyboardViewer(
 
     try {
       // Parse the YAML
-      const kbdgenData = parseYaml(yamlContent.value);
+      const kbdgenData = parseYaml(yamlContent.value) as KbdgenLayout;
 
       // Get available platforms
       const availablePlatforms = getAvailablePlatforms(kbdgenData);
@@ -124,7 +126,7 @@ export default function KeyboardViewer(
       selectedLayoutId.value = yamlLayoutId;
       clearState();
     } catch (error) {
-      yamlError.value = error.message;
+      yamlError.value = getErrorMessage(error);
       yamlAvailablePlatforms.value = [];
     }
   };

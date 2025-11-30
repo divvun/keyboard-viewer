@@ -60,7 +60,7 @@ interface KbdgenPlatformData {
   transforms?: KbdgenTransform;
 }
 
-interface KbdgenLayout {
+export interface KbdgenLayout {
   displayNames?: { [lang: string]: string };
   locale?: string;
   macOS?: KbdgenPlatformData;

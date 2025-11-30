@@ -7,3 +7,11 @@ export interface State {
 }
 
 export const define = createDefine<State>();
+
+/**
+ * Safely extracts an error message from an unknown error value
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}

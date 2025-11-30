@@ -1,6 +1,7 @@
 import { useSignal, useComputed } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
+import { getErrorMessage } from "../utils.ts";
 
 interface Repo {
   code: string;
@@ -48,7 +49,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
         const data = await response.json();
         repos.value = data;
       } catch (e) {
-        error.value = e.message;
+        error.value = getErrorMessage(e);
       } finally {
         loading.value = false;
       }
@@ -79,7 +80,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
           selectedLayout.value = data[0].name;
         }
       } catch (e) {
-        error.value = e.message;
+        error.value = getErrorMessage(e);
       } finally {
         loading.value = false;
       }
@@ -118,7 +119,7 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
 
         onLayoutLoaded(data.layout, data.rawYaml);
       } catch (e) {
-        error.value = e.message;
+        error.value = getErrorMessage(e);
       } finally {
         loading.value = false;
       }

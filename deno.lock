@@ -25,6 +25,7 @@
     "jsr:@std/path@^1.1.2": "1.1.2",
     "jsr:@std/semver@^1.0.6": "1.0.6",
     "jsr:@std/uuid@^1.0.9": "1.0.9",
+    "jsr:@std/yaml@*": "1.0.9",
     "npm:@babel/core@^7.28.0": "7.28.5",
     "npm:@babel/preset-react@^7.27.1": "7.28.5_@babel+core@7.28.5",
     "npm:@mjackson/node-fetch-server@0.7": "0.7.0",
@@ -158,6 +159,9 @@
       "dependencies": [
         "jsr:@std/bytes"
       ]
+    },
+    "@std/yaml@1.0.9": {
+      "integrity": "6bad3dc766dd85b4b37eabcba81b6aa4eac7a392792ae29abcfb0f90602d55bb"
     }
   },
   "npm": {
