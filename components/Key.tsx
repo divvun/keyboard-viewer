@@ -91,7 +91,6 @@ export function Key(
         ${
         isActive ? "key-active" : "bg-white border-gray-300 hover:bg-gray-200"
       }
-        ${type === "modifier" || type === "function" ? "font-semibold" : ""}
         ${type === "function" ? "text-xs" : "text-sm"}
       `}
       title={keyData.id}
