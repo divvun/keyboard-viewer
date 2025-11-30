@@ -129,7 +129,15 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
 
   return (
     <div class="w-full space-y-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-      <h2 class="text-lg font-bold text-gray-800">Load from GitHub (giellalt)</h2>
+      <div class="flex items-center gap-2">
+        <h2 class="text-lg font-bold text-gray-800">Load from GitHub (giellalt)</h2>
+        {loading.value && (
+          <div
+            class="spinner flex-shrink-0"
+            style="width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #4b5563; border-radius: 50%;"
+          />
+        )}
+      </div>
 
       {error.value && (
         <div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -214,12 +222,6 @@ export function GitHubKeyboardSelector({ onLayoutLoaded }: GitHubKeyboardSelecto
           </select>
         </div>
       </div>
-
-      {loading.value && (
-        <div class="text-center text-sm text-gray-600">
-          Loading...
-        </div>
-      )}
     </div>
   );
 }
