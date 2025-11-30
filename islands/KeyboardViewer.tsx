@@ -3,10 +3,14 @@ import { useEffect } from "preact/hooks";
 import type { Key, KeyboardLayout } from "../types/keyboard-simple.ts";
 import { KeyboardLayout as KeyboardLayoutComponent } from "../components/KeyboardLayout.tsx";
 import { GitHubKeyboardSelector } from "../components/GitHubKeyboardSelector.tsx";
+import { parse as parseYaml } from "jsr:@std/yaml";
+import { transformKbdgenToLayout, getAvailablePlatforms } from "../utils/kbdgen-transform.ts";
 
 interface KeyboardViewerProps {
   layouts: KeyboardLayout[];
 }
+
+type TabMode = "github" | "yaml";
 
 export default function KeyboardViewer(
   { layouts: initialLayouts }: KeyboardViewerProps,
@@ -19,6 +23,12 @@ export default function KeyboardViewer(
   const pendingDeadkey = useSignal<string | null>(null); // Holds the deadkey character waiting for combination
   const allLayouts = useSignal<KeyboardLayout[]>(initialLayouts);
   const selectedLayoutId = useSignal(initialLayouts[0]?.id ?? "");
+
+  // Tab mode and YAML editor state
+  const activeTab = useSignal<TabMode>("github");
+  const yamlContent = useSignal("");
+  const yamlError = useSignal<string | null>(null);
+  const yamlPlatform = useSignal("macOS");
 
   const clearState = () => {
     text.value = "";
@@ -44,6 +54,62 @@ export default function KeyboardViewer(
     // Select the newly loaded layout
     selectedLayoutId.value = layout.id;
     clearState();
+  };
+
+  const handleYamlChange = (newYaml: string) => {
+    yamlContent.value = newYaml;
+    yamlError.value = null;
+
+    if (!newYaml.trim()) {
+      return;
+    }
+
+    try {
+      // Parse the YAML
+      const kbdgenData = parseYaml(newYaml);
+
+      // Get available platforms
+      const availablePlatforms = getAvailablePlatforms(kbdgenData);
+
+      if (availablePlatforms.length === 0) {
+        yamlError.value = "No supported platforms found in YAML";
+        return;
+      }
+
+      // Use selected platform or default to macOS if available
+      const platform = availablePlatforms.includes(yamlPlatform.value)
+        ? yamlPlatform.value
+        : availablePlatforms[0];
+
+      yamlPlatform.value = platform;
+
+      // Transform to layout
+      const layout = transformKbdgenToLayout(
+        kbdgenData,
+        platform,
+        "custom",
+        "yaml-editor"
+      );
+
+      // Update or add the layout
+      const yamlLayoutId = "yaml-editor-custom";
+      layout.id = yamlLayoutId;
+      layout.name = kbdgenData.displayNames?.en || "Custom YAML Layout";
+
+      const existingIndex = allLayouts.value.findIndex((l) => l.id === yamlLayoutId);
+      if (existingIndex >= 0) {
+        const updated = [...allLayouts.value];
+        updated[existingIndex] = layout;
+        allLayouts.value = updated;
+      } else {
+        allLayouts.value = [...allLayouts.value, layout];
+      }
+
+      selectedLayoutId.value = yamlLayoutId;
+      clearState();
+    } catch (error) {
+      yamlError.value = error.message;
+    }
   };
 
   // Get the currently selected layout
@@ -273,36 +339,6 @@ export default function KeyboardViewer(
 
   return (
     <div class="flex flex-col gap-6">
-      {/* GitHub Keyboard Selector */}
-      <div class="flex justify-center">
-        <div class="keyboard-width-container">
-          <GitHubKeyboardSelector onLayoutLoaded={handleGitHubLayoutLoaded} />
-        </div>
-      </div>
-
-      {/* Local/Loaded Layouts Selector */}
-      <div class="flex justify-center">
-        <div class="keyboard-width-container">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
-            Or select from loaded layouts:
-          </label>
-          <select
-            value={selectedLayoutId.value}
-            onChange={(e) => {
-              selectedLayoutId.value = (e.target as HTMLSelectElement).value;
-              clearState();
-            }}
-            class="w-full p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500"
-          >
-            {allLayouts.value.map((layoutOption) => (
-              <option key={layoutOption.id} value={layoutOption.id}>
-                {layoutOption.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
       {/* Output text area */}
       <div class="flex justify-center">
         <div class="keyboard-width-container">
@@ -363,6 +399,92 @@ export default function KeyboardViewer(
           Click keys to type, or type directly in the text area
         </p>
       </div>
+
+      {/* Tabs */}
+      <div class="flex justify-center">
+        <div class="keyboard-width-container">
+          <div class="flex gap-2 border-b-2 border-gray-300 mb-4">
+            <button
+              onClick={() => activeTab.value = "github"}
+              class={`px-4 py-2 font-semibold text-sm transition-colors ${
+                activeTab.value === "github"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Load from GitHub
+            </button>
+            <button
+              onClick={() => activeTab.value = "yaml"}
+              class={`px-4 py-2 font-semibold text-sm transition-colors ${
+                activeTab.value === "yaml"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              YAML Editor
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab.value === "github" && (
+            <div>
+              <GitHubKeyboardSelector onLayoutLoaded={handleGitHubLayoutLoaded} />
+            </div>
+          )}
+
+          {activeTab.value === "yaml" && (
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Paste kbdgen YAML layout:
+                </label>
+                <textarea
+                  value={yamlContent.value}
+                  onInput={(e) => handleYamlChange((e.target as HTMLTextAreaElement).value)}
+                  class="w-full h-64 p-3 border-2 border-gray-300 rounded font-mono text-xs resize-y focus:outline-none focus:border-blue-500"
+                  placeholder="Paste your kbdgen YAML here..."
+                />
+              </div>
+
+              {yamlError.value && (
+                <div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                  <strong>Error:</strong> {yamlError.value}
+                </div>
+              )}
+
+              {!yamlError.value && yamlContent.value && (
+                <div class="p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded text-sm">
+                  <strong>Success!</strong> Layout loaded. Start typing on the keyboard above.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Commented out: Local/Loaded Layouts Selector */}
+      {/* <div class="flex justify-center">
+        <div class="keyboard-width-container">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Or select from loaded layouts:
+          </label>
+          <select
+            value={selectedLayoutId.value}
+            onChange={(e) => {
+              selectedLayoutId.value = (e.target as HTMLSelectElement).value;
+              clearState();
+            }}
+            class="w-full p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500"
+          >
+            {allLayouts.value.map((layoutOption) => (
+              <option key={layoutOption.id} value={layoutOption.id}>
+                {layoutOption.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div> */}
     </div>
   );
 }
