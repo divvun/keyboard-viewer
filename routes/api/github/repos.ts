@@ -3,15 +3,22 @@ import { define } from "../../../utils.ts";
 export const handler = define.handlers({
   async GET() {
     try {
+      // Get GitHub token from environment if available
+      const githubToken = Deno.env.get("GITHUB_TOKEN");
+      const headers: Record<string, string> = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "keyboard-viewer",
+      };
+
+      // Add authorization header if token is available
+      if (githubToken) {
+        headers["Authorization"] = `Bearer ${githubToken}`;
+      }
+
       // Fetch all repos from giellalt organization
       const response = await fetch(
         "https://api.github.com/orgs/giellalt/repos?per_page=100",
-        {
-          headers: {
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "keyboard-viewer",
-          },
-        }
+        { headers }
       );
 
       if (!response.ok) {

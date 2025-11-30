@@ -46,7 +46,10 @@ export default function KeyboardViewer(
     pressedKeyId.value = null;
   };
 
-  const handleGitHubLayoutLoaded = (layout: KeyboardLayout, rawYaml: string) => {
+  const handleGitHubLayoutLoaded = (
+    layout: KeyboardLayout,
+    rawYaml: string,
+  ) => {
     // Store the raw YAML for later use
     lastGitHubYaml.value = rawYaml;
 
@@ -214,7 +217,9 @@ export default function KeyboardViewer(
 
   // Load stored YAML when switching to YAML tab
   useEffect(() => {
-    if (activeTab.value === "yaml" && lastGitHubYaml.value && !yamlContent.value) {
+    if (
+      activeTab.value === "yaml" && lastGitHubYaml.value && !yamlContent.value
+    ) {
       yamlContent.value = lastGitHubYaml.value;
       parseAndLoadYaml();
     }

@@ -17,14 +17,21 @@ export const handler = define.handlers({
         );
       }
 
+      // Get GitHub token from environment if available
+      const githubToken = Deno.env.get("GITHUB_TOKEN");
+      const headers: Record<string, string> = {
+        "User-Agent": "keyboard-viewer",
+      };
+
+      // Add authorization header if token is available
+      if (githubToken) {
+        headers["Authorization"] = `Bearer ${githubToken}`;
+      }
+
       // Fetch the YAML file from GitHub
       const response = await fetch(
         `https://raw.githubusercontent.com/giellalt/keyboard-${langCode}/refs/heads/main/${langCode}.kbdgen/layouts/${layoutFile}`,
-        {
-          headers: {
-            "User-Agent": "keyboard-viewer",
-          },
-        }
+        { headers }
       );
 
       if (!response.ok) {

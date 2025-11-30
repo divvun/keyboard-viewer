@@ -13,15 +13,22 @@ export const handler = define.handlers({
         );
       }
 
+      // Get GitHub token from environment if available
+      const githubToken = Deno.env.get("GITHUB_TOKEN");
+      const headers: Record<string, string> = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "keyboard-viewer",
+      };
+
+      // Add authorization header if token is available
+      if (githubToken) {
+        headers["Authorization"] = `Bearer ${githubToken}`;
+      }
+
       // Fetch contents of the layouts directory
       const response = await fetch(
         `https://api.github.com/repos/giellalt/keyboard-${langCode}/contents/${langCode}.kbdgen/layouts`,
-        {
-          headers: {
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "keyboard-viewer",
-          },
-        }
+        { headers }
       );
 
       if (!response.ok) {
