@@ -98,7 +98,7 @@ export function Key(
       style={style}
       class={`
         relative
-        rounded
+        rounded-lg
         border-2
         shadow-sm
         hover:shadow-md
