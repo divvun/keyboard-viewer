@@ -84,6 +84,9 @@ export function Key(
     (isCtrlKey && isCtrlActive) ||
     isPendingDeadkey;
 
+  // Check if this is an icon label (like ⌫, ⌘, etc.)
+  const isIconLabel = label.match(/^[⌫⌘⇧⌃⌥⇪⏎]$/);
+
   const style = {
     width: `${width * baseWidth}rem`,
     height: `${height * baseHeight}rem`,
@@ -107,7 +110,9 @@ export function Key(
         ${
         isActive ? "key-active" : "bg-white border-gray-300 hover:bg-gray-200"
       }
-        ${type === "function" ? "text-xs" : "text-sm"}
+        ${
+        isIconLabel ? "kbd-icon" : type === "function" ? "text-xs" : "text-sm"
+      }
       `}
       title={keyData.id}
     >

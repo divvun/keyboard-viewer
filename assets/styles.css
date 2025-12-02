@@ -236,10 +236,6 @@ html {
 .text-red-700 {
   color: #b91c1c;
 }
-.text-lg {
-  font-size: 1.125rem;
-  line-height: 1.75rem;
-}
 
 /* Border radius */
 .rounded-lg {
@@ -299,6 +295,13 @@ html {
 .text-sm {
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.kbd-icon {
+  font-size: 1.5rem;
 }
 
 /* Font weight utilities */
