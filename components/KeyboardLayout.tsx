@@ -15,6 +15,7 @@ interface KeyboardLayoutProps {
   isCmdActive?: boolean;
   isCtrlActive?: boolean;
   isSymbolsActive?: boolean;
+  isSymbols2Active?: boolean;
   pendingDeadkey?: string | null;
 }
 
@@ -29,6 +30,7 @@ export function KeyboardLayout({
   isCmdActive,
   isCtrlActive,
   isSymbolsActive,
+  isSymbols2Active,
   pendingDeadkey
 }: KeyboardLayoutProps) {
   const baseWidth = 3.5; // rem - matches Key component
@@ -135,6 +137,7 @@ export function KeyboardLayout({
                   isCmdActive={isCmdActive}
                   isCtrlActive={isCtrlActive}
                   isSymbolsActive={isSymbolsActive}
+                  isSymbols2Active={isSymbols2Active}
                   pendingDeadkey={pendingDeadkey}
                 />
               );
@@ -163,6 +166,7 @@ export function KeyboardLayout({
               isCmdActive={isCmdActive}
               isCtrlActive={isCtrlActive}
               isSymbolsActive={isSymbolsActive}
+              isSymbols2Active={isSymbols2Active}
               pendingDeadkey={pendingDeadkey}
             />
           </div>

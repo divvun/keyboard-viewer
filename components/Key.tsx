@@ -11,6 +11,7 @@ interface KeyProps {
   isCmdActive?: boolean;
   isCtrlActive?: boolean;
   isSymbolsActive?: boolean;
+  isSymbols2Active?: boolean;
   pendingDeadkey?: string | null;
 }
 
@@ -46,6 +47,7 @@ export function Key(
     isCmdActive,
     isCtrlActive,
     isSymbolsActive,
+    isSymbols2Active,
     pendingDeadkey,
   }: KeyProps,
 ) {
@@ -56,6 +58,9 @@ export function Key(
   // Get the output character for the active layer
   const output = getKeyOutput(keyData, activeLayer);
 
+  // Check if this is a modifier key
+  const isShiftKey = keyData.id === "ShiftLeft" || keyData.id === "ShiftRight";
+
   // Determine the label to display
   let label = keyData.label ?? output;
 
@@ -64,8 +69,12 @@ export function Key(
     label = isSymbolsActive ? "ABC" : "123";
   }
 
-  // Check if this is a modifier key
-  const isShiftKey = keyData.id === "ShiftLeft" || keyData.id === "ShiftRight";
+  // Dynamic label for shift key in symbols mode
+  if (isShiftKey && isSymbolsActive) {
+    // When in symbols-2 (symbols-2 is active), show "123" to return to symbols-1
+    // When in symbols-1 (symbols-2 is not active), show "#+=" to go to symbols-2
+    label = isSymbols2Active ? "123" : "#+=";
+  }
   const isCapsLockKey = keyData.id === "CapsLock";
   const isAltKey = keyData.id === "AltLeft" || keyData.id === "AltRight";
   const isCmdKey = keyData.id === "MetaLeft" || keyData.id === "MetaRight";
@@ -90,7 +99,7 @@ export function Key(
 
   // Check if key should show active state
   const isActive = isPressed ||
-    (isShiftKey && isShiftActive) ||
+    (isShiftKey && (isSymbolsActive ? isSymbols2Active : isShiftActive)) ||
     (isCapsLockKey && isCapsLockActive) ||
     (isAltKey && isAltActive) ||
     (isCmdKey && isCmdActive) ||
