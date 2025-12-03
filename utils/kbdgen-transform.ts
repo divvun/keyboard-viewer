@@ -509,7 +509,7 @@ function createMobileKey(
     // Map mobile special keys to standard key properties
     const specialKeyMap: Record<string, Partial<Key>> = {
       "shift": {
-        id: "MobileShift",
+        id: "ShiftLeft", // Use standard shift ID so it works with existing logic
         label: "⇧",
         layers: { default: "" },
         type: "modifier",
