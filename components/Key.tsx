@@ -18,6 +18,11 @@ interface KeyProps {
  * with fallback logic if the layer doesn't exist.
  */
 function getKeyOutput(keyData: KeyType, activeLayer: string): string {
+  // Safety check: ensure layers exist
+  if (!keyData.layers) {
+    return "";
+  }
+
   // Try to get the character from the active layer
   const output = keyData.layers[activeLayer as keyof typeof keyData.layers];
   if (output !== undefined) {
@@ -25,7 +30,7 @@ function getKeyOutput(keyData: KeyType, activeLayer: string): string {
   }
 
   // Fallback to default layer
-  return keyData.layers.default;
+  return keyData.layers.default || "";
 }
 
 export function Key(

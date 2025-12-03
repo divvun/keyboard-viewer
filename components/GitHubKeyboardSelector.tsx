@@ -17,7 +17,9 @@ interface LayoutFile {
 interface LayoutResponse {
   layout: KeyboardLayout;
   availablePlatforms: string[];
+  availableVariants: string[];
   selectedPlatform: string;
+  selectedVariant: string;
   rawYaml: string;
 }
 
@@ -31,9 +33,11 @@ export function GitHubKeyboardSelector(
   const repos = useSignal<Repo[]>([]);
   const layouts = useSignal<LayoutFile[]>([]);
   const platforms = useSignal<string[]>([]);
+  const variants = useSignal<string[]>([]);
   const selectedRepo = useSignal<string>("");
   const selectedLayout = useSignal<string>("");
   const selectedPlatform = useSignal<string>("macOS");
+  const selectedVariant = useSignal<string>("primary");
   const loading = useSignal<boolean>(false);
   const error = useSignal<string | null>(null);
 
@@ -100,7 +104,7 @@ export function GitHubKeyboardSelector(
     fetchLayouts();
   }, [selectedRepo.value]);
 
-  // Fetch layout and platforms when layout or platform changes
+  // Fetch layout and platforms when layout, platform, or variant changes
   useEffect(() => {
     if (!selectedRepo.value || !selectedLayout.value) return;
 
@@ -109,7 +113,7 @@ export function GitHubKeyboardSelector(
       error.value = null;
       try {
         const response = await fetch(
-          `/api/github/layout?repo=${selectedRepo.value}&file=${selectedLayout.value}&platform=${selectedPlatform.value}`,
+          `/api/github/layout?repo=${selectedRepo.value}&file=${selectedLayout.value}&platform=${selectedPlatform.value}&variant=${selectedVariant.value}`,
         );
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
@@ -122,6 +126,7 @@ export function GitHubKeyboardSelector(
         const data: LayoutResponse = await response.json();
 
         platforms.value = data.availablePlatforms;
+        variants.value = data.availableVariants;
 
         // Only auto-select a different platform if the current selection is not available
         if (!data.availablePlatforms.includes(selectedPlatform.value)) {
@@ -133,6 +138,15 @@ export function GitHubKeyboardSelector(
           return; // Will trigger another fetch with the new platform
         }
 
+        // Only auto-select a different variant if the current selection is not available
+        if (
+          data.availableVariants.length > 0 &&
+          !data.availableVariants.includes(selectedVariant.value)
+        ) {
+          selectedVariant.value = data.availableVariants[0];
+          return; // Will trigger another fetch with the new variant
+        }
+
         onLayoutLoaded(data.layout, data.rawYaml);
       } catch (e) {
         error.value = getErrorMessage(e);
@@ -141,7 +155,12 @@ export function GitHubKeyboardSelector(
       }
     }
     fetchLayout();
-  }, [selectedRepo.value, selectedLayout.value, selectedPlatform.value]);
+  }, [
+    selectedRepo.value,
+    selectedLayout.value,
+    selectedPlatform.value,
+    selectedVariant.value,
+  ]);
 
   return (
     <div class="w-full space-y-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
@@ -230,6 +249,8 @@ export function GitHubKeyboardSelector(
             value={selectedPlatform.value}
             onChange={(e) => {
               selectedPlatform.value = (e.target as HTMLSelectElement).value;
+              // Reset variant to primary when platform changes
+              selectedVariant.value = "primary";
             }}
             disabled={loading.value || platforms.value.length === 0}
             class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
@@ -245,6 +266,40 @@ export function GitHubKeyboardSelector(
               )}
           </select>
         </div>
+
+        {/* Variant selector (mobile only) */}
+        {variants.value.length > 0 && (
+          <div class="flex items-center gap-4">
+            <label class="text-sm font-semibold text-gray-700 w-40 flex-shrink-0 text-right">
+              4. Select Device Type
+            </label>
+            <select
+              value={selectedVariant.value}
+              onChange={(e) => {
+                selectedVariant.value = (e.target as HTMLSelectElement).value;
+              }}
+              disabled={loading.value}
+              class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
+            >
+              {variants.value.map((variant) => {
+                // Map internal variant names to display names
+                const displayNames: { [key: string]: string } = {
+                  "primary": "Phone (default)",
+                  "iPad-9in": "iPad (9 inch)",
+                  "iPad-12in": "iPad (12 inch)",
+                  "tablet-600": "Tablet (7-10 inch)",
+                };
+                const displayName = displayNames[variant] || variant;
+
+                return (
+                  <option key={variant} value={variant}>
+                    {displayName}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
       </div>
     </div>
   );

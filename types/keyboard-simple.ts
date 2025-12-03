@@ -19,6 +19,8 @@ export interface KeyLayers {
   "cmd+alt"?: string;
   "cmd+alt+shift"?: string;
   "alt+caps"?: string;
+  "symbols-1"?: string; // Mobile symbol layer
+  "symbols-2"?: string; // Mobile symbol layer
 }
 
 /**
@@ -66,4 +68,7 @@ export interface KeyboardLayout {
   name: string;
   rows: KeyRow[];
   deadkeys?: DeadkeyCombinations;
+  isMobile?: boolean; // Whether this is a mobile keyboard layout
+  platform?: string; // Platform name (iOS, android, macOS, etc.)
+  variant?: string; // Variant name for mobile (primary, iPad-9in, etc.)
 }
