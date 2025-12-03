@@ -612,6 +612,34 @@ function transformMobileLayout(
     return { keys };
   });
 
+  // Add synthetic bottom row with symbols key, spacebar, and return
+  // This row is standard across all mobile keyboards but not defined in YAML
+  rows.push({
+    keys: [
+      {
+        id: "MobileSymbols",
+        label: "123",
+        layers: { default: "" },
+        type: "modifier",
+        width: 1.5,
+      },
+      {
+        id: "Space",
+        label: "",
+        layers: { default: " " },
+        type: "space",
+        width: 8.0,
+      },
+      {
+        id: "Enter",
+        label: "⏎",
+        layers: { default: "\n" },
+        type: "modifier",
+        width: 1.5,
+      },
+    ],
+  });
+
   // Generate display name
   const displayName = kbdgenData.displayNames?.en ||
     kbdgenData.locale ||

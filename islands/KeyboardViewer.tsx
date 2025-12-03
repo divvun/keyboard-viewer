@@ -38,6 +38,7 @@ export default function KeyboardViewer(
   const cmdClickMode = useSignal(false);
   const isCtrlActive = useSignal(false);
   const ctrlClickMode = useSignal(false);
+  const isSymbolsActive = useSignal(false); // Mobile symbols mode
 
   const pendingDeadkey = useSignal<string | null>(null); // Holds the deadkey character waiting for combination
   const allLayouts = useSignal<KeyboardLayout[]>(initialLayouts);
@@ -55,6 +56,12 @@ export default function KeyboardViewer(
 
   // Compute the active layer based on modifier state
   const activeLayer = useComputed(() => {
+    // For mobile symbols mode, use symbols-1 or symbols-2
+    if (isSymbolsActive.value) {
+      return isShiftActive.value ? "symbols-2" : "symbols-1";
+    }
+
+    // Desktop/normal layers
     const modifiers: ModifierState = {
       shift: isShiftActive.value,
       caps: isCapsLockActive.value,
@@ -77,6 +84,7 @@ export default function KeyboardViewer(
     cmdClickMode.value = false;
     isCtrlActive.value = false;
     ctrlClickMode.value = false;
+    isSymbolsActive.value = false;
     pressedKeyId.value = null;
   };
 
@@ -210,6 +218,11 @@ export default function KeyboardViewer(
   // Helper: Check if a key is a Ctrl key
   const isCtrlKey = (key: Key): boolean => {
     return key.id === "ControlLeft" || key.id === "ControlRight";
+  };
+
+  // Helper: Check if a key is the mobile symbols key
+  const isSymbolsKey = (key: Key): boolean => {
+    return key.id === "MobileSymbols";
   };
 
   // Helper: Get the character to output based on the active layer
@@ -406,6 +419,12 @@ export default function KeyboardViewer(
       return;
     }
 
+    // Handle mobile symbols key clicks
+    if (isSymbolsKey(key)) {
+      isSymbolsActive.value = !isSymbolsActive.value;
+      return;
+    }
+
     // Handle special keys
     if (key.id === "Backspace") {
       // If there's a pending deadkey, just cancel it instead of deleting
@@ -538,6 +557,7 @@ export default function KeyboardViewer(
           isAltActive={isAltActive.value}
           isCmdActive={isCmdActive.value}
           isCtrlActive={isCtrlActive.value}
+          isSymbolsActive={isSymbolsActive.value}
           pendingDeadkey={pendingDeadkey.value}
         />
       </div>

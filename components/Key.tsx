@@ -10,6 +10,7 @@ interface KeyProps {
   isAltActive?: boolean;
   isCmdActive?: boolean;
   isCtrlActive?: boolean;
+  isSymbolsActive?: boolean;
   pendingDeadkey?: string | null;
 }
 
@@ -44,6 +45,7 @@ export function Key(
     isAltActive,
     isCmdActive,
     isCtrlActive,
+    isSymbolsActive,
     pendingDeadkey,
   }: KeyProps,
 ) {
@@ -55,7 +57,12 @@ export function Key(
   const output = getKeyOutput(keyData, activeLayer);
 
   // Determine the label to display
-  const label = keyData.label ?? output;
+  let label = keyData.label ?? output;
+
+  // Dynamic label for symbols key: "123" when in letter mode, "ABC" when in symbols mode
+  if (keyData.id === "MobileSymbols") {
+    label = isSymbolsActive ? "ABC" : "123";
+  }
 
   // Check if this is a modifier key
   const isShiftKey = keyData.id === "ShiftLeft" || keyData.id === "ShiftRight";
@@ -64,6 +71,7 @@ export function Key(
   const isCmdKey = keyData.id === "MetaLeft" || keyData.id === "MetaRight";
   const isCtrlKey = keyData.id === "ControlLeft" ||
     keyData.id === "ControlRight";
+  const isSymbolsKey = keyData.id === "MobileSymbols";
 
   // Check if this key produces the pending deadkey in any layer
   const isPendingDeadkey = pendingDeadkey !== null &&
@@ -87,6 +95,7 @@ export function Key(
     (isAltKey && isAltActive) ||
     (isCmdKey && isCmdActive) ||
     (isCtrlKey && isCtrlActive) ||
+    (isSymbolsKey && isSymbolsActive) ||
     isPendingDeadkey;
 
   // Check if this is an icon label (like ⌫, ⌘, etc.)

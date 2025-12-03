@@ -14,6 +14,7 @@ interface KeyboardLayoutProps {
   isAltActive?: boolean;
   isCmdActive?: boolean;
   isCtrlActive?: boolean;
+  isSymbolsActive?: boolean;
   pendingDeadkey?: string | null;
 }
 
@@ -27,6 +28,7 @@ export function KeyboardLayout({
   isAltActive,
   isCmdActive,
   isCtrlActive,
+  isSymbolsActive,
   pendingDeadkey
 }: KeyboardLayoutProps) {
   const baseWidth = 3.5; // rem - matches Key component
@@ -132,6 +134,7 @@ export function KeyboardLayout({
                   isAltActive={isAltActive}
                   isCmdActive={isCmdActive}
                   isCtrlActive={isCtrlActive}
+                  isSymbolsActive={isSymbolsActive}
                   pendingDeadkey={pendingDeadkey}
                 />
               );
@@ -159,6 +162,7 @@ export function KeyboardLayout({
               isAltActive={isAltActive}
               isCmdActive={isCmdActive}
               isCtrlActive={isCtrlActive}
+              isSymbolsActive={isSymbolsActive}
               pendingDeadkey={pendingDeadkey}
             />
           </div>
