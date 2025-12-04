@@ -6,6 +6,7 @@ import { GitHubKeyboardSelector } from "../components/GitHubKeyboardSelector.tsx
 import { parse as parseYaml } from "jsr:@std/yaml";
 import {
   getAvailablePlatforms,
+  getMobileVariants,
   type KbdgenLayout,
   transformKbdgenToLayout,
 } from "../utils/kbdgen-transform.ts";
@@ -51,6 +52,8 @@ export default function KeyboardViewer(
   const yamlError = useSignal<string | null>(null);
   const yamlDefaultPlatform = useSignal("macOS");
   const yamlAvailablePlatforms = useSignal<string[]>([]);
+  const yamlDefaultVariant = useSignal("primary");
+  const yamlAvailableVariants = useSignal<string[]>([]);
 
   // Track the last GitHub layout YAML
   const lastGitHubYaml = useSignal<string | null>(null);
@@ -118,6 +121,7 @@ export default function KeyboardViewer(
 
     if (!yamlContent.value.trim()) {
       yamlAvailablePlatforms.value = [];
+      yamlAvailableVariants.value = [];
       return;
     }
 
@@ -141,12 +145,27 @@ export default function KeyboardViewer(
 
       yamlDefaultPlatform.value = platform;
 
+      // Get available variants for this platform
+      const availableVariants = getMobileVariants(kbdgenData, platform);
+      yamlAvailableVariants.value = availableVariants;
+
+      // Determine the variant to use
+      let variant = "primary";
+      if (availableVariants.length > 0) {
+        // Use selected variant if available, otherwise use first variant
+        variant = availableVariants.includes(yamlDefaultVariant.value)
+          ? yamlDefaultVariant.value
+          : availableVariants[0];
+        yamlDefaultVariant.value = variant;
+      }
+
       // Transform to layout
       const layout = transformKbdgenToLayout(
         kbdgenData,
         platform,
         "custom",
         "yaml-editor",
+        variant,
       );
 
       // Update or add the layout
@@ -170,6 +189,7 @@ export default function KeyboardViewer(
     } catch (error) {
       yamlError.value = getErrorMessage(error);
       yamlAvailablePlatforms.value = [];
+      yamlAvailableVariants.value = [];
     }
   };
 
@@ -180,6 +200,13 @@ export default function KeyboardViewer(
 
   const handleYamlPlatformChange = (newPlatform: string) => {
     yamlDefaultPlatform.value = newPlatform;
+    // Reset variant to primary when platform changes
+    yamlDefaultVariant.value = "primary";
+    parseAndLoadYaml();
+  };
+
+  const handleYamlVariantChange = (newVariant: string) => {
+    yamlDefaultVariant.value = newVariant;
     parseAndLoadYaml();
   };
 
@@ -657,6 +684,40 @@ export default function KeyboardViewer(
                         {platform}
                       </option>
                     ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Variant selector (mobile only) */}
+              {yamlAvailableVariants.value.length > 0 && (
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Select Device Type:
+                  </label>
+                  <select
+                    value={yamlDefaultVariant.value}
+                    onChange={(e) =>
+                      handleYamlVariantChange(
+                        (e.target as HTMLSelectElement).value,
+                      )}
+                    class="w-full p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    {yamlAvailableVariants.value.map((variant) => {
+                      // Map internal variant names to display names
+                      const displayNames: { [key: string]: string } = {
+                        "primary": "Phone (default)",
+                        "iPad-9in": "iPad (9 inch)",
+                        "iPad-12in": "iPad (12 inch)",
+                        "tablet-600": "Tablet (7-10 inch)",
+                      };
+                      const displayName = displayNames[variant] || variant;
+
+                      return (
+                        <option key={variant} value={variant}>
+                          {displayName}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               )}
