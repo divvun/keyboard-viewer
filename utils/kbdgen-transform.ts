@@ -632,13 +632,25 @@ function transformMobileLayout(
     width: platform === "iOS" ? 8.0 : 9.5,
   });
 
-  bottomRowKeys.push({
-    id: "Enter",
-    label: "⏎",
-    layers: { default: "\n" },
-    type: "modifier",
-    width: 1.5,
-  });
+  // iPad layouts have a second symbols key instead of Enter
+  const isIPad = variant === "iPad-9in" || variant === "iPad-12in";
+  if (isIPad) {
+    bottomRowKeys.push({
+      id: "MobileSymbols2",
+      label: "123",
+      layers: { default: "" },
+      type: "modifier",
+      width: 1.5,
+    });
+  } else {
+    bottomRowKeys.push({
+      id: "Enter",
+      label: "⏎",
+      layers: { default: "\n" },
+      type: "modifier",
+      width: 1.5,
+    });
+  }
 
   rows.push({
     keys: bottomRowKeys,

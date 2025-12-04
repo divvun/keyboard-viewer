@@ -65,7 +65,7 @@ export function Key(
   let label = keyData.label ?? output;
 
   // Dynamic label for symbols key: "123" when in letter mode, "ABC" when in symbols mode
-  if (keyData.id === "MobileSymbols") {
+  if (keyData.id === "MobileSymbols" || keyData.id === "MobileSymbols2") {
     label = isSymbolsActive ? "ABC" : "123";
   }
 
@@ -80,7 +80,8 @@ export function Key(
   const isCmdKey = keyData.id === "MetaLeft" || keyData.id === "MetaRight";
   const isCtrlKey = keyData.id === "ControlLeft" ||
     keyData.id === "ControlRight";
-  const isSymbolsKey = keyData.id === "MobileSymbols";
+  const isSymbolsKey = keyData.id === "MobileSymbols" ||
+    keyData.id === "MobileSymbols2";
 
   // Check if this key produces the pending deadkey in any layer
   const isPendingDeadkey = pendingDeadkey !== null &&

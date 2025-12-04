@@ -251,7 +251,7 @@ export default function KeyboardViewer(
 
   // Helper: Check if a key is the mobile symbols key
   const isSymbolsKey = (key: Key): boolean => {
-    return key.id === "MobileSymbols";
+    return key.id === "MobileSymbols" || key.id === "MobileSymbols2";
   };
 
   // Helper: Get the character to output based on the active layer
