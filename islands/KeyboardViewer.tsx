@@ -13,6 +13,13 @@ import {
   type KbdgenLayout,
   transformKbdgenToLayout,
 } from "../utils/kbdgen-transform.ts";
+import {
+  DEFAULT_PLATFORM,
+  DEFAULT_VARIANT,
+  DeviceVariant,
+  Platform,
+  VariantDisplayNames,
+} from "../constants/platforms.ts";
 import { getErrorMessage } from "../utils.ts";
 import {
   getActiveLayer,
@@ -53,10 +60,10 @@ export default function KeyboardViewer(
   const activeTab = useSignal<TabMode>("github");
   const yamlContent = useSignal("");
   const yamlError = useSignal<string | null>(null);
-  const yamlDefaultPlatform = useSignal("macOS");
-  const yamlAvailablePlatforms = useSignal<string[]>([]);
-  const yamlDefaultVariant = useSignal("primary");
-  const yamlAvailableVariants = useSignal<string[]>([]);
+  const yamlDefaultPlatform = useSignal<Platform>(DEFAULT_PLATFORM);
+  const yamlAvailablePlatforms = useSignal<Platform[]>([]);
+  const yamlDefaultVariant = useSignal<DeviceVariant>(DEFAULT_VARIANT);
+  const yamlAvailableVariants = useSignal<DeviceVariant[]>([]);
 
   // Track the last GitHub layout YAML
   const lastGitHubYaml = useSignal<string | null>(null);
@@ -158,7 +165,7 @@ export default function KeyboardViewer(
       yamlAvailableVariants.value = availableVariants;
 
       // Determine the variant to use
-      let variant = "primary";
+      let variant: DeviceVariant = DEFAULT_VARIANT;
       if (availableVariants.length > 0) {
         // Use selected variant if available, otherwise use first variant
         variant = availableVariants.includes(yamlDefaultVariant.value)
@@ -206,14 +213,14 @@ export default function KeyboardViewer(
     parseAndLoadYaml();
   };
 
-  const handleYamlPlatformChange = (newPlatform: string) => {
+  const handleYamlPlatformChange = (newPlatform: Platform) => {
     yamlDefaultPlatform.value = newPlatform;
     // Reset variant to primary when platform changes
-    yamlDefaultVariant.value = "primary";
+    yamlDefaultVariant.value = DEFAULT_VARIANT;
     parseAndLoadYaml();
   };
 
-  const handleYamlVariantChange = (newVariant: string) => {
+  const handleYamlVariantChange = (newVariant: DeviceVariant) => {
     yamlDefaultVariant.value = newVariant;
     parseAndLoadYaml();
   };
@@ -593,7 +600,7 @@ export default function KeyboardViewer(
           <div class="relative">
             <textarea
               value={text.value}
-              readonly
+              readOnly
               class="w-full h-32 p-3 pr-10 border-2 border-gray-300 rounded font-mono text-sm resize-y focus:outline-none focus:border-blue-500"
               placeholder="Click keys below or use your keyboard to type..."
             />
@@ -712,7 +719,7 @@ export default function KeyboardViewer(
                     value={yamlDefaultPlatform.value}
                     onChange={(e) =>
                       handleYamlPlatformChange(
-                        (e.target as HTMLSelectElement).value,
+                        (e.target as HTMLSelectElement).value as Platform,
                       )}
                     class="w-full p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500"
                   >
@@ -735,19 +742,12 @@ export default function KeyboardViewer(
                     value={yamlDefaultVariant.value}
                     onChange={(e) =>
                       handleYamlVariantChange(
-                        (e.target as HTMLSelectElement).value,
+                        (e.target as HTMLSelectElement).value as DeviceVariant,
                       )}
                     class="w-full p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500"
                   >
                     {yamlAvailableVariants.value.map((variant) => {
-                      // Map internal variant names to display names
-                      const displayNames: { [key: string]: string } = {
-                        "primary": "Phone (default)",
-                        "iPad-9in": "iPad (9 inch)",
-                        "iPad-12in": "iPad (12 inch)",
-                        "tablet-600": "Tablet (7-10 inch)",
-                      };
-                      const displayName = displayNames[variant] || variant;
+                      const displayName = VariantDisplayNames[variant] || variant;
 
                       return (
                         <option key={variant} value={variant}>

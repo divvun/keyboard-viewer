@@ -3,6 +3,7 @@ import type {
   KeyboardLayout,
   KeyLayers,
 } from "../types/keyboard-simple.ts";
+import { Platform, DeviceVariant } from "../constants/platforms.ts";
 
 /**
  * Transforms keyboard layouts from kbdgen format (used by giellalt)
@@ -269,8 +270,8 @@ function parseLayerString(layerString: string): string[][] {
 /**
  * Checks if a platform is mobile (iOS or Android).
  */
-function isMobilePlatform(platform: string): boolean {
-  return platform === "iOS" || platform === "android";
+function isMobilePlatform(platform: Platform): boolean {
+  return platform === Platform.IOS || platform === Platform.Android;
 }
 
 /**
@@ -337,8 +338,8 @@ function parseMobileLayerString(layerString: string): ParsedMobileKey[][] {
  */
 export function getMobileVariants(
   kbdgenData: KbdgenLayout,
-  platform: string,
-): string[] {
+  platform: Platform,
+): DeviceVariant[] {
   // Only return variants for mobile platforms
   if (!isMobilePlatform(platform)) {
     return [];
@@ -352,17 +353,17 @@ export function getMobileVariants(
     return [];
   }
 
-  const variants: string[] = [];
+  const variants: DeviceVariant[] = [];
 
   if (platformData.primary) {
-    variants.push("primary");
+    variants.push(DeviceVariant.Primary);
   }
 
-  if (platform === "iOS") {
-    if (platformData["iPad-9in"]) variants.push("iPad-9in");
-    if (platformData["iPad-12in"]) variants.push("iPad-12in");
-  } else if (platform === "android") {
-    if (platformData["tablet-600"]) variants.push("tablet-600");
+  if (platform === Platform.IOS) {
+    if (platformData["iPad-9in"]) variants.push(DeviceVariant.IPad9in);
+    if (platformData["iPad-12in"]) variants.push(DeviceVariant.IPad12in);
+  } else if (platform === Platform.Android) {
+    if (platformData["tablet-600"]) variants.push(DeviceVariant.Tablet600);
   }
 
   return variants;
@@ -374,8 +375,8 @@ export function getMobileVariants(
  */
 function extractPlatformData(
   kbdgenData: KbdgenLayout,
-  platform: string,
-  variant = "primary",
+  platform: Platform,
+  variant: DeviceVariant = DeviceVariant.Primary,
 ): { layers: KbdgenLayers; transforms: KbdgenTransform } {
   // Get the platform data (macOS, windows, android, iOS, chrome, chromeOS)
   const platformData = kbdgenData[platform as keyof KbdgenLayout] as
@@ -389,7 +390,7 @@ function extractPlatformData(
   // For mobile platforms or non-primary variants, access the variant directly
   let layers: KbdgenLayers | undefined;
 
-  if (variant !== "primary" && isMobilePlatform(platform)) {
+  if (variant !== DeviceVariant.Primary && isMobilePlatform(platform)) {
     const variantData = platformData[variant as keyof KbdgenPlatformData] as
       | KbdgenMobileVariant
       | undefined;
@@ -569,8 +570,8 @@ function createMobileKey(
  */
 function transformMobileLayout(
   kbdgenData: KbdgenLayout,
-  platform: string,
-  variant: string,
+  platform: Platform,
+  variant: DeviceVariant,
   repoCode: string,
   layoutName: string,
 ): KeyboardLayout {
@@ -612,14 +613,14 @@ function transformMobileLayout(
   // Add synthetic bottom row with spacebar and return
   // This row is standard across all mobile keyboards but not defined in YAML
   // Only iOS keyboards have symbols layers, so only add the symbols key for iOS
-  const bottomRowKeys = [];
+  const bottomRowKeys: Key[] = [];
 
-  if (platform === "iOS") {
+  if (platform === Platform.IOS) {
     bottomRowKeys.push({
       id: "MobileSymbols",
       label: "123",
       layers: { default: "" },
-      type: "modifier",
+      type: "modifier" as const,
       width: 1.5,
     });
   }
@@ -628,18 +629,18 @@ function transformMobileLayout(
     id: "Space",
     label: "",
     layers: { default: " " },
-    type: "space",
-    width: platform === "iOS" ? 8.0 : 9.5,
+    type: "space" as const,
+    width: platform === Platform.IOS ? 8.0 : 9.5,
   });
 
   // iPad layouts have a second symbols key instead of Enter
-  const isIPad = variant === "iPad-9in" || variant === "iPad-12in";
+  const isIPad = variant === DeviceVariant.IPad9in || variant === DeviceVariant.IPad12in;
   if (isIPad) {
     bottomRowKeys.push({
       id: "MobileSymbols2",
       label: "123",
       layers: { default: "" },
-      type: "modifier",
+      type: "modifier" as const,
       width: 1.5,
     });
   } else {
@@ -647,7 +648,7 @@ function transformMobileLayout(
       id: "Enter",
       label: "⏎",
       layers: { default: "\n" },
-      type: "modifier",
+      type: "modifier" as const,
       width: 1.5,
     });
   }
@@ -684,10 +685,10 @@ function transformMobileLayout(
  */
 export function transformKbdgenToLayout(
   kbdgenData: KbdgenLayout,
-  platform: string,
+  platform: Platform,
   repoCode: string,
   layoutName: string,
-  variant = "primary",
+  variant: DeviceVariant = DeviceVariant.Primary,
 ): KeyboardLayout {
   // Route to mobile transformer for iOS/Android
   if (isMobilePlatform(platform)) {
@@ -768,13 +769,13 @@ export function transformKbdgenToLayout(
   const bottomRowKeys = [SPECIAL_KEYS.controlLeft];
   bottomRowKeys.push(SPECIAL_KEYS.altLeft);
 
-  if (platform === "macOS") {
+  if (platform === Platform.MacOS) {
     bottomRowKeys.push(SPECIAL_KEYS.metaLeft);
   }
 
   bottomRowKeys.push(SPECIAL_KEYS.space);
 
-  if (platform === "macOS") {
+  if (platform === Platform.MacOS) {
     bottomRowKeys.push(SPECIAL_KEYS.metaRight);
   }
 
@@ -806,15 +807,15 @@ export function transformKbdgenToLayout(
  * @param kbdgenData - The parsed kbdgen YAML layout data
  * @returns Array of platform names (e.g., ["macOS", "windows", "chromeOS"])
  */
-export function getAvailablePlatforms(kbdgenData: KbdgenLayout): string[] {
-  const platforms: string[] = [];
+export function getAvailablePlatforms(kbdgenData: KbdgenLayout): Platform[] {
+  const platforms: Platform[] = [];
 
   // Only include platforms supported by the viewer
-  if (kbdgenData.macOS) platforms.push("macOS");
-  if (kbdgenData.windows) platforms.push("windows");
-  if (kbdgenData.chromeOS) platforms.push("chromeOS");
-  if (kbdgenData.android) platforms.push("android");
-  if (kbdgenData.iOS) platforms.push("iOS");
+  if (kbdgenData.macOS) platforms.push(Platform.MacOS);
+  if (kbdgenData.windows) platforms.push(Platform.Windows);
+  if (kbdgenData.chromeOS) platforms.push(Platform.ChromeOS);
+  if (kbdgenData.android) platforms.push(Platform.Android);
+  if (kbdgenData.iOS) platforms.push(Platform.IOS);
 
   return platforms;
 }

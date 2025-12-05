@@ -2,6 +2,13 @@ import { useComputed, useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import { getErrorMessage } from "../utils.ts";
+import {
+  DEFAULT_PLATFORM,
+  DEFAULT_VARIANT,
+  DeviceVariant,
+  Platform,
+  VariantDisplayNames,
+} from "../constants/platforms.ts";
 
 export interface Repo {
   code: string;
@@ -16,10 +23,10 @@ interface LayoutFile {
 
 interface LayoutResponse {
   layout: KeyboardLayout;
-  availablePlatforms: string[];
-  availableVariants: string[];
-  selectedPlatform: string;
-  selectedVariant: string;
+  availablePlatforms: Platform[];
+  availableVariants: DeviceVariant[];
+  selectedPlatform: Platform;
+  selectedVariant: DeviceVariant;
   rawYaml: string;
 }
 
@@ -35,12 +42,12 @@ export function GitHubKeyboardSelector(
     GitHubKeyboardSelectorProps,
 ) {
   const layouts = useSignal<LayoutFile[]>([]);
-  const platforms = useSignal<string[]>([]);
-  const variants = useSignal<string[]>([]);
+  const platforms = useSignal<Platform[]>([]);
+  const variants = useSignal<DeviceVariant[]>([]);
   const selectedRepo = useSignal<string>("");
   const selectedLayout = useSignal<string>("");
-  const selectedPlatform = useSignal<string>("macOS");
-  const selectedVariant = useSignal<string>("primary");
+  const selectedPlatform = useSignal<Platform>(DEFAULT_PLATFORM);
+  const selectedVariant = useSignal<DeviceVariant>(DEFAULT_VARIANT);
   const loading = useSignal<boolean>(false);
   const error = useSignal<string | null>(null);
 
@@ -108,9 +115,9 @@ export function GitHubKeyboardSelector(
         // Only auto-select a different platform if the current selection is not available
         if (!data.availablePlatforms.includes(selectedPlatform.value)) {
           // Prefer macOS if available, otherwise use first platform
-          const newPlatform = data.availablePlatforms.includes("macOS")
-            ? "macOS"
-            : data.availablePlatforms[0] || "macOS";
+          const newPlatform = data.availablePlatforms.includes(Platform.MacOS)
+            ? Platform.MacOS
+            : data.availablePlatforms[0] || Platform.MacOS;
           selectedPlatform.value = newPlatform;
           return; // Will trigger another fetch with the new platform
         }
@@ -225,9 +232,9 @@ export function GitHubKeyboardSelector(
           <select
             value={selectedPlatform.value}
             onChange={(e) => {
-              selectedPlatform.value = (e.target as HTMLSelectElement).value;
+              selectedPlatform.value = (e.target as HTMLSelectElement).value as Platform;
               // Reset variant to primary when platform changes
-              selectedVariant.value = "primary";
+              selectedVariant.value = DEFAULT_VARIANT;
             }}
             disabled={loading.value || platforms.value.length === 0}
             class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
@@ -253,20 +260,13 @@ export function GitHubKeyboardSelector(
             <select
               value={selectedVariant.value}
               onChange={(e) => {
-                selectedVariant.value = (e.target as HTMLSelectElement).value;
+                selectedVariant.value = (e.target as HTMLSelectElement).value as DeviceVariant;
               }}
               disabled={loading.value}
               class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
             >
               {variants.value.map((variant) => {
-                // Map internal variant names to display names
-                const displayNames: { [key: string]: string } = {
-                  "primary": "Phone (default)",
-                  "iPad-9in": "iPad (9 inch)",
-                  "iPad-12in": "iPad (12 inch)",
-                  "tablet-600": "Tablet (7-10 inch)",
-                };
-                const displayName = displayNames[variant] || variant;
+                const displayName = VariantDisplayNames[variant] || variant;
 
                 return (
                   <option key={variant} value={variant}>

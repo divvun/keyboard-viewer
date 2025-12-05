@@ -2,6 +2,8 @@
  * Simplified keyboard types for basic viewer
  */
 
+import type { Platform, DeviceVariant } from "../constants/platforms.ts";
+
 /**
  * All possible keyboard layers across platforms
  */
@@ -69,6 +71,6 @@ export interface KeyboardLayout {
   rows: KeyRow[];
   deadkeys?: DeadkeyCombinations;
   isMobile?: boolean; // Whether this is a mobile keyboard layout
-  platform?: string; // Platform name (iOS, android, macOS, etc.)
-  variant?: string; // Variant name for mobile (primary, iPad-9in, etc.)
+  platform?: Platform; // Platform name (iOS, android, macOS, etc.)
+  variant?: DeviceVariant; // Variant name for mobile (primary, iPad-9in, etc.)
 }
