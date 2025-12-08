@@ -34,15 +34,3 @@ export const VariantDisplayNames: Record<DeviceVariant, string> = {
  */
 export const DEFAULT_PLATFORM = Platform.MacOS;
 export const DEFAULT_VARIANT = DeviceVariant.Primary;
-
-/**
- * Platforms that support device variants (mobile platforms)
- */
-export const MOBILE_PLATFORMS = [Platform.IOS, Platform.Android] as const;
-
-/**
- * Check if a platform supports device variants
- */
-export function isMobilePlatform(platform: Platform): platform is Platform.IOS | Platform.Android {
-  return MOBILE_PLATFORMS.includes(platform as any);
-}
