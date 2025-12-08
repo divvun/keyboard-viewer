@@ -57,5 +57,10 @@ export function getKeyOutput(key: Key, layer: string): string {
     return output;
   }
 
+  // Special fallback for symbols-2: try symbols-1 before default
+  if (layer === "symbols-2" && key.layers["symbols-1"]) {
+    return key.layers["symbols-1"];
+  }
+
   return key.layers.default || "";
 }
