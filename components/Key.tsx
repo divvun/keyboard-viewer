@@ -79,7 +79,6 @@ export function Key(
   // Base key width and height in rem
   const baseWidth = 3.5; // rem
   const baseHeight = 3.5; // rem
-  const gap = 0.25; // gap between keys
 
   // Check if key should show active state
   const isActive = isPressed ||
