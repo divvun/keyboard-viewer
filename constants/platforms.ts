@@ -1,6 +1,3 @@
-/**
- * Supported keyboard platforms
- */
 export enum Platform {
   MacOS = "macOS",
   Windows = "windows",
@@ -9,19 +6,13 @@ export enum Platform {
   Android = "android",
 }
 
-/**
- * Device form factor variants for mobile platforms
- */
 export enum DeviceVariant {
-  Primary = "primary", // Phone/default
-  IPad9in = "iPad-9in", // iPad 9 inch
-  IPad12in = "iPad-12in", // iPad 12 inch
-  Tablet600 = "tablet-600", // Android tablet 7-10 inch
+  Primary = "primary",
+  IPad9in = "iPad-9in",
+  IPad12in = "iPad-12in",
+  Tablet600 = "tablet-600",
 }
 
-/**
- * Display names for device variants
- */
 export const VariantDisplayNames: Record<DeviceVariant, string> = {
   [DeviceVariant.Primary]: "Phone (default)",
   [DeviceVariant.IPad9in]: "iPad (9 inch)",
@@ -29,8 +20,5 @@ export const VariantDisplayNames: Record<DeviceVariant, string> = {
   [DeviceVariant.Tablet600]: "Tablet (7-10 inch)",
 };
 
-/**
- * Default values for platform selection
- */
 export const DEFAULT_PLATFORM = Platform.MacOS;
 export const DEFAULT_VARIANT = DeviceVariant.Primary;
