@@ -31,7 +31,7 @@ export function KeyboardLayout({
   isCtrlActive,
   isSymbolsActive,
   isSymbols2Active,
-  pendingDeadkey
+  pendingDeadkey,
 }: KeyboardLayoutProps) {
   const baseWidth = 3.5; // rem - matches Key component
   const gap = 0.25; // rem - gap between keys
@@ -110,7 +110,11 @@ export function KeyboardLayout({
         {layout.rows.map((row, rowIndex) => (
           <div
             key={rowIndex}
-            class={`flex ${layout.isMobile || rowIndex === layout.rows.length - 1 ? "justify-center" : ""}`}
+            class={`flex ${
+              layout.isMobile || rowIndex === layout.rows.length - 1
+                ? "justify-center"
+                : ""
+            }`}
             style={{
               gap: `${gap}rem`,
               marginLeft: row.offset
