@@ -180,7 +180,8 @@ export function GitHubKeyboardSelector(
             onChange={(e) => {
               selectedRepo.value = (e.target as HTMLSelectElement).value;
             }}
-            disabled={loading.value || reposLoading || initialRepos.length === 0}
+            disabled={loading.value || reposLoading ||
+              initialRepos.length === 0}
             class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           >
             <option value="">-- Select a language --</option>
@@ -232,7 +233,8 @@ export function GitHubKeyboardSelector(
           <select
             value={selectedPlatform.value}
             onChange={(e) => {
-              selectedPlatform.value = (e.target as HTMLSelectElement).value as Platform;
+              selectedPlatform.value = (e.target as HTMLSelectElement)
+                .value as Platform;
               // Reset variant to primary when platform changes
               selectedVariant.value = DEFAULT_VARIANT;
             }}
@@ -260,7 +262,8 @@ export function GitHubKeyboardSelector(
             <select
               value={selectedVariant.value}
               onChange={(e) => {
-                selectedVariant.value = (e.target as HTMLSelectElement).value as DeviceVariant;
+                selectedVariant.value = (e.target as HTMLSelectElement)
+                  .value as DeviceVariant;
               }}
               disabled={loading.value}
               class="flex-1 p-2 border-2 border-gray-300 rounded font-mono text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
