@@ -2,9 +2,16 @@ import { define, getErrorMessage } from "../../../utils.ts";
 import { parse as parseYaml } from "jsr:@std/yaml";
 import {
   getAvailablePlatforms,
+  getMobileVariants,
   type KbdgenLayout,
   transformKbdgenToLayout,
 } from "../../../utils/kbdgen-transform.ts";
+import {
+  DEFAULT_PLATFORM,
+  DEFAULT_VARIANT,
+  DeviceVariant,
+  Platform,
+} from "../../../constants/platforms.ts";
 
 export const handler = define.handlers({
   async GET(req) {
@@ -12,7 +19,8 @@ export const handler = define.handlers({
       const url = new URL(req.url);
       const langCode = url.searchParams.get("repo");
       const layoutFile = url.searchParams.get("file");
-      const platform = url.searchParams.get("platform") || "macOS";
+      const platform = (url.searchParams.get("platform") as Platform) || DEFAULT_PLATFORM;
+      const variant = (url.searchParams.get("variant") as DeviceVariant) || DEFAULT_VARIANT;
 
       if (!langCode || !layoutFile) {
         return Response.json(
@@ -66,6 +74,14 @@ export const handler = define.handlers({
         ? platform
         : availablePlatforms[0];
 
+      // Get available variants for mobile platforms
+      const availableVariants = getMobileVariants(kbdgenData, selectedPlatform);
+
+      // Use requested variant or default to primary
+      const selectedVariant = availableVariants.includes(variant)
+        ? variant
+        : (availableVariants[0] || DEFAULT_VARIANT);
+
       // Transform to our internal format
       const layoutName = layoutFile.replace(".yaml", "");
       const transformedLayout = transformKbdgenToLayout(
@@ -73,12 +89,15 @@ export const handler = define.handlers({
         selectedPlatform,
         langCode,
         layoutName,
+        selectedVariant,
       );
 
       return Response.json({
         layout: transformedLayout,
         availablePlatforms,
+        availableVariants,
         selectedPlatform,
+        selectedVariant,
         rawYaml: yamlContent,
       });
     } catch (error) {

@@ -1,6 +1,7 @@
 {
   "id": "iso-qwerty",
   "name": "ISO QWERTY",
+  "platform": "macOS",
   "deadkeys": {
     "`": {
       "a": "à",
@@ -127,31 +128,31 @@
           "type": "modifier"
         },
         {
-          "id": "MetaLeft",
-          "layers": { "default": "" },
-          "label": "⌘",
-          "width": 1.25,
-          "type": "modifier"
-        },
-        {
           "id": "AltLeft",
           "layers": { "default": "" },
           "label": "Alt",
           "width": 1.25,
           "type": "modifier"
         },
-        { "id": "Space", "layers": { "default": " " }, "label": "", "width": 6.25, "type": "space" },
         {
-          "id": "AltRight",
+          "id": "MetaLeft",
           "layers": { "default": "" },
-          "label": "Alt",
+          "label": "⌘",
           "width": 1.25,
           "type": "modifier"
         },
+        { "id": "Space", "layers": { "default": " " }, "label": "", "width": 6.25, "type": "space" },
         {
           "id": "MetaRight",
           "layers": { "default": "" },
           "label": "⌘",
+          "width": 1.25,
+          "type": "modifier"
+        },
+        {
+          "id": "AltRight",
+          "layers": { "default": "" },
+          "label": "Alt",
           "width": 1.25,
           "type": "modifier"
         },

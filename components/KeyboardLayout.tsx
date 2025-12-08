@@ -3,6 +3,7 @@ import type {
   KeyboardLayout as LayoutType,
 } from "../types/keyboard-simple.ts";
 import { Key } from "./Key.tsx";
+import { ENTER_KEY } from "../constants/key-ids.ts";
 
 interface KeyboardLayoutProps {
   layout: LayoutType;
@@ -14,6 +15,8 @@ interface KeyboardLayoutProps {
   isAltActive?: boolean;
   isCmdActive?: boolean;
   isCtrlActive?: boolean;
+  isSymbolsActive?: boolean;
+  isSymbols2Active?: boolean;
   pendingDeadkey?: string | null;
 }
 
@@ -27,7 +30,9 @@ export function KeyboardLayout({
   isAltActive,
   isCmdActive,
   isCtrlActive,
-  pendingDeadkey
+  isSymbolsActive,
+  isSymbols2Active,
+  pendingDeadkey,
 }: KeyboardLayoutProps) {
   const baseWidth = 3.5; // rem - matches Key component
   const gap = 0.25; // rem - gap between keys
@@ -47,7 +52,7 @@ export function KeyboardLayout({
     const numGaps = row.keys.length - 1;
 
     row.keys.forEach((key) => {
-      if (key.id === "Enter" && key.height && key.height > 1) {
+      if (key.id === ENTER_KEY && key.height && key.height > 1) {
         enterKeyRowIndex = rowIndex;
       }
       rowWidth += (key.width ?? 1.0) * baseWidth;
@@ -79,7 +84,7 @@ export function KeyboardLayout({
       // Enter key width is the difference
       const enterWidth = (maxRowWidth - asdfRowWidth - gap) / baseWidth;
       const enterKey = layout.rows[enterKeyRowIndex].keys.find((k) =>
-        k.id === "Enter"
+        k.id === ENTER_KEY
       );
 
       if (enterKey) {
@@ -106,7 +111,11 @@ export function KeyboardLayout({
         {layout.rows.map((row, rowIndex) => (
           <div
             key={rowIndex}
-            class="flex"
+            class={`flex ${
+              layout.isMobile || rowIndex === layout.rows.length - 1
+                ? "justify-center"
+                : ""
+            }`}
             style={{
               gap: `${gap}rem`,
               marginLeft: row.offset
@@ -116,7 +125,7 @@ export function KeyboardLayout({
           >
             {row.keys.map((key) => {
               // Skip ISO Enter in normal flow - it's rendered absolutely below
-              if (key.id === "Enter" && key.height && key.height > 1) {
+              if (key.id === ENTER_KEY && key.height && key.height > 1) {
                 return null;
               }
 
@@ -132,6 +141,8 @@ export function KeyboardLayout({
                   isAltActive={isAltActive}
                   isCmdActive={isCmdActive}
                   isCtrlActive={isCtrlActive}
+                  isSymbolsActive={isSymbolsActive}
+                  isSymbols2Active={isSymbols2Active}
                   pendingDeadkey={pendingDeadkey}
                 />
               );
@@ -159,6 +170,8 @@ export function KeyboardLayout({
               isAltActive={isAltActive}
               isCmdActive={isCmdActive}
               isCtrlActive={isCtrlActive}
+              isSymbolsActive={isSymbolsActive}
+              isSymbols2Active={isSymbols2Active}
               pendingDeadkey={pendingDeadkey}
             />
           </div>
