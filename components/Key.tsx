@@ -122,8 +122,8 @@ export function Key(
         isIconLabel
           ? "kbd-icon"
           : isFunctionKey(keyData.id)
-          ? "text-xs"
-          : "text-lg"
+          ? "text-sm"
+          : "text-xl"
       }
       `}
       title={keyData.id}
