@@ -290,7 +290,7 @@ export default function KeyboardViewer(
       currentLayout.isMobile ?? false,
     );
 
-    return `<iframe src="${baseUrl}?${params}" width="${dimensions.width}" height="${dimensions.height}" frameborder="0" ></iframe>`;
+    return `<iframe src="${baseUrl}?${params}" width="100%" frameborder="0" ></iframe>`;
   };
 
   const handleCopyEmbedCode = () => {
