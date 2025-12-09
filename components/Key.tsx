@@ -96,6 +96,7 @@ export function Key(
   const style = {
     width: `${width * baseWidth}rem`,
     height: `${height * baseHeight}rem`,
+    touchAction: "manipulation", // Prevent 300ms tap delay on mobile
   };
 
   return (
@@ -108,7 +109,7 @@ export function Key(
         border-2
         shadow-sm
         hover:shadow-md
-        transition-all
+        transition-shadow
         font-mono
         cursor-pointer
         select-none
