@@ -28,27 +28,15 @@
   </body>
 
   <script>
-  console.log('Parent script loaded!');
-
   window.addEventListener('message', (event) => {
-    console.log('Received message:', event.data, 'from:', event.source);
-
     if (event.data.type === 'giellalt-keyboard-resize') {
       // Find the iframe that sent this message
       const iframes = document.querySelectorAll('iframe');
-      console.log('Looking through', iframes.length, 'iframes');
-      let found = false;
       for (const iframe of iframes) {
-        console.log('Checking iframe:', iframe.src, 'contentWindow:', iframe.contentWindow, 'event.source:', event.source, 'match:', iframe.contentWindow === event.source);
         if (iframe.contentWindow === event.source) {
-          console.log('✓ Matched iframe:', iframe.src, 'setting height to:', event.data.height);
           iframe.style.height = event.data.height + 'px';
-          found = true;
           break;
         }
-      }
-      if (!found) {
-        console.log('✗ No matching iframe found!');
       }
     }
   });
