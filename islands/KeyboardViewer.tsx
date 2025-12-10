@@ -24,6 +24,10 @@ import { getErrorMessage } from "../utils.ts";
 import { getLayerDisplayName } from "../utils/modifiers.ts";
 import { useKeyboard } from "../hooks/useKeyboard.ts";
 import { useKeyboardScaling } from "../hooks/useKeyboardScaling.ts";
+import {
+  parseKeyboardParams,
+  serializeKeyboardParams,
+} from "../utils/keyboard-params.ts";
 
 interface KeyboardViewerProps {
   layouts: KeyboardLayout[];
@@ -54,6 +58,19 @@ export default function KeyboardViewer(
   const repos = useSignal<Repo[]>([]);
   const reposLoading = useSignal<boolean>(false);
   const reposError = useSignal<string | null>(null);
+
+  // Read URL parameters synchronously for initial keyboard selection
+  const getInitialUrlParams = () => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.has("kbd")) {
+        return parseKeyboardParams(searchParams);
+      }
+    }
+    return null;
+  };
+
+  const initialUrlParams = getInitialUrlParams();
 
   // Get the currently selected layout
   const layout =
@@ -100,6 +117,41 @@ export default function KeyboardViewer(
     // Select the newly loaded layout
     selectedLayoutId.value = layout.id;
     keyboard.clearState();
+
+    // Update URL with layout parameters
+    updateURLParams(layout);
+  };
+
+  const updateURLParams = (layout: KeyboardLayout) => {
+    // Extract parameters from layout ID and metadata
+    const parts = layout.id.split("-");
+    if (parts.length >= 2) {
+      const repo = parts[0];
+      const platformIndex = parts.findIndex((p) =>
+        ["macOS", "iOS", "android", "windows", "chromeOS"].includes(p)
+      );
+      let layoutName = platformIndex > 0
+        ? parts.slice(1, platformIndex).join("-")
+        : parts.slice(1).join("-");
+
+      // Strip .yaml extension if present (to match embed format)
+      if (layoutName.endsWith(".yaml")) {
+        layoutName = layoutName.slice(0, -5);
+      }
+
+      const platform = layout.platform || DEFAULT_PLATFORM;
+      const variant = layout.variant || DEFAULT_VARIANT;
+
+      // Update URL without reloading page using shared utility
+      const url = new URL(window.location.href);
+      url.search = serializeKeyboardParams({
+        kbd: repo,
+        layout: layoutName,
+        platform,
+        variant,
+      });
+      window.history.pushState({}, "", url.toString());
+    }
   };
 
   const parseAndLoadYaml = () => {
@@ -266,7 +318,8 @@ export default function KeyboardViewer(
     const parts = currentLayout.id.split("-");
     let repo = "sme";
     let layoutName = "se";
-    let platformName = currentLayout.platform || "macOS";
+    let platformName = currentLayout.platform || DEFAULT_PLATFORM;
+    let variantName = currentLayout.variant || DEFAULT_VARIANT;
 
     // Try to parse the ID to get repo and layout
     if (parts.length >= 2) {
@@ -284,11 +337,11 @@ export default function KeyboardViewer(
     }
 
     const baseUrl = window.location.origin + "/embed";
-    const params = new URLSearchParams({
+    const paramsString = serializeKeyboardParams({
       kbd: repo,
       layout: layoutName,
       platform: platformName,
-      variant: "primary", // Could enhance this later
+      variant: variantName,
     });
 
     const dimensions = getDimensionsForPlatform(
@@ -296,7 +349,7 @@ export default function KeyboardViewer(
       currentLayout.isMobile ?? false,
     );
 
-    return `<iframe src="${baseUrl}?${params}" width="100%" frameborder="0" ></iframe>`;
+    return `<iframe src="${baseUrl}?${paramsString}" width="100%" frameborder="0" ></iframe>`;
   };
 
   const handleCopyEmbedCode = () => {
@@ -441,6 +494,12 @@ export default function KeyboardViewer(
                 reposLoading={reposLoading.value}
                 reposError={reposError.value}
                 onLayoutLoaded={handleGitHubLayoutLoaded}
+                urlRepo={initialUrlParams?.kbd}
+                urlLayout={initialUrlParams?.layout
+                  ? `${initialUrlParams.layout}.yaml`
+                  : undefined}
+                urlPlatform={initialUrlParams?.platform}
+                urlVariant={initialUrlParams?.variant}
               />
             </div>
           )}

@@ -4,6 +4,7 @@ import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import { KeyboardDisplay } from "../components/KeyboardDisplay.tsx";
 import { useKeyboard } from "../hooks/useKeyboard.ts";
 import { useKeyboardScaling } from "../hooks/useKeyboardScaling.ts";
+import { buildKeyboardApiUrl } from "../utils/keyboard-params.ts";
 import { getErrorMessage } from "../utils.ts";
 
 interface KeyboardEmbedProps {
@@ -57,7 +58,7 @@ export function KeyboardEmbed({
 
       try {
         const response = await fetch(
-          `/api/github/layout?repo=${kbd}&file=${layout}.yaml&platform=${platform}&variant=${variant}`,
+          buildKeyboardApiUrl({ kbd, layout, platform, variant }),
         );
 
         if (!response.ok) {

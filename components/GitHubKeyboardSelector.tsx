@@ -9,6 +9,7 @@ import {
   Platform,
   VariantDisplayNames,
 } from "../constants/platforms.ts";
+import { buildKeyboardApiUrl } from "../utils/keyboard-params.ts";
 
 export interface Repo {
   code: string;
@@ -35,19 +36,35 @@ interface GitHubKeyboardSelectorProps {
   reposLoading: boolean;
   reposError: string | null;
   onLayoutLoaded: (layout: KeyboardLayout, rawYaml: string) => void;
+  urlRepo?: string;
+  urlLayout?: string;
+  urlPlatform?: Platform;
+  urlVariant?: DeviceVariant;
 }
 
 export function GitHubKeyboardSelector(
-  { repos: initialRepos, reposLoading, reposError, onLayoutLoaded }:
-    GitHubKeyboardSelectorProps,
+  {
+    repos: initialRepos,
+    reposLoading,
+    reposError,
+    onLayoutLoaded,
+    urlRepo,
+    urlLayout,
+    urlPlatform,
+    urlVariant,
+  }: GitHubKeyboardSelectorProps,
 ) {
   const layouts = useSignal<LayoutFile[]>([]);
   const platforms = useSignal<Platform[]>([]);
   const variants = useSignal<DeviceVariant[]>([]);
-  const selectedRepo = useSignal<string>("");
-  const selectedLayout = useSignal<string>("");
-  const selectedPlatform = useSignal<Platform>(DEFAULT_PLATFORM);
-  const selectedVariant = useSignal<DeviceVariant>(DEFAULT_VARIANT);
+  const selectedRepo = useSignal<string>(urlRepo || "");
+  const selectedLayout = useSignal<string>(urlLayout || "");
+  const selectedPlatform = useSignal<Platform>(
+    urlPlatform || DEFAULT_PLATFORM,
+  );
+  const selectedVariant = useSignal<DeviceVariant>(
+    urlVariant || DEFAULT_VARIANT,
+  );
   const loading = useSignal<boolean>(false);
   const error = useSignal<string | null>(null);
 
@@ -97,7 +114,12 @@ export function GitHubKeyboardSelector(
       error.value = null;
       try {
         const response = await fetch(
-          `/api/github/layout?repo=${selectedRepo.value}&file=${selectedLayout.value}&platform=${selectedPlatform.value}&variant=${selectedVariant.value}`,
+          buildKeyboardApiUrl({
+            kbd: selectedRepo.value,
+            layout: selectedLayout.value.replace(/\.yaml$/, ""),
+            platform: selectedPlatform.value,
+            variant: selectedVariant.value,
+          }),
         );
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({

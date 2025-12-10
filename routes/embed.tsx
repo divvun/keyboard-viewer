@@ -1,21 +1,17 @@
 import { PageProps } from "$fresh/server.ts";
 import { KeyboardEmbed } from "../islands/KeyboardEmbed.tsx";
+import { parseKeyboardParams } from "../utils/keyboard-params.ts";
 
 export default function EmbedPage({ url }: PageProps) {
-  const params = url.searchParams;
-
-  const kbd = params.get("kbd") || "sme";
-  const layout = params.get("layout") || "se";
-  const platform = params.get("platform") || "macOS";
-  const variant = params.get("variant") || "primary";
-  const interactive = params.get("interactive") !== "false"; // default true
+  const params = parseKeyboardParams(url.searchParams);
+  const interactive = url.searchParams.get("interactive") !== "false"; // default true
 
   return (
     <html lang="en">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Keyboard: {kbd} - {layout}</title>
+        <title>Keyboard: {params.kbd} - {params.layout}</title>
         <style>{`
           body {
             margin: 0;
@@ -27,10 +23,10 @@ export default function EmbedPage({ url }: PageProps) {
       </head>
       <body>
         <KeyboardEmbed
-          kbd={kbd}
-          layout={layout}
-          platform={platform}
-          variant={variant}
+          kbd={params.kbd}
+          layout={params.layout}
+          platform={params.platform}
+          variant={params.variant}
           interactive={interactive}
         />
       </body>
