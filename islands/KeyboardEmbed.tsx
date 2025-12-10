@@ -1,8 +1,9 @@
 import { useSignal } from "@preact/signals";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import { KeyboardDisplay } from "../components/KeyboardDisplay.tsx";
 import { useKeyboard } from "../hooks/useKeyboard.ts";
+import { useKeyboardScaling } from "../hooks/useKeyboardScaling.ts";
 import { getErrorMessage } from "../utils.ts";
 
 interface KeyboardEmbedProps {
@@ -23,14 +24,29 @@ export function KeyboardEmbed({
   const keyboardLayout = useSignal<KeyboardLayout | null>(null);
   const loading = useSignal<boolean>(true);
   const error = useSignal<string | null>(null);
-  const scale = useSignal<number>(1); // Scale factor for transform
-  const scaledHeight = useSignal<number>(0); // Actual visual height after scaling
-  const containerRef = useRef<HTMLDivElement>(null);
-  const keyboardRef = useRef<HTMLDivElement>(null);
 
   // Use keyboard hook for state management
   const keyboard = useKeyboard({
     layout: keyboardLayout.value,
+  });
+
+  // Helper function to send height to parent (accounting for scale)
+  const sendHeight = (scale: number, scaledHeight: number) => {
+    if (scaledHeight === 0) return;
+
+    // Add 8px bottom padding for drop shadow
+    const totalHeight = scaledHeight + 8;
+
+    window.parent.postMessage({
+      type: "giellalt-keyboard-resize",
+      height: totalHeight,
+    }, "*");
+  };
+
+  // Use scaling hook for responsive behavior
+  const scaling = useKeyboardScaling({
+    layout: keyboardLayout.value,
+    onScaleChange: sendHeight,
   });
 
   // Fetch the keyboard layout from the API
@@ -65,97 +81,22 @@ export function KeyboardEmbed({
     fetchLayout();
   }, [kbd, layout, platform, variant]);
 
-  // Helper function to send height to parent (accounting for scale)
-  const sendHeight = () => {
-    // Use the pre-calculated scaledHeight signal value
-    if (scaledHeight.value === 0) return;
-
-    // Add 8px bottom padding for drop shadow
-    const totalHeight = scaledHeight.value + 8;
-
-    window.parent.postMessage({
-      type: "giellalt-keyboard-resize",
-      height: totalHeight,
-    }, "*");
-  };
-
-  // Send height to parent for auto-sizing
-  useEffect(() => {
-    if (!keyboardLayout.value) return;
-
-    sendHeight();
-    window.addEventListener("resize", sendHeight);
-
-    return () => {
-      window.removeEventListener("resize", sendHeight);
-    };
-  }, [keyboardLayout.value]);
-
-  // Auto-scale keyboard to fit container width using CSS transform
-  useEffect(() => {
-    if (!containerRef.current || !keyboardLayout.value) return;
-
-    const calculateScale = () => {
-      if (!containerRef.current || !keyboardRef.current) {
-        return;
-      }
-
-      const containerWidth = containerRef.current.offsetWidth;
-      const keyboardNaturalWidth = keyboardRef.current.scrollWidth; // Use scrollWidth for full width
-
-      if (keyboardNaturalWidth === 0) {
-        return;
-      }
-
-      // Calculate scale factor to fit keyboard in container
-      // Add small buffer (0.98) to prevent horizontal scrollbar from rounding errors
-      const scaleFactor = (containerWidth / keyboardNaturalWidth) * 0.98;
-
-      // Clamp scale between 0.2 (minimum for small phones) and 1.0 (natural size, don't upscale)
-      const clampedScale = Math.max(0.2, Math.min(scaleFactor, 1.0));
-
-      scale.value = clampedScale;
-
-      // Calculate and store the visual height after scaling
-      const naturalHeight = keyboardRef.current.scrollHeight;
-      scaledHeight.value = naturalHeight * clampedScale;
-
-      // After scaling, send updated height to parent
-      // Use requestAnimationFrame to wait for DOM re-render
-      requestAnimationFrame(() => {
-        sendHeight();
-      });
-    };
-
-    // Initial calculation after keyboard renders
-    requestAnimationFrame(() => {
-      calculateScale();
-    });
-
-    const resizeObserver = new ResizeObserver(() => {
-      calculateScale();
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [keyboardLayout.value]);
-
   return (
     <div
-      ref={containerRef}
+      ref={scaling.containerRef}
       class="pb-2"
       style={{
+        textAlign: "center",
         overflow: "hidden",
-        height: scaledHeight.value > 0 ? `${scaledHeight.value + 8}px` : "auto",
+        height: scaling.scaledHeight.value > 0
+          ? `${scaling.scaledHeight.value + 8}px`
+          : "auto",
       }}
     >
       <div
-        ref={keyboardRef}
+        ref={scaling.keyboardRef}
         style={{
-          transform: `scale(${scale.value})`,
+          transform: `scale(${scaling.scale.value})`,
           transformOrigin: "top left",
           display: "inline-block",
         }}

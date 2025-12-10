@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import { KeyboardDisplay } from "../components/KeyboardDisplay.tsx";
 import {
@@ -23,6 +23,7 @@ import {
 import { getErrorMessage } from "../utils.ts";
 import { getLayerDisplayName } from "../utils/modifiers.ts";
 import { useKeyboard } from "../hooks/useKeyboard.ts";
+import { useKeyboardScaling } from "../hooks/useKeyboardScaling.ts";
 
 interface KeyboardViewerProps {
   layouts: KeyboardLayout[];
@@ -73,10 +74,10 @@ export default function KeyboardViewer(
     },
   });
 
-  // Responsive scaling for main viewer
-  const scale = useSignal<number>(1);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const keyboardRef = useRef<HTMLDivElement>(null);
+  // Use scaling hook for responsive behavior
+  const scaling = useKeyboardScaling({
+    layout: layout ?? null,
+  });
 
   const handleGitHubLayoutLoaded = (
     layout: KeyboardLayout,
@@ -214,48 +215,6 @@ export default function KeyboardViewer(
     }
   }, [activeTab.value]);
 
-  // Auto-scale keyboard to fit container width using CSS transform
-  useEffect(() => {
-    if (!containerRef.current || !layout) return;
-
-    const calculateScale = () => {
-      if (!containerRef.current || !keyboardRef.current) {
-        return;
-      }
-
-      const containerWidth = containerRef.current.offsetWidth;
-      const keyboardNaturalWidth = keyboardRef.current.scrollWidth;
-
-      if (keyboardNaturalWidth === 0) {
-        return;
-      }
-
-      // Calculate scale factor to fit keyboard in container
-      // Add small buffer (0.98) to prevent horizontal scrollbar from rounding errors
-      const scaleFactor = (containerWidth / keyboardNaturalWidth) * 0.98;
-
-      // Clamp scale between 0.2 (minimum for small phones) and 1.0 (natural size, don't upscale)
-      const clampedScale = Math.max(0.2, Math.min(scaleFactor, 1.0));
-
-      scale.value = clampedScale;
-    };
-
-    // Initial calculation after keyboard renders
-    requestAnimationFrame(() => {
-      calculateScale();
-    });
-
-    const resizeObserver = new ResizeObserver(() => {
-      calculateScale();
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [layout]);
-
   // Fetch repos on mount (cached for tab switching)
   useEffect(() => {
     async function fetchRepos() {
@@ -391,11 +350,11 @@ export default function KeyboardViewer(
       </div>
 
       {/* Keyboard */}
-      <div class="flex justify-center" ref={containerRef}>
+      <div class="flex justify-center" ref={scaling.containerRef}>
         <div
-          ref={keyboardRef}
+          ref={scaling.keyboardRef}
           style={{
-            transform: `scale(${scale.value})`,
+            transform: `scale(${scaling.scale.value})`,
             transformOrigin: "top center",
           }}
         >
