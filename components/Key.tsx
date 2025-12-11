@@ -9,6 +9,7 @@ import {
   isShiftKey,
   isSymbolsKey,
 } from "../utils/key-helpers.ts";
+import { decodeUnicodeEscapes } from "../utils.ts";
 
 interface KeyProps {
   keyData: KeyType;
@@ -66,6 +67,9 @@ export function Key(
     // When in symbols-1 (symbols-2 is not active), show "#+=" to go to symbols-2
     label = isSymbols2Active ? "123" : "#+=";
   }
+
+  // Decode Unicode escape sequences like \u{304}
+  label = decodeUnicodeEscapes(label);
 
   // Check if this key produces the pending deadkey in any layer
   const isPendingDeadkey = pendingDeadkey !== null &&

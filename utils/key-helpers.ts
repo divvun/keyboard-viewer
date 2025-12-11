@@ -11,6 +11,7 @@ import {
   SYMBOLS_KEYS,
   TAB_KEY,
 } from "../constants/key-ids.ts";
+import { decodeUnicodeEscapes } from "../utils.ts";
 
 export function isShiftKey(keyId: string): boolean {
   return SHIFT_KEYS.some((k) => k === keyId);
@@ -67,13 +68,13 @@ export function getKeyOutput(key: Key, layer: string): string {
 
   const output = key.layers[layer as keyof typeof key.layers];
   if (output !== undefined) {
-    return output;
+    return decodeUnicodeEscapes(output);
   }
 
   // Special fallback for symbols-2: try symbols-1 before default
   if (layer === "symbols-2" && key.layers["symbols-1"]) {
-    return key.layers["symbols-1"];
+    return decodeUnicodeEscapes(key.layers["symbols-1"]);
   }
 
-  return key.layers.default || "";
+  return decodeUnicodeEscapes(key.layers.default || "");
 }
