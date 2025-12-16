@@ -11,8 +11,6 @@ export const SYMBOLS_KEYS = [MOBILE_SYMBOLS_KEY, MOBILE_SYMBOLS2_KEY] as const;
 export const BACKSPACE_KEY = "Backspace" as const;
 export const ENTER_KEY = "Enter" as const;
 export const TAB_KEY = "Tab" as const;
-export const SPACE_KEY = "Space" as const;
-export const ESCAPE_KEY = "Escape" as const;
 
 export const MODIFIER_KEYS = [
   ...SHIFT_KEYS,

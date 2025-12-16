@@ -5,9 +5,11 @@ import {
   isCapsLockKey,
   isCmdKey,
   isCtrlKey,
+  isFunctionKey,
   isShiftKey,
   isSymbolsKey,
 } from "../utils/key-helpers.ts";
+import { decodeUnicodeEscapes } from "../utils.ts";
 
 interface KeyProps {
   keyData: KeyType;
@@ -66,6 +68,9 @@ export function Key(
     label = isSymbols2Active ? "123" : "#+=";
   }
 
+  // Decode Unicode escape sequences like \u{304}
+  label = decodeUnicodeEscapes(label);
+
   // Check if this key produces the pending deadkey in any layer
   const isPendingDeadkey = pendingDeadkey !== null &&
     Object.values(keyData.layers).some((char) => char === pendingDeadkey);
@@ -96,6 +101,7 @@ export function Key(
   const style = {
     width: `${width * baseWidth}rem`,
     height: `${height * baseHeight}rem`,
+    touchAction: "manipulation", // Prevent 300ms tap delay on mobile
   };
 
   return (
@@ -108,7 +114,7 @@ export function Key(
         border-2
         shadow-sm
         hover:shadow-md
-        transition-all
+        transition-shadow
         font-mono
         cursor-pointer
         select-none
@@ -117,7 +123,11 @@ export function Key(
         isActive ? "key-active" : "bg-white border-gray-300 hover:bg-gray-200"
       }
         ${
-        isIconLabel ? "kbd-icon" : type === "function" ? "text-xs" : "text-sm"
+        isIconLabel
+          ? "kbd-icon"
+          : isFunctionKey(keyData.id)
+          ? "text-sm"
+          : "text-xl"
       }
       `}
       title={keyData.id}

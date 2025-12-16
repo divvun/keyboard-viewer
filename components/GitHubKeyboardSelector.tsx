@@ -9,6 +9,7 @@ import {
   Platform,
   VariantDisplayNames,
 } from "../constants/platforms.ts";
+import { buildKeyboardApiUrl } from "../utils/keyboard-params.ts";
 
 export interface Repo {
   code: string;
@@ -35,19 +36,35 @@ interface GitHubKeyboardSelectorProps {
   reposLoading: boolean;
   reposError: string | null;
   onLayoutLoaded: (layout: KeyboardLayout, rawYaml: string) => void;
+  urlRepo?: string;
+  urlLayout?: string;
+  urlPlatform?: Platform;
+  urlVariant?: DeviceVariant;
 }
 
 export function GitHubKeyboardSelector(
-  { repos: initialRepos, reposLoading, reposError, onLayoutLoaded }:
-    GitHubKeyboardSelectorProps,
+  {
+    repos: initialRepos,
+    reposLoading,
+    reposError,
+    onLayoutLoaded,
+    urlRepo,
+    urlLayout,
+    urlPlatform,
+    urlVariant,
+  }: GitHubKeyboardSelectorProps,
 ) {
   const layouts = useSignal<LayoutFile[]>([]);
   const platforms = useSignal<Platform[]>([]);
   const variants = useSignal<DeviceVariant[]>([]);
-  const selectedRepo = useSignal<string>("");
-  const selectedLayout = useSignal<string>("");
-  const selectedPlatform = useSignal<Platform>(DEFAULT_PLATFORM);
-  const selectedVariant = useSignal<DeviceVariant>(DEFAULT_VARIANT);
+  const selectedRepo = useSignal<string>(urlRepo || "");
+  const selectedLayout = useSignal<string>(urlLayout || "");
+  const selectedPlatform = useSignal<Platform>(
+    urlPlatform || DEFAULT_PLATFORM,
+  );
+  const selectedVariant = useSignal<DeviceVariant>(
+    urlVariant || DEFAULT_VARIANT,
+  );
   const loading = useSignal<boolean>(false);
   const error = useSignal<string | null>(null);
 
@@ -97,7 +114,12 @@ export function GitHubKeyboardSelector(
       error.value = null;
       try {
         const response = await fetch(
-          `/api/github/layout?repo=${selectedRepo.value}&file=${selectedLayout.value}&platform=${selectedPlatform.value}&variant=${selectedVariant.value}`,
+          buildKeyboardApiUrl({
+            kbd: selectedRepo.value,
+            layout: selectedLayout.value.replace(/\.yaml$/, ""),
+            platform: selectedPlatform.value,
+            variant: selectedVariant.value,
+          }),
         );
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
@@ -147,7 +169,7 @@ export function GitHubKeyboardSelector(
   ]);
 
   return (
-    <div class="w-full space-y-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+    <div class="w-full space-y-4 p-3 md:p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
       <div>
         <div class="flex items-center gap-2">
           <h2 class="text-lg font-bold text-gray-800">Load from GitHub</h2>
@@ -164,15 +186,15 @@ export function GitHubKeyboardSelector(
       </div>
 
       {(reposError || error.value) && (
-        <div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div class="p-2 md:p-3 bg-red-100 border border-red-400 text-red-700 rounded text-xs md:text-sm">
           Error: {reposError || error.value}
         </div>
       )}
 
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-2 md:gap-4">
         {/* Repo selector */}
-        <div class="flex items-center gap-4">
-          <label class="text-sm font-semibold text-gray-700 w-40 flex-shrink-0 text-right">
+        <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+          <label class="text-sm font-semibold text-gray-700 text-left md:text-right md:w-40 md:flex-shrink-0">
             1. Select Language
           </label>
           <select
@@ -204,8 +226,8 @@ export function GitHubKeyboardSelector(
         </div>
 
         {/* Layout selector */}
-        <div class="flex items-center gap-4">
-          <label class="text-sm font-semibold text-gray-700 w-40 flex-shrink-0 text-right">
+        <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+          <label class="text-sm font-semibold text-gray-700 text-left md:text-right md:w-40 md:flex-shrink-0">
             2. Select Layout
           </label>
           <select
@@ -226,8 +248,8 @@ export function GitHubKeyboardSelector(
         </div>
 
         {/* Platform selector */}
-        <div class="flex items-center gap-4">
-          <label class="text-sm font-semibold text-gray-700 w-40 flex-shrink-0 text-right">
+        <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+          <label class="text-sm font-semibold text-gray-700 text-left md:text-right md:w-40 md:flex-shrink-0">
             3. Select Platform
           </label>
           <select
@@ -255,8 +277,8 @@ export function GitHubKeyboardSelector(
 
         {/* Variant selector (mobile only) */}
         {variants.value.length > 0 && (
-          <div class="flex items-center gap-4">
-            <label class="text-sm font-semibold text-gray-700 w-40 flex-shrink-0 text-right">
+          <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+            <label class="text-sm font-semibold text-gray-700 text-left md:text-right md:w-40 md:flex-shrink-0">
               4. Select Device Type
             </label>
             <select

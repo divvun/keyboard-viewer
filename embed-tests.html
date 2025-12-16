@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>test embed</title>
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+  <iframe
+    src="http://localhost:5173/embed?kbd=sme&layout=se-FI&platform=macOS"
+    width="100%"
+    frameborder="0">
+  </iframe>
+
+  <iframe
+    src="http://localhost:5173/embed?kbd=mhr&layout=mhr&platform=macOS"
+    width="100%"
+    frameborder="0">
+  </iframe>
+
+  <iframe
+    src="http://localhost:5173/embed?kbd=liv&layout=liv&platform=iOS"
+    width="100%"
+    frameborder="0">
+  </iframe>
+
+  </body>
+
+  <script>
+  window.addEventListener('message', (event) => {
+    if (event.data.type === 'giellalt-keyboard-resize') {
+      // Find the iframe that sent this message
+      const iframes = document.querySelectorAll('iframe');
+      for (const iframe of iframes) {
+        if (iframe.contentWindow === event.source) {
+          iframe.style.height = event.data.height + 'px';
+          break;
+        }
+      }
+    }
+  });
+  </script>
+</html>
