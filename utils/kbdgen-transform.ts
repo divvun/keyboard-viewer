@@ -267,9 +267,6 @@ function parseLayerString(layerString: string): string[][] {
   return lines.map((line) => line.trim().split(/\s+/));
 }
 
-/**
- * Checks if a platform is mobile (iOS or Android).
- */
 function isMobilePlatform(platform: Platform): boolean {
   return platform === Platform.IOS || platform === Platform.Android;
 }

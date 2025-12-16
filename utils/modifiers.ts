@@ -1,7 +1,3 @@
-/**
- * Modifier state management and layer computation
- */
-
 export interface ModifierState {
   shift: boolean;
   caps: boolean;
@@ -10,9 +6,6 @@ export interface ModifierState {
   ctrl: boolean;
 }
 
-/**
- * Creates an initial modifier state with all modifiers off
- */
 export function createModifierState(): ModifierState {
   return {
     shift: false,
