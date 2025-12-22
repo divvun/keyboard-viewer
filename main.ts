@@ -3,6 +3,20 @@ import { define, type State } from "./utils.ts";
 
 export const app = new App<State>();
 
+// Check for GitHub token on startup
+const githubToken = Deno.env.get("GITHUB_TOKEN");
+if (!githubToken) {
+  console.warn(
+    "\n⚠️  WARNING: No GITHUB_TOKEN found in environment variables.\n" +
+      "   GitHub API requests will be rate-limited (60 requests/hour).\n" +
+      "   Create a .env file with GITHUB_TOKEN=your_token to increase limits.\n" +
+      "   See .env.example for details.\n",
+  );
+} else {
+  const maskedToken = `${githubToken.slice(0, 4)}...${githubToken.slice(-4)}`;
+  console.log(`✓ GitHub token found (${maskedToken}) - authenticated API requests enabled`);
+}
+
 app.use(staticFiles());
 
 // Pass a shared value from a middleware
