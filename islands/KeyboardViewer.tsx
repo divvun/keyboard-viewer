@@ -21,7 +21,10 @@ import {
   VariantDisplayNames,
 } from "../constants/platforms.ts";
 import { getErrorMessage } from "../utils.ts";
-import { getLayerDisplayName } from "../utils/modifiers.ts";
+import {
+  getEffectiveLayer,
+  getLayerDisplayName,
+} from "../utils/modifiers.ts";
 import { useKeyboard } from "../hooks/useKeyboard.ts";
 import { useKeyboardScaling } from "../hooks/useKeyboardScaling.ts";
 import {
@@ -449,7 +452,11 @@ export default function KeyboardViewer(
             </span>
             <span>
               Active Layer:{" "}
-              <strong>{getLayerDisplayName(keyboard.activeLayer.value)}</strong>
+              <strong>
+                {getLayerDisplayName(
+                  getEffectiveLayer(keyboard.activeLayer.value, layout),
+                )}
+              </strong>
             </span>
             <button
               onClick={handleCopyEmbedCode}

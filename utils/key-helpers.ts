@@ -12,6 +12,7 @@ import {
   TAB_KEY,
 } from "../constants/key-ids.ts";
 import { decodeUnicodeEscapes } from "../utils.ts";
+import { getLayerFallbackChain } from "./modifiers.ts";
 
 export function isShiftKey(keyId: string): boolean {
   return SHIFT_KEYS.some((k) => k === keyId);
@@ -66,15 +67,16 @@ export function getKeyOutput(key: Key, layer: string): string {
     return "";
   }
 
-  const output = key.layers[layer as keyof typeof key.layers];
-  if (output !== undefined) {
-    return decodeUnicodeEscapes(output);
+  // Use the fallback chain to find the first available layer
+  const fallbackChain = getLayerFallbackChain(layer);
+
+  for (const fallbackLayer of fallbackChain) {
+    const output = key.layers[fallbackLayer as keyof typeof key.layers];
+    if (output !== undefined) {
+      return decodeUnicodeEscapes(output);
+    }
   }
 
-  // Special fallback for symbols-2: try symbols-1 before default
-  if (layer === "symbols-2" && key.layers["symbols-1"]) {
-    return decodeUnicodeEscapes(key.layers["symbols-1"]);
-  }
-
-  return decodeUnicodeEscapes(key.layers.default || "");
+  // Final fallback (should not reach here if "default" is in the chain)
+  return "";
 }
