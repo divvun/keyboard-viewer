@@ -3,10 +3,10 @@
   "tasks": {
     "check": "deno fmt --check . && deno lint . && deno check",
     "dev": "vite",
-    "prod": "deno serve --allow-net --allow-read --allow-env --port 5173 _fresh/server.js",
+    "prod": "deno serve --env-file=.env --allow-net --allow-read --allow-env --port 5173 _fresh/server.js",
     "ci": "rm -rf node_modules && deno clean && deno install",
     "build": "vite build",
-    "start": "deno serve -A _fresh/server.js",
+    "start": "deno serve --env-file=.env -A _fresh/server.js",
     "update": "deno run -A -r jsr:@fresh/update ."
   },
   "lint": { "rules": { "tags": ["fresh", "recommended"] } },
