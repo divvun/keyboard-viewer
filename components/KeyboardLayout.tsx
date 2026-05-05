@@ -18,6 +18,7 @@ interface KeyboardLayoutProps {
   isSymbolsActive?: boolean;
   isSymbols2Active?: boolean;
   pendingDeadkey?: string | null;
+  labelForLayer?: (layerName: string) => string | null;
 }
 
 export function KeyboardLayout({
@@ -33,6 +34,7 @@ export function KeyboardLayout({
   isSymbolsActive,
   isSymbols2Active,
   pendingDeadkey,
+  labelForLayer,
 }: KeyboardLayoutProps) {
   const baseWidth = 3.5; // rem - matches Key component
   const gap = 0.25; // rem - gap between keys
@@ -144,6 +146,7 @@ export function KeyboardLayout({
                   isSymbolsActive={isSymbolsActive}
                   isSymbols2Active={isSymbols2Active}
                   pendingDeadkey={pendingDeadkey}
+                  labelForLayer={labelForLayer}
                 />
               );
             })}
@@ -173,6 +176,7 @@ export function KeyboardLayout({
               isSymbolsActive={isSymbolsActive}
               isSymbols2Active={isSymbols2Active}
               pendingDeadkey={pendingDeadkey}
+              labelForLayer={labelForLayer}
             />
           </div>
         )}

@@ -58,7 +58,12 @@ export function KeyboardEmbed({
 
       try {
         const response = await fetch(
-          buildKeyboardApiUrl({ kbd, layout, platform, variant }),
+          buildKeyboardApiUrl({
+            kbd,
+            layout,
+            platform: platform as import("../constants/platforms.ts").Platform,
+            variant: variant as import("../constants/platforms.ts").DeviceVariant,
+          }),
         );
 
         if (!response.ok) {
