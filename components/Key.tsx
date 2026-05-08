@@ -10,6 +10,7 @@ import {
   isShiftKey,
   isSymbolsKey,
 } from "../utils/key-helpers.ts";
+import { getActiveLayer, layerNameToModifiers } from "../utils/modifiers.ts";
 import { decodeUnicodeEscapes } from "../utils.ts";
 
 interface KeyProps {
@@ -30,63 +31,19 @@ interface KeyProps {
 }
 
 function getTargetLayer(keyId: string, currentLayer: string): string | null {
-  if (isShiftKey(keyId)) {
-    const transitions: Record<string, string> = {
-      "default": "shift",
-      "shift": "default",
-      "caps": "caps+shift",
-      "caps+shift": "caps",
-      "alt": "alt+shift",
-      "alt+shift": "alt",
-      "symbols-1": "symbols-2",
-      "symbols-2": "symbols-1",
-    };
-    return transitions[currentLayer] ?? null;
-  }
-  if (isCapsLockKey(keyId)) {
-    if (currentLayer === "default" || currentLayer === "shift") return "caps";
-    if (currentLayer === "caps" || currentLayer === "caps+shift") return "default";
-    return null;
-  }
-  if (isAltKey(keyId)) {
-    const transitions: Record<string, string> = {
-      "default": "alt",
-      "alt": "default",
-      "shift": "alt+shift",
-      "alt+shift": "shift",
-      "caps": "alt+caps",
-      "alt+caps": "caps",
-    };
-    return transitions[currentLayer] ?? null;
-  }
-  if (isCmdKey(keyId)) {
-    const transitions: Record<string, string> = {
-      "default": "cmd",
-      "cmd": "default",
-      "shift": "cmd+shift",
-      "cmd+shift": "shift",
-      "alt": "cmd+alt",
-      "cmd+alt": "alt",
-      "alt+shift": "cmd+alt+shift",
-      "cmd+alt+shift": "alt+shift",
-    };
-    return transitions[currentLayer] ?? null;
-  }
-  if (isCtrlKey(keyId)) {
-    const transitions: Record<string, string> = {
-      "default": "ctrl",
-      "ctrl": "default",
-      "shift": "ctrl+shift",
-      "ctrl+shift": "shift",
-    };
-    return transitions[currentLayer] ?? null;
-  }
   if (isSymbolsKey(keyId)) {
-    if (currentLayer === "symbols-1" || currentLayer === "symbols-2") {
-      return "default";
-    }
-    return "symbols-1";
+    return (currentLayer === "symbols-1" || currentLayer === "symbols-2")
+      ? "default"
+      : "symbols-1";
   }
+  const modifiers = layerNameToModifiers(currentLayer);
+  if (!modifiers) return null;
+  if (isShiftKey(keyId)) return getActiveLayer({ ...modifiers, shift: !modifiers.shift });
+  // Match JS behaviour: clicking caps deactivates shift
+  if (isCapsLockKey(keyId)) return getActiveLayer({ ...modifiers, caps: !modifiers.caps, shift: false });
+  if (isAltKey(keyId)) return getActiveLayer({ ...modifiers, alt: !modifiers.alt });
+  if (isCmdKey(keyId)) return getActiveLayer({ ...modifiers, cmd: !modifiers.cmd });
+  if (isCtrlKey(keyId)) return getActiveLayer({ ...modifiers, ctrl: !modifiers.ctrl });
   return null;
 }
 
