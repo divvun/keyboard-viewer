@@ -109,7 +109,6 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
           layout={layout}
           platform={platform}
           variant={variant}
-          interactive={true}
         />
         <noscript>
           <div
