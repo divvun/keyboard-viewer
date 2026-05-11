@@ -56,6 +56,54 @@
     frameborder="0">
   </iframe>
 
+  <hr>
+  <h3 style="font-family:sans-serif">No-JS scaled by width</h3>
+  <p style="font-family:sans-serif">Set ?width=N and iframe width="N". Read data-embed-height off the root element for the exact iframe height.</p>
+
+  <p style="font-family:sans-serif">width=400 (iframe dims = data-embed-width × data-embed-height)</p>
+  <iframe
+    src="http://localhost:5173/embed?kbd=sme&layout=se-FI&platform=macOS&interactive=false&width=400"
+    width="412"
+    height="240"
+    frameborder="0">
+  </iframe>
+
+  <p style="font-family:sans-serif">width=700</p>
+  <iframe
+    src="http://localhost:5173/embed?kbd=sme&layout=se-FI&platform=macOS&interactive=false&width=700"
+    width="712"
+    height="360"
+    frameborder="0">
+  </iframe>
+
+  <p style="font-family:sans-serif">width=1000 (at or above natural size — renders at natural size)</p>
+  <iframe
+    src="http://localhost:5173/embed?kbd=sme&layout=se-FI&platform=macOS&interactive=false&width=1000"
+    width="960"
+    height="400"
+    frameborder="0">
+  </iframe>
+
+
+  <hr>
+  <h3 style="font-family:sans-serif">No-JS many layers (tab bar scroll test)</h3>
+
+  <p style="font-family:sans-serif">mhr at natural size</p>
+  <iframe
+    src="http://localhost:5173/embed?kbd=mhr&layout=mhr&platform=macOS&interactive=false"
+    width="100%"
+    height="400"
+    frameborder="0">
+  </iframe>
+
+  <p style="font-family:sans-serif">mhr at width=500 (many tabs, should scroll)</p>
+  <iframe
+    src="http://localhost:5173/embed?kbd=mhr&layout=mhr&platform=macOS&interactive=false&width=500"
+    width="512"
+    height="300"
+    frameborder="0">
+  </iframe>
+
   </body>
 
   <script>

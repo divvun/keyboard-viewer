@@ -23,6 +23,7 @@ interface EmbedData {
   layers?: LayerState[];
   error?: string;
   staticUrl: string;
+  requestedWidth?: number;
 }
 
 export const handler = define.handlers<EmbedData>({
@@ -32,6 +33,13 @@ export const handler = define.handlers<EmbedData>({
 
     const staticUrl = `/embed?${serializeKeyboardParams(params)}&interactive=false`;
 
+    const parsePositivePx = (raw: string | null): number | undefined => {
+      if (raw == null) return undefined;
+      const n = parseFloat(raw);
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    };
+    const requestedWidth = parsePositivePx(ctx.url.searchParams.get("width"));
+
     const base = {
       kbd: params.kbd,
       layout: params.layout,
@@ -40,6 +48,7 @@ export const handler = define.handlers<EmbedData>({
       layer: params.layer ?? "default",
       interactive,
       staticUrl,
+      requestedWidth,
     };
 
     if (!interactive) {
@@ -71,6 +80,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
     layers,
     error,
     staticUrl,
+    requestedWidth,
   } = data;
 
   let body;
@@ -94,6 +104,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
           layout={keyboardLayout!}
           layers={layers!}
           initialLayer={layer}
+          requestedWidth={requestedWidth}
         />
       );
     }
