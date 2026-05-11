@@ -155,7 +155,9 @@ export function Key(
       );
     }
 
-    // Modifier with no valid target layer (or any recognized modifier): render non-interactive
+    // Render as a non-interactive span when:
+    // - it's a modifier key with no computed target (e.g. caps on an alt layer), OR
+    // - the target layer exists logically but isn't included in this keyboard's static embed
     if (isModifierKey(keyData.id) || targetLayer !== null) {
       return (
         <span style={style} class={keyClass} title={keyData.id}>
