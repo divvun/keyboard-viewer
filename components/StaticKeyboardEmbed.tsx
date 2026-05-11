@@ -133,6 +133,8 @@ export function StaticKeyboardEmbed({
         {layers.map((l) => (
           <label
             for={`layer-${uid}-${layerNameToId(l.name)}`}
+            role="tab"
+            aria-selected={l.name === checkedLayer ? "true" : "false"}
             data-layer={l.name}
             data-layer-id={layerNameToId(l.name)}
             style={{
