@@ -80,8 +80,6 @@ export function Key(
 ) {
   const width = keyData.width ?? 1.0;
   const height = keyData.height ?? 1.0;
-  const type = keyData.type ?? "normal";
-
   // Get the output character for the active layer
   const output = getKeyOutput(keyData, activeLayer);
 

@@ -6,7 +6,7 @@ import {
   GitHubKeyboardSelector,
   type Repo,
 } from "../components/GitHubKeyboardSelector.tsx";
-import { parse as parseYaml } from "jsr:@std/yaml";
+import { parse as parseYaml } from "jsr:@std/yaml@^1.0.0";
 import {
   getAvailablePlatforms,
   getMobileVariants,
@@ -319,7 +319,7 @@ export default function KeyboardViewer(
     let repo = "sme";
     let layoutName = "se";
     let platformName = currentLayout.platform || DEFAULT_PLATFORM;
-    let variantName = currentLayout.variant || DEFAULT_VARIANT;
+    const variantName = currentLayout.variant || DEFAULT_VARIANT;
 
     // Try to parse the ID to get repo and layout
     if (parts.length >= 2) {

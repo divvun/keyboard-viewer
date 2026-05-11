@@ -1,4 +1,4 @@
-import { parse as parseYaml } from "jsr:@std/yaml";
+import { parse as parseYaml } from "jsr:@std/yaml@^1.0.0";
 import {
   getAvailablePlatforms,
   getMobileVariants,
