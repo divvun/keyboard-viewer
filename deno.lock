@@ -29,6 +29,7 @@
     "jsr:@std/semver@^1.0.6": "1.0.8",
     "jsr:@std/uuid@^1.0.9": "1.0.9",
     "jsr:@std/yaml@*": "1.0.10",
+    "jsr:@std/yaml@1": "1.0.10",
     "npm:@babel/core@^7.28.0": "7.29.0",
     "npm:@babel/preset-react@^7.27.1": "7.28.5_@babel+core@7.29.0",
     "npm:@mjackson/node-fetch-server@0.7": "0.7.0",
