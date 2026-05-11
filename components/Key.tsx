@@ -38,12 +38,26 @@ function getTargetLayer(keyId: string, currentLayer: string): string | null {
   }
   const modifiers = layerNameToModifiers(currentLayer);
   if (!modifiers) return null;
-  if (isShiftKey(keyId)) return getActiveLayer({ ...modifiers, shift: !modifiers.shift });
+  if (isShiftKey(keyId)) {
+    return getActiveLayer({ ...modifiers, shift: !modifiers.shift });
+  }
   // Match JS behaviour: clicking caps deactivates shift
-  if (isCapsLockKey(keyId)) return getActiveLayer({ ...modifiers, caps: !modifiers.caps, shift: false });
-  if (isAltKey(keyId)) return getActiveLayer({ ...modifiers, alt: !modifiers.alt });
-  if (isCmdKey(keyId)) return getActiveLayer({ ...modifiers, cmd: !modifiers.cmd });
-  if (isCtrlKey(keyId)) return getActiveLayer({ ...modifiers, ctrl: !modifiers.ctrl });
+  if (isCapsLockKey(keyId)) {
+    return getActiveLayer({
+      ...modifiers,
+      caps: !modifiers.caps,
+      shift: false,
+    });
+  }
+  if (isAltKey(keyId)) {
+    return getActiveLayer({ ...modifiers, alt: !modifiers.alt });
+  }
+  if (isCmdKey(keyId)) {
+    return getActiveLayer({ ...modifiers, cmd: !modifiers.cmd });
+  }
+  if (isCtrlKey(keyId)) {
+    return getActiveLayer({ ...modifiers, ctrl: !modifiers.ctrl });
+  }
   return null;
 }
 
@@ -66,8 +80,6 @@ export function Key(
 ) {
   const width = keyData.width ?? 1.0;
   const height = keyData.height ?? 1.0;
-  const type = keyData.type ?? "normal";
-
   // Get the output character for the active layer
   const output = getKeyOutput(keyData, activeLayer);
 
@@ -139,7 +151,9 @@ export function Key(
     select-none
     flex items-center justify-center
     ${isActive ? "key-active" : "bg-white border-gray-300 hover:bg-gray-200"}
-    ${isIconLabel ? "kbd-icon" : isFunctionKey(keyData.id) ? "text-sm" : "text-xl"}
+    ${
+    isIconLabel ? "kbd-icon" : isFunctionKey(keyData.id) ? "text-sm" : "text-xl"
+  }
   `;
 
   // In static (no-JS) mode, render modifier keys as <label> elements
@@ -169,6 +183,7 @@ export function Key(
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       style={style}
       class={keyClass}

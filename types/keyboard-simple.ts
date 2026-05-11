@@ -8,6 +8,7 @@ import type { DeviceVariant, Platform } from "../constants/platforms.ts";
  * All possible keyboard layers across platforms
  */
 export interface KeyLayers {
+  [key: string]: string | undefined;
   default: string;
   shift?: string;
   caps?: string;

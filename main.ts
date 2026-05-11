@@ -14,7 +14,9 @@ if (!githubToken) {
   );
 } else {
   const maskedToken = `${githubToken.slice(0, 4)}...${githubToken.slice(-4)}`;
-  console.log(`✓ GitHub token found (${maskedToken}) - authenticated API requests enabled`);
+  console.log(
+    `✓ GitHub token found (${maskedToken}) - authenticated API requests enabled`,
+  );
 }
 
 app.use(staticFiles());

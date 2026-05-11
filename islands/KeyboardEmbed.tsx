@@ -30,13 +30,13 @@ export function KeyboardEmbed({
   });
 
   // Helper function to send height to parent (accounting for scale)
-  const sendHeight = (scale: number, scaledHeight: number) => {
+  const sendHeight = (_scale: number, scaledHeight: number) => {
     if (scaledHeight === 0) return;
 
     // Add 8px bottom padding for drop shadow
     const totalHeight = scaledHeight + 8;
 
-    window.parent.postMessage({
+    globalThis.parent.postMessage({
       type: "giellalt-keyboard-resize",
       height: totalHeight,
     }, "*");
@@ -60,7 +60,8 @@ export function KeyboardEmbed({
             kbd,
             layout,
             platform: platform as import("../constants/platforms.ts").Platform,
-            variant: variant as import("../constants/platforms.ts").DeviceVariant,
+            variant:
+              variant as import("../constants/platforms.ts").DeviceVariant,
           }),
         );
 

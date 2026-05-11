@@ -6,7 +6,7 @@ import {
   GitHubKeyboardSelector,
   type Repo,
 } from "../components/GitHubKeyboardSelector.tsx";
-import { parse as parseYaml } from "jsr:@std/yaml";
+import { parse as parseYaml } from "jsr:@std/yaml@^1.0.0";
 import {
   getAvailablePlatforms,
   getMobileVariants,
@@ -21,10 +21,7 @@ import {
   VariantDisplayNames,
 } from "../constants/platforms.ts";
 import { getErrorMessage } from "../utils.ts";
-import {
-  getEffectiveLayer,
-  getLayerDisplayName,
-} from "../utils/modifiers.ts";
+import { getEffectiveLayer, getLayerDisplayName } from "../utils/modifiers.ts";
 import { useKeyboard } from "../hooks/useKeyboard.ts";
 import { useKeyboardScaling } from "../hooks/useKeyboardScaling.ts";
 import {
@@ -65,7 +62,7 @@ export default function KeyboardViewer(
   // Read URL parameters synchronously for initial keyboard selection
   const getInitialUrlParams = () => {
     if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
+      const searchParams = new URLSearchParams(globalThis.location.search);
       if (searchParams.has("kbd")) {
         return parseKeyboardParams(searchParams);
       }
@@ -146,14 +143,14 @@ export default function KeyboardViewer(
       const variant = layout.variant || DEFAULT_VARIANT;
 
       // Update URL without reloading page using shared utility
-      const url = new URL(window.location.href);
+      const url = new URL(globalThis.location.href);
       url.search = serializeKeyboardParams({
         kbd: repo,
         layout: layoutName,
         platform,
         variant,
       });
-      window.history.pushState({}, "", url.toString());
+      globalThis.history.pushState({}, "", url.toString());
     }
   };
 
@@ -251,15 +248,6 @@ export default function KeyboardViewer(
     parseAndLoadYaml();
   };
 
-  // Guard against undefined layout
-  if (!layout) {
-    return (
-      <div class="text-center text-red-600 p-4">
-        No keyboard layout available
-      </div>
-    );
-  }
-
   // Load stored YAML when switching to YAML tab
   useEffect(() => {
     if (
@@ -296,19 +284,18 @@ export default function KeyboardViewer(
     fetchRepos();
   }, []);
 
+  // Guard against undefined layout
+  if (!layout) {
+    return (
+      <div class="text-center text-red-600 p-4">
+        No keyboard layout available
+      </div>
+    );
+  }
+
   const handleClear = () => {
     text.value = "";
     keyboard.pendingDeadkey.value = null; // Clear any pending deadkey
-  };
-
-  const getDimensionsForPlatform = (
-    platform: string,
-    isMobile: boolean,
-  ): { width: number; height: number } => {
-    if (isMobile) {
-      return { width: 400, height: 500 };
-    }
-    return { width: 800, height: 300 };
   };
 
   const generateEmbedCode = () => {
@@ -322,7 +309,7 @@ export default function KeyboardViewer(
     let repo = "sme";
     let layoutName = "se";
     let platformName = currentLayout.platform || DEFAULT_PLATFORM;
-    let variantName = currentLayout.variant || DEFAULT_VARIANT;
+    const variantName = currentLayout.variant || DEFAULT_VARIANT;
 
     // Try to parse the ID to get repo and layout
     if (parts.length >= 2) {
@@ -333,24 +320,19 @@ export default function KeyboardViewer(
       );
       if (platformIndex > 0) {
         layoutName = parts.slice(1, platformIndex).join("-");
-        platformName = parts[platformIndex];
+        platformName = parts[platformIndex] as Platform;
       } else {
         layoutName = parts.slice(1).join("-");
       }
     }
 
-    const baseUrl = window.location.origin + "/embed";
+    const baseUrl = globalThis.location.origin + "/embed";
     const paramsString = serializeKeyboardParams({
       kbd: repo,
       layout: layoutName,
       platform: platformName,
       variant: variantName,
     });
-
-    const dimensions = getDimensionsForPlatform(
-      platformName,
-      currentLayout.isMobile ?? false,
-    );
 
     return `<iframe src="${baseUrl}?${paramsString}" width="100%" frameborder="0" ></iframe>`;
   };
@@ -386,6 +368,7 @@ export default function KeyboardViewer(
             />
             {text.value && (
               <button
+                type="button"
                 onClick={handleClear}
                 class="clear-button text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors"
                 title="Clear"
@@ -438,7 +421,7 @@ export default function KeyboardViewer(
             isSymbolsActive={keyboard.isSymbolsActive.value}
             isSymbols2Active={keyboard.isSymbols2Active.value}
             pendingDeadkey={keyboard.pendingDeadkey.value}
-            showChrome={true}
+            showChrome
           />
         </div>
       </div>
@@ -459,6 +442,7 @@ export default function KeyboardViewer(
               </strong>
             </span>
             <button
+              type="button"
               onClick={handleCopyEmbedCode}
               class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-xs font-semibold"
               title="Copy embed code for this keyboard"
@@ -474,6 +458,7 @@ export default function KeyboardViewer(
         <div class="keyboard-width-container">
           <div class="flex gap-2 border-b-2 border-gray-300 mb-4">
             <button
+              type="button"
               onClick={() => activeTab.value = "github"}
               class={`px-3 md:px-4 py-2 font-semibold text-xs md:text-sm transition-colors ${
                 activeTab.value === "github"
@@ -484,6 +469,7 @@ export default function KeyboardViewer(
               Load from GitHub
             </button>
             <button
+              type="button"
               onClick={() => activeTab.value = "yaml"}
               class={`px-3 md:px-4 py-2 font-semibold text-xs md:text-sm transition-colors ${
                 activeTab.value === "yaml"

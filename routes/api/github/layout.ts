@@ -29,7 +29,12 @@ export const handler = define.handlers({
       }
 
       const layout = layoutFile.replace(/\.yaml$/, "");
-      const loaded = await loadKeyboardLayout({ kbd, layout, platform, variant });
+      const loaded = await loadKeyboardLayout({
+        kbd,
+        layout,
+        platform,
+        variant,
+      });
 
       return Response.json({
         layout: loaded.layout,
