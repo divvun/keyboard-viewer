@@ -30,7 +30,7 @@ export function KeyboardEmbed({
   });
 
   // Helper function to send height to parent (accounting for scale)
-  const sendHeight = (scale: number, scaledHeight: number) => {
+  const sendHeight = (_scale: number, scaledHeight: number) => {
     if (scaledHeight === 0) return;
 
     // Add 8px bottom padding for drop shadow

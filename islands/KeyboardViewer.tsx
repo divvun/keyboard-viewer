@@ -248,15 +248,6 @@ export default function KeyboardViewer(
     parseAndLoadYaml();
   };
 
-  // Guard against undefined layout
-  if (!layout) {
-    return (
-      <div class="text-center text-red-600 p-4">
-        No keyboard layout available
-      </div>
-    );
-  }
-
   // Load stored YAML when switching to YAML tab
   useEffect(() => {
     if (
@@ -293,19 +284,18 @@ export default function KeyboardViewer(
     fetchRepos();
   }, []);
 
+  // Guard against undefined layout
+  if (!layout) {
+    return (
+      <div class="text-center text-red-600 p-4">
+        No keyboard layout available
+      </div>
+    );
+  }
+
   const handleClear = () => {
     text.value = "";
     keyboard.pendingDeadkey.value = null; // Clear any pending deadkey
-  };
-
-  const getDimensionsForPlatform = (
-    platform: string,
-    isMobile: boolean,
-  ): { width: number; height: number } => {
-    if (isMobile) {
-      return { width: 400, height: 500 };
-    }
-    return { width: 800, height: 300 };
   };
 
   const generateEmbedCode = () => {
@@ -343,11 +333,6 @@ export default function KeyboardViewer(
       platform: platformName,
       variant: variantName,
     });
-
-    const dimensions = getDimensionsForPlatform(
-      platformName,
-      currentLayout.isMobile ?? false,
-    );
 
     return `<iframe src="${baseUrl}?${paramsString}" width="100%" frameborder="0" ></iframe>`;
   };
