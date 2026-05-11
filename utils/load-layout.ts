@@ -37,6 +37,7 @@ interface CacheEntry {
 
 const layoutCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_MAX_SIZE = 200;
 
 export async function loadKeyboardLayout(
   params: KeyboardParams,
@@ -100,6 +101,9 @@ export async function loadKeyboardLayout(
     rawYaml,
   };
 
+  if (layoutCache.size >= CACHE_MAX_SIZE) {
+    layoutCache.delete(layoutCache.keys().next().value!);
+  }
   layoutCache.set(cacheKey, { data: result, expiresAt: Date.now() + CACHE_TTL_MS });
   return result;
 }
