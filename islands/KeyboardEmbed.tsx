@@ -36,7 +36,7 @@ export function KeyboardEmbed({
     // Add 8px bottom padding for drop shadow
     const totalHeight = scaledHeight + 8;
 
-    window.parent.postMessage({
+    globalThis.parent.postMessage({
       type: "giellalt-keyboard-resize",
       height: totalHeight,
     }, "*");

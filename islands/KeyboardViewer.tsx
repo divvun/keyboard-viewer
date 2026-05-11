@@ -62,7 +62,7 @@ export default function KeyboardViewer(
   // Read URL parameters synchronously for initial keyboard selection
   const getInitialUrlParams = () => {
     if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
+      const searchParams = new URLSearchParams(globalThis.location.search);
       if (searchParams.has("kbd")) {
         return parseKeyboardParams(searchParams);
       }
@@ -143,14 +143,14 @@ export default function KeyboardViewer(
       const variant = layout.variant || DEFAULT_VARIANT;
 
       // Update URL without reloading page using shared utility
-      const url = new URL(window.location.href);
+      const url = new URL(globalThis.location.href);
       url.search = serializeKeyboardParams({
         kbd: repo,
         layout: layoutName,
         platform,
         variant,
       });
-      window.history.pushState({}, "", url.toString());
+      globalThis.history.pushState({}, "", url.toString());
     }
   };
 
@@ -336,7 +336,7 @@ export default function KeyboardViewer(
       }
     }
 
-    const baseUrl = window.location.origin + "/embed";
+    const baseUrl = globalThis.location.origin + "/embed";
     const paramsString = serializeKeyboardParams({
       kbd: repo,
       layout: layoutName,
@@ -435,7 +435,7 @@ export default function KeyboardViewer(
             isSymbolsActive={keyboard.isSymbolsActive.value}
             isSymbols2Active={keyboard.isSymbols2Active.value}
             pendingDeadkey={keyboard.pendingDeadkey.value}
-            showChrome={true}
+            showChrome
           />
         </div>
       </div>
