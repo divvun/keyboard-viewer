@@ -11,6 +11,7 @@ export interface KeyboardParams {
   layout: string;
   platform: Platform;
   variant: DeviceVariant;
+  layer?: string;
 }
 
 // Default keyboard repo and layout
@@ -22,11 +23,13 @@ const DEFAULT_LAYOUT = "se";
 export function parseKeyboardParams(
   searchParams: URLSearchParams,
 ): KeyboardParams {
+  const layer = searchParams.get("layer") || undefined;
   return {
     kbd: searchParams.get("kbd") || DEFAULT_KBD,
     layout: searchParams.get("layout") || DEFAULT_LAYOUT,
     platform: (searchParams.get("platform") as Platform) || DEFAULT_PLATFORM,
     variant: (searchParams.get("variant") as DeviceVariant) || DEFAULT_VARIANT,
+    layer,
   };
 }
 
@@ -44,5 +47,6 @@ export function serializeKeyboardParams(
   if (params.layout) urlParams.set("layout", params.layout);
   if (params.platform) urlParams.set("platform", params.platform);
   if (params.variant) urlParams.set("variant", params.variant);
+  if (params.layer) urlParams.set("layer", params.layer);
   return urlParams.toString();
 }

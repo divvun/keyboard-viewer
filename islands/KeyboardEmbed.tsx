@@ -12,7 +12,6 @@ interface KeyboardEmbedProps {
   layout: string;
   platform: string;
   variant: string;
-  interactive: boolean;
 }
 
 export function KeyboardEmbed({
@@ -20,7 +19,6 @@ export function KeyboardEmbed({
   layout,
   platform,
   variant,
-  interactive,
 }: KeyboardEmbedProps) {
   const keyboardLayout = useSignal<KeyboardLayout | null>(null);
   const loading = useSignal<boolean>(true);
@@ -58,7 +56,12 @@ export function KeyboardEmbed({
 
       try {
         const response = await fetch(
-          buildKeyboardApiUrl({ kbd, layout, platform, variant }),
+          buildKeyboardApiUrl({
+            kbd,
+            layout,
+            platform: platform as import("../constants/platforms.ts").Platform,
+            variant: variant as import("../constants/platforms.ts").DeviceVariant,
+          }),
         );
 
         if (!response.ok) {
@@ -108,7 +111,7 @@ export function KeyboardEmbed({
           layout={keyboardLayout.value}
           loading={loading.value}
           error={error.value}
-          onKeyClick={interactive ? keyboard.handleKeyClick : undefined}
+          onKeyClick={keyboard.handleKeyClick}
           pressedKeyId={keyboard.pressedKeyId.value}
           activeLayer={keyboard.activeLayer.value}
           isShiftActive={keyboard.isShiftActive.value}

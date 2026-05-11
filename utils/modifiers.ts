@@ -111,6 +111,22 @@ export function getEffectiveLayer(
 }
 
 /**
+ * Parses a layer name back into a ModifierState.
+ * Returns null for layers that have no ModifierState equivalent (symbols-1, symbols-2).
+ */
+export function layerNameToModifiers(layer: string): ModifierState | null {
+  if (layer === "symbols-1" || layer === "symbols-2") return null;
+  const parts = new Set(layer === "default" ? [] : layer.split("+"));
+  return {
+    shift: parts.has("shift"),
+    caps: parts.has("caps"),
+    alt: parts.has("alt"),
+    cmd: parts.has("cmd"),
+    ctrl: parts.has("ctrl"),
+  };
+}
+
+/**
  * Returns a human-readable name for the active layer
  */
 export function getLayerDisplayName(layer: string): string {

@@ -1,17 +1,143 @@
-import { PageProps } from "fresh";
+import { page } from "fresh";
+import type { PageProps } from "fresh";
+import { define, getErrorMessage } from "../utils.ts";
 import { KeyboardEmbed } from "../islands/KeyboardEmbed.tsx";
-import { parseKeyboardParams } from "../utils/keyboard-params.ts";
+import { StaticKeyboardEmbed } from "../components/StaticKeyboardEmbed.tsx";
+import {
+  parseKeyboardParams,
+  serializeKeyboardParams,
+} from "../utils/keyboard-params.ts";
+import { loadKeyboardLayout } from "../utils/load-layout.ts";
+import { enumerateLayers } from "../utils/layer-state.ts";
+import type { KeyboardLayout } from "../types/keyboard-simple.ts";
+import type { LayerState } from "../utils/layer-state.ts";
 
-export default function EmbedPage({ url }: PageProps) {
-  const params = parseKeyboardParams(url.searchParams);
-  const interactive = url.searchParams.get("interactive") !== "false"; // default true
+interface EmbedData {
+  kbd: string;
+  layout: string;
+  platform: string;
+  variant: string;
+  layer: string;
+  interactive: boolean;
+  keyboardLayout?: KeyboardLayout;
+  layers?: LayerState[];
+  error?: string;
+  staticUrl: string;
+  requestedWidth?: number;
+}
+
+export const handler = define.handlers<EmbedData>({
+  async GET(ctx) {
+    const params = parseKeyboardParams(ctx.url.searchParams);
+    const interactive = ctx.url.searchParams.get("interactive") !== "false";
+
+    const staticUrl = `/embed?${serializeKeyboardParams(params)}&interactive=false`;
+
+    const parsePositivePx = (raw: string | null): number | undefined => {
+      if (raw == null) return undefined;
+      const n = parseFloat(raw);
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    };
+    const requestedWidth = parsePositivePx(ctx.url.searchParams.get("width"));
+
+    const base = {
+      kbd: params.kbd,
+      layout: params.layout,
+      platform: params.platform as string,
+      variant: params.variant as string,
+      layer: params.layer ?? "default",
+      interactive,
+      staticUrl,
+      requestedWidth,
+    };
+
+    if (!interactive) {
+      try {
+        const loaded = await loadKeyboardLayout(params);
+        const layers = enumerateLayers(loaded.layout);
+        return page<EmbedData>(
+          { ...base, keyboardLayout: loaded.layout, layers },
+          { headers: { "Cache-Control": "public, max-age=300, s-maxage=3600" } },
+        );
+      } catch (e) {
+        return page<EmbedData>({ ...base, error: getErrorMessage(e) });
+      }
+    }
+
+    return page<EmbedData>(base);
+  },
+});
+
+export default function EmbedPage({ data }: PageProps<EmbedData>) {
+  const {
+    kbd,
+    layout,
+    platform,
+    variant,
+    layer,
+    interactive,
+    keyboardLayout,
+    layers,
+    error,
+    staticUrl,
+    requestedWidth,
+  } = data;
+
+  let body;
+  if (!interactive) {
+    if (error) {
+      body = (
+        <div
+          style={{
+            padding: "1rem",
+            color: "#b91c1c",
+            fontFamily: "sans-serif",
+          }}
+        >
+          <p>Error loading keyboard: {error}</p>
+          <a href={staticUrl}>Try again</a>
+        </div>
+      );
+    } else {
+      body = (
+        <StaticKeyboardEmbed
+          layout={keyboardLayout!}
+          layers={layers!}
+          initialLayer={layer}
+          requestedWidth={requestedWidth}
+        />
+      );
+    }
+  } else {
+    body = (
+      <>
+        <KeyboardEmbed
+          kbd={kbd}
+          layout={layout}
+          platform={platform}
+          variant={variant}
+        />
+        <noscript>
+          <div
+            style={{
+              padding: "0.5rem",
+              fontFamily: "sans-serif",
+              fontSize: "0.875rem",
+            }}
+          >
+            <a href={staticUrl}>View keyboard without JavaScript</a>
+          </div>
+        </noscript>
+      </>
+    );
+  }
 
   return (
     <html lang="en">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Keyboard: {params.kbd} - {params.layout}</title>
+        <title>Keyboard: {kbd} - {layout}</title>
         <style>
           {`
           body {
@@ -24,13 +150,7 @@ export default function EmbedPage({ url }: PageProps) {
         </style>
       </head>
       <body>
-        <KeyboardEmbed
-          kbd={params.kbd}
-          layout={params.layout}
-          platform={params.platform}
-          variant={params.variant}
-          interactive={interactive}
-        />
+        {body}
       </body>
     </html>
   );

@@ -6,9 +6,11 @@ import {
   isCmdKey,
   isCtrlKey,
   isFunctionKey,
+  isModifierKey,
   isShiftKey,
   isSymbolsKey,
 } from "../utils/key-helpers.ts";
+import { getActiveLayer, layerNameToModifiers } from "../utils/modifiers.ts";
 import { decodeUnicodeEscapes } from "../utils.ts";
 
 interface KeyProps {
@@ -24,6 +26,25 @@ interface KeyProps {
   isSymbolsActive?: boolean;
   isSymbols2Active?: boolean;
   pendingDeadkey?: string | null;
+  /** When provided, modifier keys are rendered as <label> elements linking to layer radios */
+  labelForLayer?: (layerName: string) => string | null;
+}
+
+function getTargetLayer(keyId: string, currentLayer: string): string | null {
+  if (isSymbolsKey(keyId)) {
+    return (currentLayer === "symbols-1" || currentLayer === "symbols-2")
+      ? "default"
+      : "symbols-1";
+  }
+  const modifiers = layerNameToModifiers(currentLayer);
+  if (!modifiers) return null;
+  if (isShiftKey(keyId)) return getActiveLayer({ ...modifiers, shift: !modifiers.shift });
+  // Match JS behaviour: clicking caps deactivates shift
+  if (isCapsLockKey(keyId)) return getActiveLayer({ ...modifiers, caps: !modifiers.caps, shift: false });
+  if (isAltKey(keyId)) return getActiveLayer({ ...modifiers, alt: !modifiers.alt });
+  if (isCmdKey(keyId)) return getActiveLayer({ ...modifiers, cmd: !modifiers.cmd });
+  if (isCtrlKey(keyId)) return getActiveLayer({ ...modifiers, ctrl: !modifiers.ctrl });
+  return null;
 }
 
 export function Key(
@@ -40,6 +61,7 @@ export function Key(
     isSymbolsActive,
     isSymbols2Active,
     pendingDeadkey,
+    labelForLayer,
   }: KeyProps,
 ) {
   const width = keyData.width ?? 1.0;
@@ -104,32 +126,52 @@ export function Key(
     touchAction: "manipulation", // Prevent 300ms tap delay on mobile
   };
 
+  const keyClass = `
+    relative
+    rounded-lg
+    border-2
+    border-solid
+    shadow-sm
+    hover:shadow-md
+    transition-shadow
+    font-mono
+    cursor-pointer
+    select-none
+    flex items-center justify-center
+    ${isActive ? "key-active" : "bg-white border-gray-300 hover:bg-gray-200"}
+    ${isIconLabel ? "kbd-icon" : isFunctionKey(keyData.id) ? "text-sm" : "text-xl"}
+  `;
+
+  // In static (no-JS) mode, render modifier keys as <label> elements
+  if (labelForLayer) {
+    const targetLayer = getTargetLayer(keyData.id, activeLayer);
+    const radioId = targetLayer ? labelForLayer(targetLayer) : null;
+
+    if (radioId) {
+      return (
+        <label for={radioId} style={style} class={keyClass} title={keyData.id}>
+          {label}
+        </label>
+      );
+    }
+
+    // Render as a non-interactive span when:
+    // - it's a modifier key with no computed target (e.g. caps on an alt layer), OR
+    // - the target layer exists logically but isn't included in this keyboard's static embed
+    if (isModifierKey(keyData.id) || targetLayer !== null) {
+      return (
+        <span style={style} class={keyClass} title={keyData.id}>
+          {label}
+        </span>
+      );
+    }
+  }
+
   return (
     <button
       onClick={handleClick}
       style={style}
-      class={`
-        relative
-        rounded-lg
-        border-2
-        shadow-sm
-        hover:shadow-md
-        transition-shadow
-        font-mono
-        cursor-pointer
-        select-none
-        flex items-center justify-center
-        ${
-        isActive ? "key-active" : "bg-white border-gray-300 hover:bg-gray-200"
-      }
-        ${
-        isIconLabel
-          ? "kbd-icon"
-          : isFunctionKey(keyData.id)
-          ? "text-sm"
-          : "text-xl"
-      }
-      `}
+      class={keyClass}
       title={keyData.id}
     >
       {label}

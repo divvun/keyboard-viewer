@@ -19,7 +19,8 @@ interface KeyboardDisplayProps {
   isSymbolsActive?: boolean;
   isSymbols2Active?: boolean;
   pendingDeadkey?: string | null;
-  showChrome?: boolean; // whether to show padding/background
+  showChrome?: boolean;
+  labelForLayer?: (layerName: string) => string | null;
 }
 
 export function KeyboardDisplay({
@@ -38,6 +39,7 @@ export function KeyboardDisplay({
   isSymbols2Active,
   pendingDeadkey,
   showChrome = true,
+  labelForLayer,
 }: KeyboardDisplayProps) {
   if (loading) {
     return (
@@ -74,6 +76,7 @@ export function KeyboardDisplay({
         isSymbolsActive={isSymbolsActive}
         isSymbols2Active={isSymbols2Active}
         pendingDeadkey={pendingDeadkey ?? null}
+        labelForLayer={labelForLayer}
       />
     </div>
   );
