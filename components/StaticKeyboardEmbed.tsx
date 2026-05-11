@@ -6,9 +6,20 @@ import { KeyboardDisplay } from "./KeyboardDisplay.tsx";
 const BASE_WIDTH = 3.5; // rem — matches Key component
 const GAP = 0.25; // rem — matches KeyboardLayout row gap
 const KBD_PADDING = 1; // rem — p-4 on each side
-// Tab bar: 0.5rem padding × 2 + label (0.875rem font × 1.2 line-height + 0.25rem padding × 2)
-const TAB_BAR_HEIGHT = 2.55; // rem — single-row approximate height
 const REM_TO_PX = 16;
+
+// Tab bar height derived from the inline styles applied below.
+// Line-height is the only approximation: browsers default "normal" ≈ 1.2 for sans-serif.
+const TAB_FONT_SIZE = 0.875; // rem — fontSize on <label>
+const TAB_LINE_HEIGHT = 1.2; // unitless — browser "normal" approximation
+const TAB_LABEL_PAD_Y = 0.25; // rem — padding top/bottom on <label>
+const TAB_CONTAINER_PAD = 0.5; // rem — padding on tab bar container
+const TAB_BORDER = 1 / REM_TO_PX; // rem — 1px borderBottom
+const TAB_BAR_HEIGHT =
+  TAB_CONTAINER_PAD * 2 +
+  TAB_LABEL_PAD_Y * 2 +
+  TAB_FONT_SIZE * TAB_LINE_HEIGHT +
+  TAB_BORDER;
 
 interface StaticKeyboardEmbedProps {
   layout: KeyboardLayout;
@@ -114,9 +125,9 @@ export function StaticKeyboardEmbed({
           overflowX: "auto",
           minWidth: 0,
           gap: "0.25rem",
-          padding: "0.5rem",
+          padding: `${TAB_CONTAINER_PAD}rem`,
           background: "#f3f4f6",
-          borderBottom: "1px solid #e5e7eb",
+          borderBottom: `${TAB_BORDER * REM_TO_PX}px solid #e5e7eb`,
         }}
       >
         {layers.map((l) => (
@@ -125,10 +136,10 @@ export function StaticKeyboardEmbed({
             data-layer={l.name}
             data-layer-id={layerNameToId(l.name)}
             style={{
-              padding: "0.25rem 0.75rem",
+              padding: `${TAB_LABEL_PAD_Y}rem 0.75rem`,
               borderRadius: "0.375rem",
               cursor: "pointer",
-              fontSize: "0.875rem",
+              fontSize: `${TAB_FONT_SIZE}rem`,
               fontFamily: "sans-serif",
               userSelect: "none",
               flexShrink: 0,
