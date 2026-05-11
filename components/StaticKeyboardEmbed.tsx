@@ -9,7 +9,6 @@ const KBD_PADDING = 1; // rem — p-4 on each side
 // Tab bar: 0.5rem padding × 2 + label (0.875rem font × 1.2 line-height + 0.25rem padding × 2)
 const TAB_BAR_HEIGHT = 2.55; // rem — single-row approximate height
 const REM_TO_PX = 16;
-const SHADOW_BUFFER_PX = 12; // room for the keyboard's drop shadow
 
 interface StaticKeyboardEmbedProps {
   layout: KeyboardLayout;
@@ -87,9 +86,8 @@ export function StaticKeyboardEmbed({
 
   const scaledWidth = naturalWidth * scale;
   const scaledHeight = naturalHeight * scale;
-  // Exposed so embedders know the exact iframe dimensions to set
-  const embedWidth = Math.ceil(scaledWidth * REM_TO_PX) + SHADOW_BUFFER_PX;
-  const embedHeight = Math.ceil(scaledHeight * REM_TO_PX) + SHADOW_BUFFER_PX;
+  // Exposed so embedders know the exact iframe height to set
+  const embedHeight = Math.ceil(scaledHeight * REM_TO_PX);
 
   const content = (
     <div style={{ position: "relative" }}>
@@ -177,13 +175,12 @@ export function StaticKeyboardEmbed({
   if (scale !== 1) {
     return (
       <div
-        data-embed-width={embedWidth}
         data-embed-height={embedHeight}
         style={{
           display: "inline-block",
           position: "relative",
-          width: `calc(${scaledWidth}rem + ${SHADOW_BUFFER_PX}px)`,
-          height: `calc(${scaledHeight}rem + ${SHADOW_BUFFER_PX}px)`,
+          width: `${scaledWidth}rem`,
+          height: `${scaledHeight}rem`,
         }}
       >
         <div
@@ -204,13 +201,8 @@ export function StaticKeyboardEmbed({
 
   return (
     <div
-      data-embed-width={embedWidth}
       data-embed-height={embedHeight}
-      style={{
-        display: "inline-block",
-        width: `${naturalWidth}rem`,
-        padding: `0 ${SHADOW_BUFFER_PX}px ${SHADOW_BUFFER_PX}px 0`,
-      }}
+      style={{ display: "inline-block", width: `${naturalWidth}rem` }}
     >
       {content}
     </div>
