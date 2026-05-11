@@ -101,7 +101,7 @@ export function KeyboardLayout({
   }
 
   return (
-    <div class="inline-block p-4 bg-gray-200 rounded-lg">
+    <div class="inline-block p-4 bg-gray-200 rounded-b-lg">
       <div
         style={{
           display: "flex",
