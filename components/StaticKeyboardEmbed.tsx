@@ -27,16 +27,6 @@ function generateLayerCss(uid: string, layers: LayerState[]): string {
     );
   }
 
-  rules.push(`
-    .kbd-layer-radio {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-      width: 0;
-      height: 0;
-    }
-  `);
-
   return rules.join("\n");
 }
 

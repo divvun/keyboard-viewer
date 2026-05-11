@@ -386,6 +386,15 @@ html {
   border-style: solid;
 }
 
+/* Static keyboard embed — hides layer-switching radios from layout and assistive tech */
+.kbd-layer-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
 /* Resize utilities */
 .resize-y {
   resize: vertical;
