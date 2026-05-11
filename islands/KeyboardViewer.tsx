@@ -320,7 +320,7 @@ export default function KeyboardViewer(
       );
       if (platformIndex > 0) {
         layoutName = parts.slice(1, platformIndex).join("-");
-        platformName = parts[platformIndex];
+        platformName = parts[platformIndex] as Platform;
       } else {
         layoutName = parts.slice(1).join("-");
       }
