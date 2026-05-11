@@ -42,6 +42,7 @@ function generateLayerCss(uid: string, layers: LayerState[]): string {
   const rules: string[] = [];
 
   rules.push(`.kbd-layers-${uid} .kbd-layer { display: none; }`);
+  rules.push(`.kbd-tabs-${uid} [data-layer-id] { background: #e5e7eb; color: #374151; }`);
 
   for (const layer of layers) {
     const safeId = layerNameToId(layer.name);
@@ -49,10 +50,7 @@ function generateLayerCss(uid: string, layers: LayerState[]): string {
       `#layer-${uid}-${safeId}:checked ~ .kbd-layers-${uid} .kbd-layer-${safeId} { display: block; }`,
     );
     rules.push(
-      `#layer-${uid}-${safeId}:checked ~ .kbd-tabs-${uid} [data-layer="${layer.name}"] {
-        background: #4a6cf7;
-        color: white;
-      }`,
+      `#layer-${uid}-${safeId}:checked ~ .kbd-tabs-${uid} [data-layer-id='${safeId}'] { background: #374151; color: #f9fafb; }`,
     );
   }
 
@@ -125,14 +123,13 @@ export function StaticKeyboardEmbed({
           <label
             for={`layer-${uid}-${layerNameToId(l.name)}`}
             data-layer={l.name}
+            data-layer-id={layerNameToId(l.name)}
             style={{
               padding: "0.25rem 0.75rem",
               borderRadius: "0.375rem",
               cursor: "pointer",
               fontSize: "0.875rem",
               fontFamily: "sans-serif",
-              background: "#e5e7eb",
-              color: "#374151",
               userSelect: "none",
               flexShrink: 0,
               whiteSpace: "nowrap",
