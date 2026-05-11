@@ -383,6 +383,7 @@ export default function KeyboardViewer(
             />
             {text.value && (
               <button
+                type="button"
                 onClick={handleClear}
                 class="clear-button text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors"
                 title="Clear"
@@ -456,6 +457,7 @@ export default function KeyboardViewer(
               </strong>
             </span>
             <button
+              type="button"
               onClick={handleCopyEmbedCode}
               class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-xs font-semibold"
               title="Copy embed code for this keyboard"
@@ -471,6 +473,7 @@ export default function KeyboardViewer(
         <div class="keyboard-width-container">
           <div class="flex gap-2 border-b-2 border-gray-300 mb-4">
             <button
+              type="button"
               onClick={() => activeTab.value = "github"}
               class={`px-3 md:px-4 py-2 font-semibold text-xs md:text-sm transition-colors ${
                 activeTab.value === "github"
@@ -481,6 +484,7 @@ export default function KeyboardViewer(
               Load from GitHub
             </button>
             <button
+              type="button"
               onClick={() => activeTab.value = "yaml"}
               class={`px-3 md:px-4 py-2 font-semibold text-xs md:text-sm transition-colors ${
                 activeTab.value === "yaml"

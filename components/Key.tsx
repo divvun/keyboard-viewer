@@ -185,6 +185,7 @@ export function Key(
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       style={style}
       class={keyClass}
