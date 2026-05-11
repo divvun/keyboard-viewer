@@ -26,7 +26,11 @@ const LAYER_MODIFIER_MAP: Record<string, Partial<LayerState>> = {
   "cmd": { isCmdActive: true },
   "cmd+shift": { isCmdActive: true, isShiftActive: true },
   "cmd+alt": { isCmdActive: true, isAltActive: true },
-  "cmd+alt+shift": { isCmdActive: true, isAltActive: true, isShiftActive: true },
+  "cmd+alt+shift": {
+    isCmdActive: true,
+    isAltActive: true,
+    isShiftActive: true,
+  },
   "symbols-1": { isSymbolsActive: true },
   "symbols-2": { isSymbolsActive: true, isSymbols2Active: true },
 };

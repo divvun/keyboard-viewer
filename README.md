@@ -1,15 +1,21 @@
 # Divvun Keyboard Viewer
 
-An interactive web application for visualizing and testing Divvun keyboard layouts across multiple platforms. Built with Fresh (Deno), Preact, and Vite.
+An interactive web application for visualizing and testing Divvun keyboard
+layouts across multiple platforms. Built with Fresh (Deno), Preact, and Vite.
 
 ## Features
 
-- **Interactive Keyboard Display**: Click keys or use your physical keyboard to test layouts
-- **Multi-Platform Support**: View keyboards for macOS, iOS, Android, Windows, and Chrome OS
-- **Device Variants**: Support for different mobile device types (phones, tablets)
-- **GitHub Integration**: Load keyboard layouts directly from GitHub repositories
+- **Interactive Keyboard Display**: Click keys or use your physical keyboard to
+  test layouts
+- **Multi-Platform Support**: View keyboards for macOS, iOS, Android, Windows,
+  and Chrome OS
+- **Device Variants**: Support for different mobile device types (phones,
+  tablets)
+- **GitHub Integration**: Load keyboard layouts directly from GitHub
+  repositories
 - **YAML Editor**: Paste and test kbdgen YAML layout definitions
-- **Layer Visualization**: See different keyboard layers (default, shift, alt, symbols, etc.)
+- **Layer Visualization**: See different keyboard layers (default, shift, alt,
+  symbols, etc.)
 - **Dead Key Support**: Full support for dead key combinations
 - **Embeddable**: Generate iframe code to embed keyboards in other sites
 - **Responsive Design**: Works on desktop and mobile devices
@@ -44,10 +50,13 @@ This will start the Vite development server and watch for changes.
 
 ### Main Viewer
 
-Navigate to the root URL to access the main keyboard viewer interface. The viewer includes:
+Navigate to the root URL to access the main keyboard viewer interface. The
+viewer includes:
 
-1. **Output Area**: Displays text as you type on the virtual or physical keyboard
-2. **Virtual Keyboard**: Interactive visual representation of the keyboard layout
+1. **Output Area**: Displays text as you type on the virtual or physical
+   keyboard
+2. **Virtual Keyboard**: Interactive visual representation of the keyboard
+   layout
 3. **Layer Information**: Shows the currently active keyboard layer
 4. **Load from GitHub**: Select from available Divvun keyboard repositories
 5. **YAML Editor**: Paste and test custom kbdgen YAML layouts
@@ -64,11 +73,13 @@ Navigate to the root URL to access the main keyboard viewer interface. The viewe
 1. Switch to the "YAML Editor" tab
 2. Paste a kbdgen YAML layout definition
 3. Select the platform to preview
-4. The keyboard shows a live preview, making it easy to edit a keyboard definition and see the result in real time.
+4. The keyboard shows a live preview, making it easy to edit a keyboard
+   definition and see the result in real time.
 
 ### Embedding Keyboards
 
-Click the "Get Embed Code" button to copy an iframe snippet that can be embedded in other websites. The embed URL supports these parameters:
+Click the "Get Embed Code" button to copy an iframe snippet that can be embedded
+in other websites. The embed URL supports these parameters:
 
 - `kbd`: Repository/keyboard identifier
 - `layout`: Layout name (without .yaml extension)
@@ -132,7 +143,8 @@ Custom hook that handles responsive scaling of the keyboard display.
 
 ## kbdgen Format
 
-This viewer supports keyboard layouts defined in the kbdgen YAML format used by Divvun. Each layout can define multiple modes (layers) and supports:
+This viewer supports keyboard layouts defined in the kbdgen YAML format used by
+Divvun. Each layout can define multiple modes (layers) and supports:
 
 - Dead keys and combining characters
 - Multiple keyboard layers (default, shift, alt, caps, symbols)
@@ -144,7 +156,9 @@ This viewer supports keyboard layouts defined in the kbdgen YAML format used by 
 
 This project is licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or
+  <http://opensource.org/licenses/MIT>)
 
 at your option.

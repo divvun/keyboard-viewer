@@ -104,6 +104,9 @@ export async function loadKeyboardLayout(
   if (layoutCache.size >= CACHE_MAX_SIZE) {
     layoutCache.delete(layoutCache.keys().next().value!);
   }
-  layoutCache.set(cacheKey, { data: result, expiresAt: Date.now() + CACHE_TTL_MS });
+  layoutCache.set(cacheKey, {
+    data: result,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  });
   return result;
 }

@@ -31,7 +31,9 @@ export const handler = define.handlers<EmbedData>({
     const params = parseKeyboardParams(ctx.url.searchParams);
     const interactive = ctx.url.searchParams.get("interactive") !== "false";
 
-    const staticUrl = `/embed?${serializeKeyboardParams(params)}&interactive=false`;
+    const staticUrl = `/embed?${
+      serializeKeyboardParams(params)
+    }&interactive=false`;
 
     const parsePositivePx = (raw: string | null): number | undefined => {
       if (raw == null) return undefined;
@@ -57,7 +59,9 @@ export const handler = define.handlers<EmbedData>({
         const layers = enumerateLayers(loaded.layout);
         return page<EmbedData>(
           { ...base, keyboardLayout: loaded.layout, layers },
-          { headers: { "Cache-Control": "public, max-age=300, s-maxage=3600" } },
+          {
+            headers: { "Cache-Control": "public, max-age=300, s-maxage=3600" },
+          },
         );
       } catch (e) {
         return page<EmbedData>({ ...base, error: getErrorMessage(e) });

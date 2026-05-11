@@ -60,7 +60,8 @@ export function KeyboardEmbed({
             kbd,
             layout,
             platform: platform as import("../constants/platforms.ts").Platform,
-            variant: variant as import("../constants/platforms.ts").DeviceVariant,
+            variant:
+              variant as import("../constants/platforms.ts").DeviceVariant,
           }),
         );
 

@@ -90,7 +90,9 @@ export function getLayerFallbackChain(layer: string): string[] {
  */
 export function getEffectiveLayer(
   requestedLayer: string,
-  layout: { rows: Array<{ keys: Array<{ layers: Record<string, unknown> }> }> } | null,
+  layout:
+    | { rows: Array<{ keys: Array<{ layers: Record<string, unknown> }> }> }
+    | null,
 ): string {
   if (!layout) return requestedLayer;
 

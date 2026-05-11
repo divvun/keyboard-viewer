@@ -21,10 +21,7 @@ import {
   VariantDisplayNames,
 } from "../constants/platforms.ts";
 import { getErrorMessage } from "../utils.ts";
-import {
-  getEffectiveLayer,
-  getLayerDisplayName,
-} from "../utils/modifiers.ts";
+import { getEffectiveLayer, getLayerDisplayName } from "../utils/modifiers.ts";
 import { useKeyboard } from "../hooks/useKeyboard.ts";
 import { useKeyboardScaling } from "../hooks/useKeyboardScaling.ts";
 import {
