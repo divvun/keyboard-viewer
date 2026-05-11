@@ -1,5 +1,8 @@
 import { define, getErrorMessage } from "../../../utils.ts";
-import { loadKeyboardLayout } from "../../../utils/load-layout.ts";
+import {
+  LayoutNotFoundError,
+  loadKeyboardLayout,
+} from "../../../utils/load-layout.ts";
 import {
   DEFAULT_PLATFORM,
   DEFAULT_VARIANT,
@@ -37,9 +40,8 @@ export const handler = define.handlers({
         rawYaml: loaded.rawYaml,
       });
     } catch (error) {
-      const msg = getErrorMessage(error);
-      const status = msg === "Layout file not found" ? 404 : 500;
-      return Response.json({ error: msg }, { status });
+      const status = error instanceof LayoutNotFoundError ? 404 : 500;
+      return Response.json({ error: getErrorMessage(error) }, { status });
     }
   },
 });

@@ -13,6 +13,14 @@ import {
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import type { KeyboardParams } from "./keyboard-params.ts";
 
+export class LayoutNotFoundError extends Error {
+  readonly status = 404;
+  constructor() {
+    super("Layout file not found");
+    this.name = "LayoutNotFoundError";
+  }
+}
+
 export interface LoadedKeyboard {
   layout: KeyboardLayout;
   availablePlatforms: Platform[];
@@ -54,7 +62,7 @@ export async function loadKeyboardLayout(
   );
 
   if (!response.ok) {
-    if (response.status === 404) throw new Error("Layout file not found");
+    if (response.status === 404) throw new LayoutNotFoundError();
     throw new Error(`GitHub fetch error: ${response.statusText}`);
   }
 
