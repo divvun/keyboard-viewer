@@ -85,11 +85,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
           }}
         >
           <p>Error loading keyboard: {error}</p>
-          <a
-            href={`/embed?kbd=${kbd}&layout=${layout}&platform=${platform}&variant=${variant}`}
-          >
-            Try again
-          </a>
+          <a href={staticUrl}>Try again</a>
         </div>
       );
     } else {
