@@ -1,0 +1,7 @@
+.git
+_fresh/
+node_modules/
+.env
+.env.*
+docs/
+.github/
