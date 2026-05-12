@@ -90,7 +90,13 @@
     },
     {
       "keys": [
-        { "id": "Tab", "output": "\t", "label": "Tab", "width": 1.5, "type": "modifier" },
+        {
+          "id": "Tab",
+          "output": "\t",
+          "label": "Tab",
+          "width": 1.5,
+          "type": "modifier"
+        },
         { "id": "KeyQ", "output": "á", "shiftOutput": "Á" },
         { "id": "KeyW", "output": "š", "shiftOutput": "Š" },
         { "id": "KeyE", "output": "e", "shiftOutput": "E" },
@@ -188,7 +194,13 @@
           "width": 1.25,
           "type": "modifier"
         },
-        { "id": "Space", "output": " ", "label": "", "width": 6.25, "type": "space" },
+        {
+          "id": "Space",
+          "output": " ",
+          "label": "",
+          "width": 6.25,
+          "type": "space"
+        },
         {
           "id": "AltRight",
           "output": "",

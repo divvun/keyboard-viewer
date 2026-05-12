@@ -19,17 +19,48 @@
   "rows": [
     {
       "keys": [
-        { "id": "Backquote", "layers": { "default": "`", "shift": "¬", "alt": "¦" }, "width": 1.0 },
-        { "id": "Digit1", "layers": { "default": "1", "shift": "!", "alt": "¹" } },
-        { "id": "Digit2", "layers": { "default": "2", "shift": "\"", "alt": "²" } },
-        { "id": "Digit3", "layers": { "default": "3", "shift": "£", "alt": "³" } },
-        { "id": "Digit4", "layers": { "default": "4", "shift": "$", "alt": "€" } },
-        { "id": "Digit5", "layers": { "default": "5", "shift": "%", "alt": "½" } },
+        {
+          "id": "Backquote",
+          "layers": { "default": "`", "shift": "¬", "alt": "¦" },
+          "width": 1.0
+        },
+        {
+          "id": "Digit1",
+          "layers": { "default": "1", "shift": "!", "alt": "¹" }
+        },
+        {
+          "id": "Digit2",
+          "layers": { "default": "2", "shift": "\"", "alt": "²" }
+        },
+        {
+          "id": "Digit3",
+          "layers": { "default": "3", "shift": "£", "alt": "³" }
+        },
+        {
+          "id": "Digit4",
+          "layers": { "default": "4", "shift": "$", "alt": "€" }
+        },
+        {
+          "id": "Digit5",
+          "layers": { "default": "5", "shift": "%", "alt": "½" }
+        },
         { "id": "Digit6", "layers": { "default": "6", "shift": "^" } },
-        { "id": "Digit7", "layers": { "default": "7", "shift": "&", "alt": "{" } },
-        { "id": "Digit8", "layers": { "default": "8", "shift": "*", "alt": "[" } },
-        { "id": "Digit9", "layers": { "default": "9", "shift": "(", "alt": "]" } },
-        { "id": "Digit0", "layers": { "default": "0", "shift": ")", "alt": "}" } },
+        {
+          "id": "Digit7",
+          "layers": { "default": "7", "shift": "&", "alt": "{" }
+        },
+        {
+          "id": "Digit8",
+          "layers": { "default": "8", "shift": "*", "alt": "[" }
+        },
+        {
+          "id": "Digit9",
+          "layers": { "default": "9", "shift": "(", "alt": "]" }
+        },
+        {
+          "id": "Digit0",
+          "layers": { "default": "0", "shift": ")", "alt": "}" }
+        },
         { "id": "Minus", "layers": { "default": "-", "shift": "_" } },
         { "id": "Equal", "layers": { "default": "=", "shift": "+" } },
         {
@@ -43,17 +74,77 @@
     },
     {
       "keys": [
-        { "id": "Tab", "layers": { "default": "\t" }, "label": "Tab", "width": 1.5, "type": "modifier" },
-        { "id": "KeyQ", "layers": { "default": "q", "shift": "Q", "caps": "Q" } },
-        { "id": "KeyW", "layers": { "default": "w", "shift": "W", "caps": "W" } },
-        { "id": "KeyE", "layers": { "default": "e", "shift": "E", "caps": "E", "alt": "é", "alt+shift": "É" } },
-        { "id": "KeyR", "layers": { "default": "r", "shift": "R", "caps": "R", "alt": "®" } },
-        { "id": "KeyT", "layers": { "default": "t", "shift": "T", "caps": "T" } },
-        { "id": "KeyY", "layers": { "default": "y", "shift": "Y", "caps": "Y" } },
-        { "id": "KeyU", "layers": { "default": "u", "shift": "U", "caps": "U", "alt": "ú", "alt+shift": "Ú" } },
-        { "id": "KeyI", "layers": { "default": "i", "shift": "I", "caps": "I", "alt": "í", "alt+shift": "Í" } },
-        { "id": "KeyO", "layers": { "default": "o", "shift": "O", "caps": "O", "alt": "ó", "alt+shift": "Ó" } },
-        { "id": "KeyP", "layers": { "default": "p", "shift": "P", "caps": "P" } },
+        {
+          "id": "Tab",
+          "layers": { "default": "\t" },
+          "label": "Tab",
+          "width": 1.5,
+          "type": "modifier"
+        },
+        {
+          "id": "KeyQ",
+          "layers": { "default": "q", "shift": "Q", "caps": "Q" }
+        },
+        {
+          "id": "KeyW",
+          "layers": { "default": "w", "shift": "W", "caps": "W" }
+        },
+        {
+          "id": "KeyE",
+          "layers": {
+            "default": "e",
+            "shift": "E",
+            "caps": "E",
+            "alt": "é",
+            "alt+shift": "É"
+          }
+        },
+        {
+          "id": "KeyR",
+          "layers": { "default": "r", "shift": "R", "caps": "R", "alt": "®" }
+        },
+        {
+          "id": "KeyT",
+          "layers": { "default": "t", "shift": "T", "caps": "T" }
+        },
+        {
+          "id": "KeyY",
+          "layers": { "default": "y", "shift": "Y", "caps": "Y" }
+        },
+        {
+          "id": "KeyU",
+          "layers": {
+            "default": "u",
+            "shift": "U",
+            "caps": "U",
+            "alt": "ú",
+            "alt+shift": "Ú"
+          }
+        },
+        {
+          "id": "KeyI",
+          "layers": {
+            "default": "i",
+            "shift": "I",
+            "caps": "I",
+            "alt": "í",
+            "alt+shift": "Í"
+          }
+        },
+        {
+          "id": "KeyO",
+          "layers": {
+            "default": "o",
+            "shift": "O",
+            "caps": "O",
+            "alt": "ó",
+            "alt+shift": "Ó"
+          }
+        },
+        {
+          "id": "KeyP",
+          "layers": { "default": "p", "shift": "P", "caps": "P" }
+        },
         { "id": "BracketLeft", "layers": { "default": "[", "shift": "{" } },
         { "id": "BracketRight", "layers": { "default": "]", "shift": "}" } },
         {
@@ -75,18 +166,55 @@
           "width": 1.75,
           "type": "modifier"
         },
-        { "id": "KeyA", "layers": { "default": "a", "shift": "A", "caps": "A", "alt": "á", "alt+shift": "Á" } },
-        { "id": "KeyS", "layers": { "default": "s", "shift": "S", "caps": "S", "alt": "ß" } },
-        { "id": "KeyD", "layers": { "default": "d", "shift": "D", "caps": "D" } },
-        { "id": "KeyF", "layers": { "default": "f", "shift": "F", "caps": "F" } },
-        { "id": "KeyG", "layers": { "default": "g", "shift": "G", "caps": "G" } },
-        { "id": "KeyH", "layers": { "default": "h", "shift": "H", "caps": "H" } },
-        { "id": "KeyJ", "layers": { "default": "j", "shift": "J", "caps": "J" } },
-        { "id": "KeyK", "layers": { "default": "k", "shift": "K", "caps": "K" } },
-        { "id": "KeyL", "layers": { "default": "l", "shift": "L", "caps": "L" } },
+        {
+          "id": "KeyA",
+          "layers": {
+            "default": "a",
+            "shift": "A",
+            "caps": "A",
+            "alt": "á",
+            "alt+shift": "Á"
+          }
+        },
+        {
+          "id": "KeyS",
+          "layers": { "default": "s", "shift": "S", "caps": "S", "alt": "ß" }
+        },
+        {
+          "id": "KeyD",
+          "layers": { "default": "d", "shift": "D", "caps": "D" }
+        },
+        {
+          "id": "KeyF",
+          "layers": { "default": "f", "shift": "F", "caps": "F" }
+        },
+        {
+          "id": "KeyG",
+          "layers": { "default": "g", "shift": "G", "caps": "G" }
+        },
+        {
+          "id": "KeyH",
+          "layers": { "default": "h", "shift": "H", "caps": "H" }
+        },
+        {
+          "id": "KeyJ",
+          "layers": { "default": "j", "shift": "J", "caps": "J" }
+        },
+        {
+          "id": "KeyK",
+          "layers": { "default": "k", "shift": "K", "caps": "K" }
+        },
+        {
+          "id": "KeyL",
+          "layers": { "default": "l", "shift": "L", "caps": "L" }
+        },
         { "id": "Semicolon", "layers": { "default": ";", "shift": ":" } },
         { "id": "Quote", "layers": { "default": "'", "shift": "@" } },
-        { "id": "Backslash", "layers": { "default": "#", "shift": "~" }, "label": "#" }
+        {
+          "id": "Backslash",
+          "layers": { "default": "#", "shift": "~" },
+          "label": "#"
+        }
       ]
     },
     {
@@ -98,16 +226,53 @@
           "width": 1.25,
           "type": "modifier"
         },
-        { "id": "IntlBackslash", "layers": { "default": "\\", "shift": "|" }, "label": "\\" },
-        { "id": "KeyZ", "layers": { "default": "z", "shift": "Z", "caps": "Z" } },
-        { "id": "KeyX", "layers": { "default": "x", "shift": "X", "caps": "X" } },
-        { "id": "KeyC", "layers": { "default": "c", "shift": "C", "caps": "C", "alt": "©" } },
-        { "id": "KeyV", "layers": { "default": "v", "shift": "V", "caps": "V" } },
-        { "id": "KeyB", "layers": { "default": "b", "shift": "B", "caps": "B" } },
-        { "id": "KeyN", "layers": { "default": "n", "shift": "N", "caps": "N", "alt": "ñ", "alt+shift": "Ñ" } },
-        { "id": "KeyM", "layers": { "default": "m", "shift": "M", "caps": "M", "alt": "µ" } },
-        { "id": "Comma", "layers": { "default": ",", "shift": "<", "alt": "«" } },
-        { "id": "Period", "layers": { "default": ".", "shift": ">", "alt": "»" } },
+        {
+          "id": "IntlBackslash",
+          "layers": { "default": "\\", "shift": "|" },
+          "label": "\\"
+        },
+        {
+          "id": "KeyZ",
+          "layers": { "default": "z", "shift": "Z", "caps": "Z" }
+        },
+        {
+          "id": "KeyX",
+          "layers": { "default": "x", "shift": "X", "caps": "X" }
+        },
+        {
+          "id": "KeyC",
+          "layers": { "default": "c", "shift": "C", "caps": "C", "alt": "©" }
+        },
+        {
+          "id": "KeyV",
+          "layers": { "default": "v", "shift": "V", "caps": "V" }
+        },
+        {
+          "id": "KeyB",
+          "layers": { "default": "b", "shift": "B", "caps": "B" }
+        },
+        {
+          "id": "KeyN",
+          "layers": {
+            "default": "n",
+            "shift": "N",
+            "caps": "N",
+            "alt": "ñ",
+            "alt+shift": "Ñ"
+          }
+        },
+        {
+          "id": "KeyM",
+          "layers": { "default": "m", "shift": "M", "caps": "M", "alt": "µ" }
+        },
+        {
+          "id": "Comma",
+          "layers": { "default": ",", "shift": "<", "alt": "«" }
+        },
+        {
+          "id": "Period",
+          "layers": { "default": ".", "shift": ">", "alt": "»" }
+        },
         { "id": "Slash", "layers": { "default": "/", "shift": "?" } },
         {
           "id": "ShiftRight",
@@ -141,7 +306,13 @@
           "width": 1.25,
           "type": "modifier"
         },
-        { "id": "Space", "layers": { "default": " " }, "label": "", "width": 6.25, "type": "space" },
+        {
+          "id": "Space",
+          "layers": { "default": " " },
+          "label": "",
+          "width": 6.25,
+          "type": "space"
+        },
         {
           "id": "MetaRight",
           "layers": { "default": "" },
