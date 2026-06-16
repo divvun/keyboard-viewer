@@ -21,7 +21,7 @@ export default define.page(function Home() {
             Divvun Keyboard Viewer
           </h1>
           <p class="text-sm md:text-base text-gray-600">
-            Click keys or use your keyboard to type into the text area
+            Click keys, or use your keyboard to type into the text area
           </p>
         </div>
 
