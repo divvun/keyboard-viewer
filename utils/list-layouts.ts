@@ -1,5 +1,4 @@
-import { parse as parseYaml } from "jsr:@std/yaml@^1.0.0";
-import type { KbdgenLayout } from "./kbdgen-transform.ts";
+import { fetchKbdgenData } from "./fetch-kbdgen.ts";
 
 export interface LayoutFile {
   file: string;
@@ -28,21 +27,13 @@ function githubHeaders(): Record<string, string> {
 
 async function fetchDisplayName(
   kbd: string,
-  file: string,
+  layoutFile: string,
 ): Promise<string> {
-  const name = file.replace(/\.yaml$/, "");
   try {
-    const response = await fetch(
-      `https://raw.githubusercontent.com/giellalt/keyboard-${kbd}/refs/heads/main/${kbd}.kbdgen/layouts/${file}`,
-      { headers: githubHeaders() },
-    );
-    if (!response.ok) return name;
-
-    const rawYaml = await response.text();
-    const kbdgenData = parseYaml(rawYaml) as KbdgenLayout;
-    return kbdgenData.displayNames?.en || name;
+    const { kbdgenData } = await fetchKbdgenData(kbd, layoutFile);
+    return kbdgenData.displayNames?.en || layoutFile;
   } catch {
-    return name;
+    return layoutFile;
   }
 }
 
@@ -76,10 +67,13 @@ export async function listLayoutFiles(kbd: string): Promise<LayoutFile[]> {
     .sort((a, b) => a.localeCompare(b));
 
   const result = await Promise.all(
-    files.map(async (file) => ({
-      file: file.replace(/\.yaml$/, ""),
-      displayName: await fetchDisplayName(kbd, file),
-    })),
+    files.map(async (file) => {
+      const layoutFile = file.replace(/\.yaml$/, "");
+      return {
+        file: layoutFile,
+        displayName: await fetchDisplayName(kbd, layoutFile),
+      };
+    }),
   );
 
   listCache.set(kbd, { data: result, expiresAt: Date.now() + CACHE_TTL_MS });

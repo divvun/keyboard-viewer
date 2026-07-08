@@ -1,3 +1,4 @@
+import type { ComponentChildren } from "preact";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import type { LayerState } from "../utils/layer-state.ts";
 import { layerNameToId } from "../utils/layer-state.ts";
@@ -8,12 +9,16 @@ const GAP = 0.25; // rem — matches KeyboardLayout row gap
 const KBD_PADDING = 1; // rem — p-4 on each side
 export const REM_TO_PX = 16;
 
-// Tab bar height derived from the inline styles applied below.
-// Line-height is the only approximation: browsers default "normal" ≈ 1.2 for sans-serif.
-const TAB_FONT_SIZE = 0.875; // rem — fontSize on <label>
+// Tab bar sizing — shared across the layer, platform, and layout tab bars so
+// they always look identical. Deliberately NOT scaled along with the
+// keyboard (see ScaledEmbed below): tab bars are UI chrome and should stay
+// legible/tappable regardless of how much the keyboard itself has to shrink
+// to fit a requested width.
+export const TAB_FONT_SIZE = 0.875; // rem — fontSize on <label>
 const TAB_LINE_HEIGHT = 1.2; // unitless — browser "normal" approximation
-const TAB_LABEL_PAD_Y = 0.25; // rem — padding top/bottom on <label>
-const TAB_CONTAINER_PAD = 0.5; // rem — padding on tab bar container
+export const TAB_LABEL_PAD_Y = 0.25; // rem — padding top/bottom on <label>
+export const TAB_LABEL_PAD_X = 0.75; // rem — padding left/right on <label>
+export const TAB_CONTAINER_PAD = 0.5; // rem — padding on tab bar container
 const TAB_BORDER = 1 / REM_TO_PX; // rem — 1px borderBottom
 // Exported so callers stacking additional tab bars (e.g. an outer layout
 // picker) can budget height for each extra row using the same constant.
@@ -21,6 +26,28 @@ export const TAB_BAR_HEIGHT = TAB_CONTAINER_PAD * 2 +
   TAB_LABEL_PAD_Y * 2 +
   TAB_FONT_SIZE * TAB_LINE_HEIGHT +
   TAB_BORDER;
+
+export const TAB_BAR_STYLE = {
+  display: "flex",
+  flexWrap: "nowrap",
+  overflowX: "auto",
+  minWidth: 0,
+  gap: "0.25rem",
+  padding: `${TAB_CONTAINER_PAD}rem`,
+  background: "#f3f4f6",
+  borderBottom: `${TAB_BORDER * REM_TO_PX}px solid #e5e7eb`,
+} as const;
+
+export const TAB_LABEL_STYLE = {
+  padding: `${TAB_LABEL_PAD_Y}rem ${TAB_LABEL_PAD_X}rem`,
+  borderRadius: "0.375rem",
+  cursor: "pointer",
+  fontSize: `${TAB_FONT_SIZE}rem`,
+  fontFamily: "sans-serif",
+  userSelect: "none",
+  flexShrink: 0,
+  whiteSpace: "nowrap",
+} as const;
 
 interface StaticKeyboardEmbedProps {
   layout: KeyboardLayout;
@@ -30,6 +57,80 @@ interface StaticKeyboardEmbedProps {
   requestedWidth?: number;
 }
 
+interface ScaledEmbedProps {
+  /** Natural (unscaled) width/height of `children`, in rem. */
+  naturalWidth: number;
+  naturalHeight: number;
+  /** Scale to this pixel width. Never upscales beyond natural size. */
+  requestedWidth?: number;
+  /** Applied to the outer wrapper — lets callers target it with sibling
+   * CSS selectors (e.g. `#radio:checked ~ .kbd-layers-x`) despite the extra
+   * DOM nesting this wrapper introduces when scaling. */
+  class?: string;
+  children: ComponentChildren;
+}
+
+/**
+ * Wraps `children` (rendered at `naturalWidth`/`naturalHeight`, in rem) in a
+ * `transform: scale(...)` container sized to fit `requestedWidth`. Used to
+ * scale just the keyboard key-grid — NOT tab bars, which render as plain
+ * unscaled siblings around this wrapper.
+ */
+export function ScaledEmbed(
+  { naturalWidth, naturalHeight, requestedWidth, class: className, children }:
+    ScaledEmbedProps,
+) {
+  // Never upscale — match behaviour of the JS embed
+  const scale = requestedWidth != null
+    ? Math.min(requestedWidth / (naturalWidth * REM_TO_PX), 1)
+    : 1;
+
+  const scaledWidth = naturalWidth * scale;
+  const scaledHeight = naturalHeight * scale;
+  // Exposed so embedders know the exact iframe height to set
+  const embedHeight = Math.ceil(scaledHeight * REM_TO_PX);
+
+  if (scale !== 1) {
+    return (
+      <div
+        class={className}
+        data-embed-height={embedHeight}
+        style={{
+          display: "inline-block",
+          position: "relative",
+          width: `${scaledWidth}rem`,
+          height: `${scaledHeight}rem`,
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: `${naturalWidth}rem`,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      class={className}
+      data-embed-height={embedHeight}
+      style={{ display: "inline-block", width: `${naturalWidth}rem` }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Natural (unscaled) dimensions of just the keyboard key-grid — excludes
+ * any tab bar, since tab bars are no longer part of the scaled block. */
 export function computeKeyboardDimensions(
   layout: KeyboardLayout,
 ): { width: number; height: number } {
@@ -45,8 +146,7 @@ export function computeKeyboardDimensions(
   const numRows = layout.rows.length;
   return {
     width: maxRowWidth + 2 * KBD_PADDING,
-    height: TAB_BAR_HEIGHT + numRows * BASE_WIDTH + (numRows - 1) * GAP +
-      2 * KBD_PADDING,
+    height: numRows * BASE_WIDTH + (numRows - 1) * GAP + 2 * KBD_PADDING,
   };
 }
 
@@ -61,10 +161,10 @@ function generateLayerCss(uid: string, layers: LayerState[]): string {
   for (const layer of layers) {
     const safeId = layerNameToId(layer.name);
     rules.push(
-      `#layer-${uid}-${safeId}:checked ~ .kbd-layers-${uid} .kbd-layer-${safeId} { display: block; }`,
+      `#layer-${uid}-${safeId}:checked ~ .kbd-tabs-${uid} [data-layer-id='${safeId}'] { background: #374151; color: #f9fafb; }`,
     );
     rules.push(
-      `#layer-${uid}-${safeId}:checked ~ .kbd-tabs-${uid} [data-layer-id='${safeId}'] { background: #374151; color: #f9fafb; }`,
+      `#layer-${uid}-${safeId}:checked ~ .kbd-layers-${uid} .kbd-layer-${safeId} { display: block; }`,
     );
   }
 
@@ -91,19 +191,9 @@ export function StaticKeyboardEmbed({
   const { width: naturalWidth, height: naturalHeight } =
     computeKeyboardDimensions(layout);
 
-  // Never upscale — match behaviour of the JS embed
-  const scale = requestedWidth != null
-    ? Math.min(requestedWidth / (naturalWidth * REM_TO_PX), 1)
-    : 1;
-
-  const scaledWidth = naturalWidth * scale;
-  const scaledHeight = naturalHeight * scale;
-  // Exposed so embedders know the exact iframe height to set
-  const embedHeight = Math.ceil(scaledHeight * REM_TO_PX);
-
-  const content = (
+  return (
     <div style={{ position: "relative" }}>
-      {/* Hidden radio buttons — must precede tabs and layers as siblings */}
+      {/* Hidden radio buttons — must precede the tab bar and layers as siblings */}
       {layers.map((l) => {
         const safeId = layerNameToId(l.name);
         return (
@@ -118,21 +208,8 @@ export function StaticKeyboardEmbed({
         );
       })}
 
-      {/* Layer tab toolbar */}
-      <div
-        class={`kbd-tabs-${uid}`}
-        role="tablist"
-        style={{
-          display: "flex",
-          flexWrap: "nowrap",
-          overflowX: "auto",
-          minWidth: 0,
-          gap: "0.25rem",
-          padding: `${TAB_CONTAINER_PAD}rem`,
-          background: "#f3f4f6",
-          borderBottom: `${TAB_BORDER * REM_TO_PX}px solid #e5e7eb`,
-        }}
-      >
+      {/* Layer tab toolbar — unscaled, always full size */}
+      <div class={`kbd-tabs-${uid}`} role="tablist" style={TAB_BAR_STYLE}>
         {layers.map((l) => (
           <label
             for={`layer-${uid}-${layerNameToId(l.name)}`}
@@ -140,24 +217,20 @@ export function StaticKeyboardEmbed({
             aria-selected={l.name === checkedLayer ? "true" : "false"}
             data-layer={l.name}
             data-layer-id={layerNameToId(l.name)}
-            style={{
-              padding: `${TAB_LABEL_PAD_Y}rem 0.75rem`,
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-              fontSize: `${TAB_FONT_SIZE}rem`,
-              fontFamily: "sans-serif",
-              userSelect: "none",
-              flexShrink: 0,
-              whiteSpace: "nowrap",
-            }}
+            style={TAB_LABEL_STYLE}
           >
             {l.label}
           </label>
         ))}
       </div>
 
-      {/* One fully-rendered keyboard per layer */}
-      <div class={`kbd-layers-${uid}`}>
+      {/* One fully-rendered keyboard per layer, scaled to requestedWidth */}
+      <ScaledEmbed
+        class={`kbd-layers-${uid}`}
+        naturalWidth={naturalWidth}
+        naturalHeight={naturalHeight}
+        requestedWidth={requestedWidth}
+      >
         {layers.map((l) => (
           <div
             class={`kbd-layer kbd-layer-${layerNameToId(l.name)}`}
@@ -179,45 +252,9 @@ export function StaticKeyboardEmbed({
             />
           </div>
         ))}
-      </div>
+      </ScaledEmbed>
 
       <style>{generateLayerCss(uid, layers)}</style>
-    </div>
-  );
-
-  if (scale !== 1) {
-    return (
-      <div
-        data-embed-height={embedHeight}
-        style={{
-          display: "inline-block",
-          position: "relative",
-          width: `${scaledWidth}rem`,
-          height: `${scaledHeight}rem`,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: `${naturalWidth}rem`,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-          }}
-        >
-          {content}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      data-embed-height={embedHeight}
-      style={{ display: "inline-block", width: `${naturalWidth}rem` }}
-    >
-      {content}
     </div>
   );
 }

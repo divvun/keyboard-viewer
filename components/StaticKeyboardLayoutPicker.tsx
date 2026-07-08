@@ -1,25 +1,25 @@
-import type { KeyboardLayout } from "../types/keyboard-simple.ts";
-import type { LayerState } from "../utils/layer-state.ts";
+import type { Platform } from "../constants/platforms.ts";
+import { TAB_BAR_STYLE, TAB_LABEL_STYLE } from "./StaticKeyboardEmbed.tsx";
 import {
-  computeKeyboardDimensions,
-  REM_TO_PX,
-  StaticKeyboardEmbed,
-  TAB_BAR_HEIGHT,
-} from "./StaticKeyboardEmbed.tsx";
+  type PlatformCombo,
+  StaticKeyboardPlatformPicker,
+} from "./StaticKeyboardPlatformPicker.tsx";
+
+export type { PlatformCombo };
 
 export interface LayoutCombo {
   /** Layout file name without the .yaml extension, e.g. "smj-NO". */
   file: string;
   /** Human-readable label, e.g. from the file's displayNames.en. */
   displayName: string;
-  layout: KeyboardLayout;
-  layers: LayerState[];
+  platformCombos: PlatformCombo[];
 }
 
 interface StaticKeyboardLayoutPickerProps {
   kbd: string;
   combos: LayoutCombo[];
   initialFile: string;
+  initialPlatform: Platform;
   initialLayer: string;
   /** Scale keyboard to this pixel width. Never upscales beyond natural size. */
   requestedWidth?: number;
@@ -40,10 +40,10 @@ function generateLayoutCss(uid: string, combos: LayoutCombo[]): string {
   for (const combo of combos) {
     const safeId = fileToId(combo.file);
     rules.push(
-      `#layout-${uid}-${safeId}:checked ~ .kbd-views-${uid} .kbd-view-${safeId} { display: block; }`,
+      `#layout-${uid}-${safeId}:checked ~ .kbd-layout-tabs-${uid} [data-layout-id='${safeId}'] { background: #374151; color: #f9fafb; }`,
     );
     rules.push(
-      `#layout-${uid}-${safeId}:checked ~ .kbd-layout-tabs-${uid} [data-layout-id='${safeId}'] { background: #374151; color: #f9fafb; }`,
+      `#layout-${uid}-${safeId}:checked ~ .kbd-views-${uid} .kbd-view-${safeId} { display: block; }`,
     );
   }
 
@@ -51,23 +51,27 @@ function generateLayoutCss(uid: string, combos: LayoutCombo[]): string {
 }
 
 /**
- * Renders a single keyboard when only one layout is in scope (the common
- * case). When multiple layout files exist for a kbd (e.g. smj-NO/smj-SE),
- * renders an outer layout tab bar above the keyboard, toggled the same
- * pure-CSS radio way as the layer tabs inside `StaticKeyboardEmbed`.
+ * Renders a single (nested platform-picker) keyboard when only one layout is
+ * in scope (the common case). When multiple layout files exist for a kbd
+ * (e.g. smj-NO/smj-SE), renders an outer layout tab bar above the keyboard,
+ * toggled the same pure-CSS radio way as the layer tabs inside
+ * `StaticKeyboardEmbed`. The tab bar itself is unscaled UI chrome — only the
+ * nested keyboards scale to `requestedWidth`.
  */
 export function StaticKeyboardLayoutPicker({
   kbd,
   combos,
   initialFile,
+  initialPlatform,
   initialLayer,
   requestedWidth,
 }: StaticKeyboardLayoutPickerProps) {
   if (combos.length === 1) {
     return (
-      <StaticKeyboardEmbed
-        layout={combos[0].layout}
-        layers={combos[0].layers}
+      <StaticKeyboardPlatformPicker
+        uidPrefix={`${kbd}-${combos[0].file}`}
+        combos={combos[0].platformCombos}
+        initialPlatform={initialPlatform}
         initialLayer={initialLayer}
         requestedWidth={requestedWidth}
       />
@@ -80,17 +84,8 @@ export function StaticKeyboardLayoutPicker({
     ? initialFile
     : combos[0].file;
 
-  // Informational only — exposed the same way StaticKeyboardEmbed exposes
-  // its own height, since the parent page can't read into the iframe
-  // without JS/postMessage in the no-JS embed path.
-  const embedHeight = Math.ceil(
-    Math.max(
-          ...combos.map((c) => computeKeyboardDimensions(c.layout).height),
-        ) * REM_TO_PX + TAB_BAR_HEIGHT * REM_TO_PX,
-  );
-
   return (
-    <div data-embed-height={embedHeight} style={{ position: "relative" }}>
+    <div style={{ position: "relative" }}>
       {/* Hidden radio buttons — must precede the tab bar and views as siblings */}
       {combos.map((c) => {
         const safeId = fileToId(c.file);
@@ -106,20 +101,11 @@ export function StaticKeyboardLayoutPicker({
         );
       })}
 
-      {/* Layout tab toolbar */}
+      {/* Layout tab toolbar — unscaled, always full size */}
       <div
         class={`kbd-layout-tabs-${uid}`}
         role="tablist"
-        style={{
-          display: "flex",
-          flexWrap: "nowrap",
-          overflowX: "auto",
-          minWidth: 0,
-          gap: "0.25rem",
-          padding: "0.5rem",
-          background: "#f3f4f6",
-          borderBottom: "1px solid #e5e7eb",
-        }}
+        style={TAB_BAR_STYLE}
       >
         {combos.map((c) => (
           <label
@@ -128,23 +114,17 @@ export function StaticKeyboardLayoutPicker({
             aria-selected={c.file === checkedFile ? "true" : "false"}
             data-layout={c.file}
             data-layout-id={fileToId(c.file)}
-            style={{
-              padding: "0.25rem 0.75rem",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-              fontSize: "0.875rem",
-              fontFamily: "sans-serif",
-              userSelect: "none",
-              flexShrink: 0,
-              whiteSpace: "nowrap",
-            }}
+            style={TAB_LABEL_STYLE}
           >
             {c.displayName}
           </label>
         ))}
       </div>
 
-      {/* One fully self-contained keyboard embed per layout */}
+      {
+        /* One fully self-contained platform picker per layout, each scaling
+          independently to requestedWidth. */
+      }
       <div class={`kbd-views-${uid}`}>
         {combos.map((c) => (
           <div
@@ -152,9 +132,10 @@ export function StaticKeyboardLayoutPicker({
             data-layout={c.file}
             aria-hidden={c.file !== checkedFile ? "true" : undefined}
           >
-            <StaticKeyboardEmbed
-              layout={c.layout}
-              layers={c.layers}
+            <StaticKeyboardPlatformPicker
+              uidPrefix={`${kbd}-${c.file}`}
+              combos={c.platformCombos}
+              initialPlatform={initialPlatform}
               initialLayer={initialLayer}
               requestedWidth={requestedWidth}
             />

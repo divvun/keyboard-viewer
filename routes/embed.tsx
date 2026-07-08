@@ -5,8 +5,10 @@ import { KeyboardEmbed } from "../islands/KeyboardEmbed.tsx";
 import { StaticKeyboardEmbed } from "../components/StaticKeyboardEmbed.tsx";
 import {
   type LayoutCombo,
+  type PlatformCombo,
   StaticKeyboardLayoutPicker,
 } from "../components/StaticKeyboardLayoutPicker.tsx";
+import { StaticKeyboardPlatformPicker } from "../components/StaticKeyboardPlatformPicker.tsx";
 import {
   parseKeyboardParams,
   serializeKeyboardParams,
@@ -16,6 +18,8 @@ import { listLayoutFiles } from "../utils/list-layouts.ts";
 import { enumerateLayers } from "../utils/layer-state.ts";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import type { LayerState } from "../utils/layer-state.ts";
+import type { KeyboardParams } from "../utils/keyboard-params.ts";
+import type { Platform } from "../constants/platforms.ts";
 
 interface EmbedData {
   kbd: string;
@@ -27,6 +31,7 @@ interface EmbedData {
   keyboardLayout?: KeyboardLayout;
   layers?: LayerState[];
   combos?: LayoutCombo[];
+  platformCombos?: PlatformCombo[];
   error?: string;
   staticUrl: string;
   requestedWidth?: number;
@@ -43,14 +48,45 @@ function pickDefaultLayoutFile(files: { file: string }[]): string {
   return bare?.file ?? files[0].file;
 }
 
+/**
+ * Loads every platform a single layout file declares, so a platform tab bar
+ * has something to show. `loadKeyboardLayout` caches the underlying kbdgen
+ * fetch+parse per (kbd, layout) — see `utils/fetch-kbdgen.ts` — so this only
+ * costs one GitHub fetch regardless of how many platforms it materializes.
+ */
+async function buildPlatformCombosForLayout(
+  params: KeyboardParams,
+  layoutFile: string,
+): Promise<PlatformCombo[]> {
+  const probe = await loadKeyboardLayout({ ...params, layout: layoutFile });
+
+  return Promise.all(
+    probe.availablePlatforms.map(async (platform) => {
+      const loaded = platform === probe.selectedPlatform
+        ? probe
+        : await loadKeyboardLayout({
+          ...params,
+          layout: layoutFile,
+          platform,
+        });
+      return {
+        platform,
+        layout: loaded.layout,
+        layers: enumerateLayers(loaded.layout),
+      };
+    }),
+  );
+}
+
 export const handler = define.handlers<EmbedData>({
   async GET(ctx) {
     const params = parseKeyboardParams(ctx.url.searchParams);
     const interactive = ctx.url.searchParams.get("interactive") !== "false";
-    // parseKeyboardParams defaults `layout` globally (to "se") when absent,
-    // which is meaningless for kbds that don't have that file. Detect
-    // absence from the raw query string instead of trusting params.layout.
+    // parseKeyboardParams defaults `layout`/`platform` globally when absent,
+    // which is meaningless for kbds that don't have that file/platform.
+    // Detect absence from the raw query string instead of trusting params.
     const hasExplicitLayout = ctx.url.searchParams.has("layout");
+    const hasExplicitPlatform = ctx.url.searchParams.has("platform");
 
     const staticUrl = `/embed?${
       serializeKeyboardParams(params)
@@ -79,15 +115,47 @@ export const handler = define.handlers<EmbedData>({
         "Cache-Control": "public, max-age=300, s-maxage=3600",
       };
 
-      if (!hasExplicitLayout) {
-        // Picker mode: enumerate every layout file for this kbd and load
-        // them all so the CSS-only layout tab bar has something to show.
-        try {
-          const files = await listLayoutFiles(params.kbd);
-          if (files.length === 0) {
-            throw new Error("No layouts found for this keyboard");
-          }
+      try {
+        if (hasExplicitLayout && hasExplicitPlatform) {
+          // Both pinned — existing fast path, unchanged.
+          const loaded = await loadKeyboardLayout(params);
+          const layers = enumerateLayers(loaded.layout);
+          return page<EmbedData>(
+            { ...base, keyboardLayout: loaded.layout, layers },
+            { headers: cacheHeaders },
+          );
+        }
 
+        if (hasExplicitLayout && !hasExplicitPlatform) {
+          // Layout pinned, platform absent: platform tabs for this one layout.
+          const platformCombos = await buildPlatformCombosForLayout(
+            params,
+            params.layout,
+          );
+          const initialPlatform = platformCombos.some((c) =>
+              c.platform === params.platform
+            )
+            ? params.platform
+            : platformCombos[0].platform;
+
+          return page<EmbedData>(
+            { ...base, platform: initialPlatform, platformCombos },
+            { headers: cacheHeaders },
+          );
+        }
+
+        // Layout absent: enumerate every layout file for this kbd.
+        const files = await listLayoutFiles(params.kbd);
+        if (files.length === 0) {
+          throw new Error("No layouts found for this keyboard");
+        }
+
+        if (!hasExplicitLayout && hasExplicitPlatform) {
+          // Layout absent, platform pinned: existing behavior. Some kbdgen
+          // repos declare a "bare" layout file for mobile only (e.g. sme's
+          // se.yaml is android/iOS-only; the desktop layouts are
+          // se-FI/se-NO/se-SE) — only offer files that actually support the
+          // pinned platform so every layout tab renders the same platform.
           const loaded = await Promise.all(
             files.map(async (f) => ({
               file: f.file,
@@ -96,21 +164,16 @@ export const handler = define.handlers<EmbedData>({
             })),
           );
 
-          // Some kbdgen repos declare a "bare" layout file for mobile only
-          // (e.g. sme's se.yaml is android/iOS-only; the desktop layouts are
-          // se-FI/se-NO/se-SE). loadKeyboardLayout silently substitutes a
-          // different platform when the requested one isn't available for a
-          // given file, which would make picker tabs show inconsistent
-          // keyboard shapes. Only offer files that actually support the
-          // pinned platform so every tab in one picker renders the same
-          // platform.
           const combos: LayoutCombo[] = loaded
             .filter((c) => c.loaded.selectedPlatform === params.platform)
             .map((c) => ({
               file: c.file,
               displayName: c.displayName,
-              layout: c.loaded.layout,
-              layers: enumerateLayers(c.loaded.layout),
+              platformCombos: [{
+                platform: c.loaded.selectedPlatform,
+                layout: c.loaded.layout,
+                layers: enumerateLayers(c.loaded.layout),
+              }],
             }));
 
           if (combos.length === 0) {
@@ -125,16 +188,27 @@ export const handler = define.handlers<EmbedData>({
             { ...base, layout: defaultFile, combos },
             { headers: cacheHeaders },
           );
-        } catch (e) {
-          return page<EmbedData>({ ...base, error: getErrorMessage(e) });
         }
-      }
 
-      try {
-        const loaded = await loadKeyboardLayout(params);
-        const layers = enumerateLayers(loaded.layout);
+        // Both absent: full nested layout → platform tree. Each layout's
+        // platform set stands on its own — no cross-layout filtering, since
+        // switching layout tabs doesn't need to keep a single platform
+        // consistent across all of them anymore.
+        const combos: LayoutCombo[] = await Promise.all(
+          files.map(async (f) => ({
+            file: f.file,
+            displayName: f.displayName,
+            platformCombos: await buildPlatformCombosForLayout(
+              params,
+              f.file,
+            ),
+          })),
+        );
+
+        const defaultFile = pickDefaultLayoutFile(files);
+
         return page<EmbedData>(
-          { ...base, keyboardLayout: loaded.layout, layers },
+          { ...base, layout: defaultFile, combos },
           { headers: cacheHeaders },
         );
       } catch (e) {
@@ -157,6 +231,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
     keyboardLayout,
     layers,
     combos,
+    platformCombos,
     error,
     staticUrl,
     requestedWidth,
@@ -183,6 +258,17 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
           kbd={kbd}
           combos={combos}
           initialFile={layout}
+          initialPlatform={platform as Platform}
+          initialLayer={layer}
+          requestedWidth={requestedWidth}
+        />
+      );
+    } else if (platformCombos) {
+      body = (
+        <StaticKeyboardPlatformPicker
+          uidPrefix={`${kbd}-${layout}`}
+          combos={platformCombos}
+          initialPlatform={platform as Platform}
           initialLayer={layer}
           requestedWidth={requestedWidth}
         />

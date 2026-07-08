@@ -93,35 +93,56 @@ Example embed URL:
 /embed?kbd=sme&layout=se&platform=macOS&variant=primary
 ```
 
-### No-JS layout picker mode
+### No-JS layout and platform picker mode
 
-Add `&interactive=false` and simply omit `layout` to get a fully
-server-rendered, JS-free embed with a **layout picker** built in — useful for
-embedding documentation without needing to know a kbd's layout filenames in
-advance.
+Add `&interactive=false` and omit `layout` and/or `platform` to get a fully
+server-rendered, JS-free embed with tab-bar pickers built in for whichever of
+the two you leave out — useful for embedding documentation without needing to
+know a kbd's layout filenames or supported platforms in advance.
 
 ```
 /embed?kbd=smj&interactive=false
 ```
 
-- If `layout` is present, it behaves exactly as the pinned example above (no
-  picker shown).
-- If `layout` is absent, every layout file in the kbd's repo is loaded and a tab
-  bar appears above the keyboard letting visitors switch between them (e.g.
-  `smj-NO` / `smj-SE`) — pure CSS, same mechanism as the layer tabs, no
-  JavaScript or extra network requests involved in switching.
-- Only layout files that support the resolved `platform` (default `macOS`) are
-  offered, since a repo's "bare" layout file is sometimes mobile-only (e.g.
-  `sme`'s `se.yaml` is Android/iOS-only; the desktop layouts live in
-  `se-FI`/`se-NO`/`se-SE`). Mixing platforms across tabs in one picker would
-  make the keyboard shape jump between tabs, so those are excluded.
-- If a kbd only has one layout (the common case), no tab bar is shown at all —
-  this mode is then identical to pinning that one layout explicitly.
+**Rule:** each of `layout` and `platform` is independent. If present, it's
+pinned (no tab bar for that dimension, exactly like the pinned example above).
+If absent, every option for that dimension is loaded and a CSS-only tab bar
+appears — no JavaScript or extra network requests involved in switching, same
+mechanism as the layer tabs.
 
-**Recommended iframe height:** budget for one extra tab-bar row (the same height
-as the existing layer tab bar) on top of the usual keyboard height whenever
-`layout` is omitted, since you can't know in advance whether a given kbd will
-end up with more than one layout after platform filtering.
+- **`layout` absent:** every layout file in the kbd's repo is loaded (e.g.
+  `smj-NO` / `smj-SE`).
+  - If `platform` is _also_ pinned, only layout files that support that platform
+    are offered — a repo's "bare" layout file is sometimes mobile-only (e.g.
+    `sme`'s `se.yaml` is Android/iOS-only; the desktop layouts live in
+    `se-FI`/`se-NO`/`se-SE`), and mixing platforms across tabs in one picker
+    would make the keyboard shape jump between tabs.
+  - If `platform` is _also_ absent, each layout tab shows whichever platforms
+    _that specific file_ declares, independently — switching layout can change
+    which platform tabs are available, since each layout's platform picker is
+    self-contained.
+- **`platform` absent:** every platform the resolved layout declares is loaded
+  (macOS/Windows/iOS/Android/Chrome OS, whichever apply) as its own tab.
+  - ⚠️ **Compatibility note:** previously, omitting `platform` silently
+    defaulted to macOS only. It now shows a picker for every platform the layout
+    declares. If you want today's old macOS-only behavior, pass `platform=macOS`
+    explicitly.
+- If a kbd only has one layout, or a layout only has one platform, no tab bar is
+  shown for that dimension at all — this mode then collapses toward the
+  fully-pinned example above.
+
+Tab bars are deliberately **not** scaled down along with the keyboard — they're
+UI chrome, and shrinking them together with a width-constrained keyboard made
+them inconsistent in size and less obviously clickable. Only the keyboard
+key-grid itself scales to fit `width`; every tab bar (layer, platform, layout)
+always renders at full size.
+
+**Recommended iframe height:** budget for one full, fixed-size tab-bar row
+(layer tabs are always present) plus one more _per additional dimension_ left
+unpinned (layout, platform) — up to three tab-bar rows stacked above the
+(possibly scaled-down) keyboard when both `layout` and `platform` are omitted,
+since you can't know in advance how many options either dimension will end up
+with.
 
 ### URL Parameters
 
@@ -158,10 +179,18 @@ switching (used by `/embed?...&interactive=false`).
 
 ### StaticKeyboardLayoutPicker
 
-Wraps `StaticKeyboardEmbed` with an optional outer layout tab bar, used by
-`/embed?...&interactive=false` when `layout` is omitted from the URL. Renders
-`StaticKeyboardEmbed` directly with no extra chrome when only one layout is in
+Wraps `StaticKeyboardPlatformPicker` (one per layout) with an optional outer
+layout tab bar, used by `/embed?...&interactive=false` when `layout` is omitted
+from the URL. Renders directly with no extra chrome when only one layout is in
 scope.
+
+### StaticKeyboardPlatformPicker
+
+Wraps `StaticKeyboardEmbed` (one per platform) with an optional outer platform
+tab bar, used by `/embed?...&interactive=false` when `platform` is omitted from
+the URL. Nested inside `StaticKeyboardLayoutPicker` since available platforms
+differ per layout file. Renders `StaticKeyboardEmbed` directly with no extra
+chrome when only one platform is in scope for that layout.
 
 ### KeyboardDisplay
 
