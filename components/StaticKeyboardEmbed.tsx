@@ -6,7 +6,7 @@ import { KeyboardDisplay } from "./KeyboardDisplay.tsx";
 const BASE_WIDTH = 3.5; // rem — matches Key component
 const GAP = 0.25; // rem — matches KeyboardLayout row gap
 const KBD_PADDING = 1; // rem — p-4 on each side
-const REM_TO_PX = 16;
+export const REM_TO_PX = 16;
 
 // Tab bar height derived from the inline styles applied below.
 // Line-height is the only approximation: browsers default "normal" ≈ 1.2 for sans-serif.
@@ -15,7 +15,9 @@ const TAB_LINE_HEIGHT = 1.2; // unitless — browser "normal" approximation
 const TAB_LABEL_PAD_Y = 0.25; // rem — padding top/bottom on <label>
 const TAB_CONTAINER_PAD = 0.5; // rem — padding on tab bar container
 const TAB_BORDER = 1 / REM_TO_PX; // rem — 1px borderBottom
-const TAB_BAR_HEIGHT = TAB_CONTAINER_PAD * 2 +
+// Exported so callers stacking additional tab bars (e.g. an outer layout
+// picker) can budget height for each extra row using the same constant.
+export const TAB_BAR_HEIGHT = TAB_CONTAINER_PAD * 2 +
   TAB_LABEL_PAD_Y * 2 +
   TAB_FONT_SIZE * TAB_LINE_HEIGHT +
   TAB_BORDER;
@@ -28,7 +30,7 @@ interface StaticKeyboardEmbedProps {
   requestedWidth?: number;
 }
 
-function computeKeyboardDimensions(
+export function computeKeyboardDimensions(
   layout: KeyboardLayout,
 ): { width: number; height: number } {
   let maxRowWidth = 0;

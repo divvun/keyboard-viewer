@@ -394,7 +394,8 @@ html {
 }
 
 /* Static keyboard embed — hides layer-switching radios from layout and assistive tech */
-.kbd-layer-radio {
+.kbd-layer-radio,
+.kbd-layout-radio {
   position: absolute;
   opacity: 0;
   pointer-events: none;

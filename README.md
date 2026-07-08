@@ -93,6 +93,36 @@ Example embed URL:
 /embed?kbd=sme&layout=se&platform=macOS&variant=primary
 ```
 
+### No-JS layout picker mode
+
+Add `&interactive=false` and simply omit `layout` to get a fully
+server-rendered, JS-free embed with a **layout picker** built in — useful for
+embedding documentation without needing to know a kbd's layout filenames in
+advance.
+
+```
+/embed?kbd=smj&interactive=false
+```
+
+- If `layout` is present, it behaves exactly as the pinned example above (no
+  picker shown).
+- If `layout` is absent, every layout file in the kbd's repo is loaded and a tab
+  bar appears above the keyboard letting visitors switch between them (e.g.
+  `smj-NO` / `smj-SE`) — pure CSS, same mechanism as the layer tabs, no
+  JavaScript or extra network requests involved in switching.
+- Only layout files that support the resolved `platform` (default `macOS`) are
+  offered, since a repo's "bare" layout file is sometimes mobile-only (e.g.
+  `sme`'s `se.yaml` is Android/iOS-only; the desktop layouts live in
+  `se-FI`/`se-NO`/`se-SE`). Mixing platforms across tabs in one picker would
+  make the keyboard shape jump between tabs, so those are excluded.
+- If a kbd only has one layout (the common case), no tab bar is shown at all —
+  this mode is then identical to pinning that one layout explicitly.
+
+**Recommended iframe height:** budget for one extra tab-bar row (the same height
+as the existing layer tab bar) on top of the usual keyboard height whenever
+`layout` is omitted, since you can't know in advance whether a given kbd will
+end up with more than one layout after platform filtering.
+
 ### URL Parameters
 
 You can share specific keyboard configurations by including URL parameters:
@@ -120,6 +150,18 @@ The main interactive keyboard viewer with GitHub loader and YAML editor.
 ### KeyboardEmbed
 
 Lightweight embeddable keyboard component for use in iframes.
+
+### StaticKeyboardEmbed
+
+Server-rendered, JS-free keyboard for one pinned layout, with CSS-only layer
+switching (used by `/embed?...&interactive=false`).
+
+### StaticKeyboardLayoutPicker
+
+Wraps `StaticKeyboardEmbed` with an optional outer layout tab bar, used by
+`/embed?...&interactive=false` when `layout` is omitted from the URL. Renders
+`StaticKeyboardEmbed` directly with no extra chrome when only one layout is in
+scope.
 
 ### KeyboardDisplay
 
