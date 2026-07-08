@@ -39,13 +39,12 @@ interface EmbedData {
 
 /**
  * Picks the layout file that should be selected by default when the caller
- * didn't pin one: prefer the bare file with no region/script suffix (e.g.
- * "se" over "se-FI"), falling back to the first alphabetically when every
- * file has a suffix (e.g. smj, which only has smj-NO/smj-SE).
+ * didn't pin one: just the first alphabetically (per `listLayoutFiles`'s
+ * sort). A repo's "bare" file (e.g. sme's se.yaml) is often mobile-only —
+ * preferring it isn't a representative default, so we don't special-case it.
  */
 function pickDefaultLayoutFile(files: { file: string }[]): string {
-  const bare = files.find((f) => !f.file.includes("-"));
-  return bare?.file ?? files[0].file;
+  return files[0].file;
 }
 
 /**
