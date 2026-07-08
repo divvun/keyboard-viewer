@@ -45,7 +45,10 @@ export const TAB_LABEL_STYLE = {
   fontSize: `${TAB_FONT_SIZE}rem`,
   fontFamily: "sans-serif",
   userSelect: "none",
-  flexShrink: 0,
+  // String, not number — this renderer doesn't special-case unitless CSS
+  // properties like Preact normally does, so a bare `0` would serialize as
+  // the invalid `flex-shrink: 0px` and get dropped by the browser.
+  flexShrink: "0",
   whiteSpace: "nowrap",
 } as const;
 
@@ -54,9 +57,9 @@ export const TAB_LABEL_STYLE = {
 export const TAB_BAR_LABEL_STYLE = {
   fontSize: `${TAB_FONT_SIZE}rem`,
   fontFamily: "sans-serif",
-  fontWeight: 700,
+  fontWeight: "700",
   color: "#4b5563",
-  flexShrink: 0,
+  flexShrink: "0",
   alignSelf: "center",
   paddingRight: "0.25rem",
 } as const;
