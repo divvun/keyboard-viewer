@@ -49,6 +49,18 @@ export const TAB_LABEL_STYLE = {
   whiteSpace: "nowrap",
 } as const;
 
+// Caption identifying what a tab bar switches (e.g. "Layer:"). Same
+// font-size/family as the pills so it doesn't change the row's height.
+export const TAB_BAR_LABEL_STYLE = {
+  fontSize: `${TAB_FONT_SIZE}rem`,
+  fontFamily: "sans-serif",
+  fontWeight: 700,
+  color: "#4b5563",
+  flexShrink: 0,
+  alignSelf: "center",
+  paddingRight: "0.25rem",
+} as const;
+
 interface StaticKeyboardEmbedProps {
   layout: KeyboardLayout;
   layers: LayerState[];
@@ -209,7 +221,15 @@ export function StaticKeyboardEmbed({
       })}
 
       {/* Layer tab toolbar — unscaled, always full size */}
-      <div class={`kbd-tabs-${uid}`} role="tablist" style={TAB_BAR_STYLE}>
+      <div
+        class={`kbd-tabs-${uid}`}
+        role="tablist"
+        aria-labelledby={`layer-tabs-label-${uid}`}
+        style={TAB_BAR_STYLE}
+      >
+        <span id={`layer-tabs-label-${uid}`} style={TAB_BAR_LABEL_STYLE}>
+          Layer:
+        </span>
         {layers.map((l) => (
           <label
             for={`layer-${uid}-${layerNameToId(l.name)}`}

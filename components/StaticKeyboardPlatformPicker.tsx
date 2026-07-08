@@ -3,6 +3,7 @@ import type { LayerState } from "../utils/layer-state.ts";
 import type { Platform } from "../constants/platforms.ts";
 import {
   StaticKeyboardEmbed,
+  TAB_BAR_LABEL_STYLE,
   TAB_BAR_STYLE,
   TAB_LABEL_STYLE,
 } from "./StaticKeyboardEmbed.tsx";
@@ -112,8 +113,12 @@ export function StaticKeyboardPlatformPicker({
       <div
         class={`kbd-platform-tabs-${uid}`}
         role="tablist"
+        aria-labelledby={`platform-tabs-label-${uid}`}
         style={TAB_BAR_STYLE}
       >
+        <span id={`platform-tabs-label-${uid}`} style={TAB_BAR_LABEL_STYLE}>
+          Platform:
+        </span>
         {combos.map((c) => (
           <label
             for={`platform-${uid}-${platformToId(c.platform)}`}

@@ -1,5 +1,9 @@
 import type { Platform } from "../constants/platforms.ts";
-import { TAB_BAR_STYLE, TAB_LABEL_STYLE } from "./StaticKeyboardEmbed.tsx";
+import {
+  TAB_BAR_LABEL_STYLE,
+  TAB_BAR_STYLE,
+  TAB_LABEL_STYLE,
+} from "./StaticKeyboardEmbed.tsx";
 import {
   type PlatformCombo,
   StaticKeyboardPlatformPicker,
@@ -105,8 +109,12 @@ export function StaticKeyboardLayoutPicker({
       <div
         class={`kbd-layout-tabs-${uid}`}
         role="tablist"
+        aria-labelledby={`layout-tabs-label-${uid}`}
         style={TAB_BAR_STYLE}
       >
+        <span id={`layout-tabs-label-${uid}`} style={TAB_BAR_LABEL_STYLE}>
+          Layout:
+        </span>
         {combos.map((c) => (
           <label
             for={`layout-${uid}-${fileToId(c.file)}`}
