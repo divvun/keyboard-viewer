@@ -27,6 +27,17 @@ export const TAB_BAR_HEIGHT = TAB_CONTAINER_PAD * 2 +
   TAB_FONT_SIZE * TAB_LINE_HEIGHT +
   TAB_BORDER;
 
+// `line-height: normal` (see TAB_LINE_HEIGHT above) is resolved by the
+// visitor's browser from their OS/font-stack, not a fixed ratio — measured
+// ~4px taller than this formula predicts in real-world Chrome/macOS testing,
+// enough to add a visible scrollbar to a no-JS static embed sized from the
+// exact estimate. No server-side formula can match every visitor's font
+// metrics exactly, so pad each tab bar row a bit: a few extra blank pixels
+// at the bottom is a much smaller problem than a hard scrollbar.
+const TAB_BAR_HEIGHT_SAFETY_PX = 8;
+export const TAB_BAR_HEIGHT_PX = Math.ceil(TAB_BAR_HEIGHT * REM_TO_PX) +
+  TAB_BAR_HEIGHT_SAFETY_PX;
+
 export const TAB_BAR_STYLE = {
   display: "flex",
   flexWrap: "nowrap",
@@ -179,7 +190,7 @@ export function computeStaticEmbedHeightPx(
     ? Math.min(requestedWidth / (naturalWidth * REM_TO_PX), 1)
     : 1;
   const gridHeightPx = Math.ceil(naturalHeight * scale * REM_TO_PX);
-  return Math.ceil(TAB_BAR_HEIGHT * REM_TO_PX) + gridHeightPx;
+  return TAB_BAR_HEIGHT_PX + gridHeightPx;
 }
 
 function generateLayerCss(uid: string, layers: LayerState[]): string {

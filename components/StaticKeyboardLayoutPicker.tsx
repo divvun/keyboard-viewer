@@ -1,7 +1,6 @@
 import type { Platform } from "../constants/platforms.ts";
 import {
-  REM_TO_PX,
-  TAB_BAR_HEIGHT,
+  TAB_BAR_HEIGHT_PX,
   TAB_BAR_LABEL_STYLE,
   TAB_BAR_STYLE,
   TAB_LABEL_STYLE,
@@ -77,7 +76,7 @@ export function computeLayoutPickerHeightPx(
     );
   }
   const checked = combos.find((c) => c.file === initialFile) ?? combos[0];
-  return Math.ceil(TAB_BAR_HEIGHT * REM_TO_PX) +
+  return TAB_BAR_HEIGHT_PX +
     computePlatformPickerHeightPx(
       checked.platformCombos,
       initialPlatform,
