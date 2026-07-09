@@ -1,3 +1,4 @@
+import { Fragment } from "preact";
 import { page } from "fresh";
 import type { PageProps } from "fresh";
 import { define, getErrorMessage } from "../utils.ts";
@@ -46,6 +47,73 @@ interface EmbedData {
 function pickDefaultLayoutFile(files: { file: string }[]): string {
   return files[0].file;
 }
+
+// Progressive enhancement for the no-JS static embed: without this, the
+// keyboard is a fixed size baked in at request time via `?width=`, so it
+// gets clipped on viewports narrower than that. With JS, re-fit every
+// ScaledEmbed block (marked by data-natural-width/height — see
+// components/StaticKeyboardEmbed.tsx) to the iframe's *actual* rendered
+// width on load/resize, then report the real height to the parent page via
+// the same `giellalt-keyboard-resize` postMessage the interactive embed
+// (islands/KeyboardEmbed.tsx + hooks/useKeyboardScaling.ts) already sends,
+// so existing listener scripts on embedding sites work unchanged.
+//
+// Uses ResizeObserver, not a `resize` listener: iframes don't reliably fire
+// `resize` when their size changes via CSS (e.g. width:100% reacting to the
+// parent window resizing) — a well-known cross-browser gotcha, and the
+// reason useKeyboardScaling.ts uses ResizeObserver too.
+const RESIZE_SCRIPT = `(function () {
+  function remToPx(rem) {
+    var base = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return rem * base;
+  }
+
+  function rescaleAll() {
+    var available = document.documentElement.clientWidth;
+    var els = document.querySelectorAll("[data-natural-width]");
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      var naturalWidth = parseFloat(el.getAttribute("data-natural-width"));
+      var naturalHeight = parseFloat(el.getAttribute("data-natural-height"));
+      var scale = Math.min(available / remToPx(naturalWidth), 1);
+      scale = Math.max(scale, 0.2);
+      var inner = el.firstElementChild;
+      if (inner) inner.style.transform = "scale(" + scale + ")";
+      el.style.width = (naturalWidth * scale) + "rem";
+      el.style.height = (naturalHeight * scale) + "rem";
+    }
+  }
+
+  function measureAndPost() {
+    var height = document.documentElement.scrollHeight;
+    window.parent.postMessage({ type: "giellalt-keyboard-resize", height: height }, "*");
+  }
+
+  function rescaleAndPost() {
+    rescaleAll();
+    requestAnimationFrame(measureAndPost);
+  }
+
+  var resizeTimer;
+  function scheduleRescale() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(rescaleAndPost, 100);
+  }
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(scheduleRescale).observe(document.documentElement);
+  } else {
+    window.addEventListener("resize", scheduleRescale);
+  }
+
+  document.addEventListener("change", function (event) {
+    if (event.target && event.target.type === "radio") {
+      requestAnimationFrame(measureAndPost);
+    }
+  });
+
+  rescaleAndPost();
+})();`;
 
 /**
  * Loads every platform a single layout file declares, so a platform tab bar
@@ -253,33 +321,51 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
       );
     } else if (combos) {
       body = (
-        <StaticKeyboardLayoutPicker
-          kbd={kbd}
-          combos={combos}
-          initialFile={layout}
-          initialPlatform={platform as Platform}
-          initialLayer={layer}
-          requestedWidth={requestedWidth}
-        />
+        <Fragment>
+          <StaticKeyboardLayoutPicker
+            kbd={kbd}
+            combos={combos}
+            initialFile={layout}
+            initialPlatform={platform as Platform}
+            initialLayer={layer}
+            requestedWidth={requestedWidth}
+          />
+          <script
+            // deno-lint-ignore react-no-danger
+            dangerouslySetInnerHTML={{ __html: RESIZE_SCRIPT }}
+          />
+        </Fragment>
       );
     } else if (platformCombos) {
       body = (
-        <StaticKeyboardPlatformPicker
-          uidPrefix={`${kbd}-${layout}`}
-          combos={platformCombos}
-          initialPlatform={platform as Platform}
-          initialLayer={layer}
-          requestedWidth={requestedWidth}
-        />
+        <Fragment>
+          <StaticKeyboardPlatformPicker
+            uidPrefix={`${kbd}-${layout}`}
+            combos={platformCombos}
+            initialPlatform={platform as Platform}
+            initialLayer={layer}
+            requestedWidth={requestedWidth}
+          />
+          <script
+            // deno-lint-ignore react-no-danger
+            dangerouslySetInnerHTML={{ __html: RESIZE_SCRIPT }}
+          />
+        </Fragment>
       );
     } else {
       body = (
-        <StaticKeyboardEmbed
-          layout={keyboardLayout!}
-          layers={layers!}
-          initialLayer={layer}
-          requestedWidth={requestedWidth}
-        />
+        <Fragment>
+          <StaticKeyboardEmbed
+            layout={keyboardLayout!}
+            layers={layers!}
+            initialLayer={layer}
+            requestedWidth={requestedWidth}
+          />
+          <script
+            // deno-lint-ignore react-no-danger
+            dangerouslySetInnerHTML={{ __html: RESIZE_SCRIPT }}
+          />
+        </Fragment>
       );
     }
   } else {

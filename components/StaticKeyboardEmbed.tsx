@@ -90,6 +90,14 @@ interface ScaledEmbedProps {
  * `transform: scale(...)` container sized to fit `requestedWidth`. Used to
  * scale just the keyboard key-grid — NOT tab bars, which render as plain
  * unscaled siblings around this wrapper.
+ *
+ * Always renders the same nested-wrapper shape (even when scale === 1, where
+ * `transform: scale(1)` is a no-op) — a client-side script re-fitting this to
+ * the actual iframe width (see `routes/embed.tsx`) needs one consistent DOM
+ * shape to find and update, regardless of what scale the server happened to
+ * pick at request time. `data-natural-width`/`data-natural-height` expose the
+ * unscaled size so that script doesn't need to reverse-parse rem values out
+ * of the transform/width styles.
  */
 export function ScaledEmbed(
   { naturalWidth, naturalHeight, requestedWidth, class: className, children }:
@@ -105,41 +113,31 @@ export function ScaledEmbed(
   // Exposed so embedders know the exact iframe height to set
   const embedHeight = Math.ceil(scaledHeight * REM_TO_PX);
 
-  if (scale !== 1) {
-    return (
-      <div
-        class={className}
-        data-embed-height={embedHeight}
-        style={{
-          display: "inline-block",
-          position: "relative",
-          width: `${scaledWidth}rem`,
-          height: `${scaledHeight}rem`,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: `${naturalWidth}rem`,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-          }}
-        >
-          {children}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div
       class={className}
       data-embed-height={embedHeight}
-      style={{ display: "inline-block", width: `${naturalWidth}rem` }}
+      data-natural-width={naturalWidth}
+      data-natural-height={naturalHeight}
+      style={{
+        display: "inline-block",
+        position: "relative",
+        width: `${scaledWidth}rem`,
+        height: `${scaledHeight}rem`,
+      }}
     >
-      {children}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: `${naturalWidth}rem`,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
