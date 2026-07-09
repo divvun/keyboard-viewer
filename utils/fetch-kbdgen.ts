@@ -1,5 +1,6 @@
 import { parse as parseYaml } from "jsr:@std/yaml@^1.0.0";
 import type { KbdgenLayout } from "./kbdgen-transform.ts";
+import { githubRawHeaders } from "./github.ts";
 
 export class LayoutNotFoundError extends Error {
   readonly status = 404;
@@ -42,15 +43,9 @@ export async function fetchKbdgenData(
     return cached.data;
   }
 
-  const githubToken = Deno.env.get("GITHUB_TOKEN");
-  const headers: Record<string, string> = { "User-Agent": "keyboard-viewer" };
-  if (githubToken) {
-    headers["Authorization"] = `Bearer ${githubToken}`;
-  }
-
   const response = await fetch(
     `https://raw.githubusercontent.com/giellalt/keyboard-${kbd}/refs/heads/main/${kbd}.kbdgen/layouts/${layoutFile}.yaml`,
-    { headers },
+    { headers: githubRawHeaders() },
   );
 
   if (!response.ok) {

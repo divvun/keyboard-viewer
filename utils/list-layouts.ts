@@ -1,4 +1,5 @@
 import { fetchKbdgenData } from "./fetch-kbdgen.ts";
+import { githubApiHeaders } from "./github.ts";
 
 export interface LayoutFile {
   file: string;
@@ -12,18 +13,6 @@ interface CacheEntry {
 
 const listCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 60 * 60 * 1000;
-
-function githubHeaders(): Record<string, string> {
-  const githubToken = Deno.env.get("GITHUB_TOKEN");
-  const headers: Record<string, string> = {
-    "Accept": "application/vnd.github+json",
-    "User-Agent": "keyboard-viewer",
-  };
-  if (githubToken) {
-    headers["Authorization"] = `Bearer ${githubToken}`;
-  }
-  return headers;
-}
 
 async function fetchDisplayName(
   kbd: string,
@@ -49,7 +38,7 @@ export async function listLayoutFiles(kbd: string): Promise<LayoutFile[]> {
 
   const response = await fetch(
     `https://api.github.com/repos/giellalt/keyboard-${kbd}/contents/${kbd}.kbdgen/layouts`,
-    { headers: githubHeaders() },
+    { headers: githubApiHeaders() },
   );
 
   if (!response.ok) {
