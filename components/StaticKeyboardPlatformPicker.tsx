@@ -2,7 +2,10 @@ import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import type { LayerState } from "../utils/layer-state.ts";
 import type { Platform } from "../constants/platforms.ts";
 import {
+  computeStaticEmbedHeightPx,
+  REM_TO_PX,
   StaticKeyboardEmbed,
+  TAB_BAR_HEIGHT,
   TAB_BAR_LABEL_STYLE,
   TAB_BAR_STYLE,
   TAB_LABEL_STYLE,
@@ -58,6 +61,26 @@ function generatePlatformCss(uid: string, combos: PlatformCombo[]): string {
   }
 
   return rules.join("\n");
+}
+
+/**
+ * Total rendered height (px) of a `StaticKeyboardPlatformPicker` for the
+ * platform that would actually be checked at SSR time — mirrors the
+ * `checkedPlatform` fallback logic in the component below exactly, so the
+ * height this reports always matches what gets rendered.
+ */
+export function computePlatformPickerHeightPx(
+  combos: PlatformCombo[],
+  initialPlatform: Platform,
+  requestedWidth?: number,
+): number {
+  if (combos.length === 1) {
+    return computeStaticEmbedHeightPx(combos[0].layout, requestedWidth);
+  }
+  const checked = combos.find((c) => c.platform === initialPlatform) ??
+    combos[0];
+  return Math.ceil(TAB_BAR_HEIGHT * REM_TO_PX) +
+    computeStaticEmbedHeightPx(checked.layout, requestedWidth);
 }
 
 /**

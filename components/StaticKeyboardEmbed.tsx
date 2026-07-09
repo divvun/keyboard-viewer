@@ -110,13 +110,10 @@ export function ScaledEmbed(
 
   const scaledWidth = naturalWidth * scale;
   const scaledHeight = naturalHeight * scale;
-  // Exposed so embedders know the exact iframe height to set
-  const embedHeight = Math.ceil(scaledHeight * REM_TO_PX);
 
   return (
     <div
       class={className}
-      data-embed-height={embedHeight}
       data-natural-width={naturalWidth}
       data-natural-height={naturalHeight}
       style={{
@@ -161,6 +158,28 @@ export function computeKeyboardDimensions(
     width: maxRowWidth + 2 * KBD_PADDING,
     height: numRows * BASE_WIDTH + (numRows - 1) * GAP + 2 * KBD_PADDING,
   };
+}
+
+/**
+ * Total rendered height (px) of a single `StaticKeyboardEmbed`: its one
+ * always-present layer tab bar plus the scaled keyboard grid below it. The
+ * picker components layer their own tab bar's height on top of this via the
+ * same `TAB_BAR_HEIGHT` constant — see `computePlatformPickerHeightPx` /
+ * `computeLayoutPickerHeightPx` — so a caller several levels up (routes/embed.tsx)
+ * can compute the true total for whichever combination of tab bars is
+ * actually rendered, without needing to render anything first.
+ */
+export function computeStaticEmbedHeightPx(
+  layout: KeyboardLayout,
+  requestedWidth?: number,
+): number {
+  const { width: naturalWidth, height: naturalHeight } =
+    computeKeyboardDimensions(layout);
+  const scale = requestedWidth != null
+    ? Math.min(requestedWidth / (naturalWidth * REM_TO_PX), 1)
+    : 1;
+  const gridHeightPx = Math.ceil(naturalHeight * scale * REM_TO_PX);
+  return Math.ceil(TAB_BAR_HEIGHT * REM_TO_PX) + gridHeightPx;
 }
 
 function generateLayerCss(uid: string, layers: LayerState[]): string {

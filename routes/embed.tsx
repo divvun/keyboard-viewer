@@ -3,13 +3,20 @@ import { page } from "fresh";
 import type { PageProps } from "fresh";
 import { define, getErrorMessage } from "../utils.ts";
 import { KeyboardEmbed } from "../islands/KeyboardEmbed.tsx";
-import { StaticKeyboardEmbed } from "../components/StaticKeyboardEmbed.tsx";
 import {
+  computeStaticEmbedHeightPx,
+  StaticKeyboardEmbed,
+} from "../components/StaticKeyboardEmbed.tsx";
+import {
+  computeLayoutPickerHeightPx,
   type LayoutCombo,
   type PlatformCombo,
   StaticKeyboardLayoutPicker,
 } from "../components/StaticKeyboardLayoutPicker.tsx";
-import { StaticKeyboardPlatformPicker } from "../components/StaticKeyboardPlatformPicker.tsx";
+import {
+  computePlatformPickerHeightPx,
+  StaticKeyboardPlatformPicker,
+} from "../components/StaticKeyboardPlatformPicker.tsx";
 import {
   parseKeyboardParams,
   serializeKeyboardParams,
@@ -305,6 +312,11 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
   } = data;
 
   let body;
+  // Total rendered height (tab bars + scaled grid) for whichever combination
+  // of pickers is about to render — read this off <body> below. Only set for
+  // the no-JS static paths; the interactive JS embed reports its height via
+  // postMessage instead (see islands/KeyboardEmbed.tsx).
+  let embedHeight: number | undefined;
   if (!interactive) {
     if (error) {
       body = (
@@ -320,6 +332,12 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
         </div>
       );
     } else if (combos) {
+      embedHeight = computeLayoutPickerHeightPx(
+        combos,
+        layout,
+        platform as Platform,
+        requestedWidth,
+      );
       body = (
         <Fragment>
           <StaticKeyboardLayoutPicker
@@ -337,6 +355,11 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
         </Fragment>
       );
     } else if (platformCombos) {
+      embedHeight = computePlatformPickerHeightPx(
+        platformCombos,
+        platform as Platform,
+        requestedWidth,
+      );
       body = (
         <Fragment>
           <StaticKeyboardPlatformPicker
@@ -353,6 +376,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
         </Fragment>
       );
     } else {
+      embedHeight = computeStaticEmbedHeightPx(keyboardLayout!, requestedWidth);
       body = (
         <Fragment>
           <StaticKeyboardEmbed
@@ -409,7 +433,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
         `}
         </style>
       </head>
-      <body>
+      <body data-embed-height={embedHeight}>
         {body}
       </body>
     </html>

@@ -1,10 +1,13 @@
 import type { Platform } from "../constants/platforms.ts";
 import {
+  REM_TO_PX,
+  TAB_BAR_HEIGHT,
   TAB_BAR_LABEL_STYLE,
   TAB_BAR_STYLE,
   TAB_LABEL_STYLE,
 } from "./StaticKeyboardEmbed.tsx";
 import {
+  computePlatformPickerHeightPx,
   type PlatformCombo,
   StaticKeyboardPlatformPicker,
 } from "./StaticKeyboardPlatformPicker.tsx";
@@ -52,6 +55,34 @@ function generateLayoutCss(uid: string, combos: LayoutCombo[]): string {
   }
 
   return rules.join("\n");
+}
+
+/**
+ * Total rendered height (px) of a `StaticKeyboardLayoutPicker` for the layout
+ * that would actually be checked at SSR time — mirrors the `checkedFile`
+ * fallback logic in the component below exactly, so the height this reports
+ * always matches what gets rendered.
+ */
+export function computeLayoutPickerHeightPx(
+  combos: LayoutCombo[],
+  initialFile: string,
+  initialPlatform: Platform,
+  requestedWidth?: number,
+): number {
+  if (combos.length === 1) {
+    return computePlatformPickerHeightPx(
+      combos[0].platformCombos,
+      initialPlatform,
+      requestedWidth,
+    );
+  }
+  const checked = combos.find((c) => c.file === initialFile) ?? combos[0];
+  return Math.ceil(TAB_BAR_HEIGHT * REM_TO_PX) +
+    computePlatformPickerHeightPx(
+      checked.platformCombos,
+      initialPlatform,
+      requestedWidth,
+    );
 }
 
 /**
