@@ -1,4 +1,4 @@
-import type { ComponentChildren } from "preact";
+import { Component, type ComponentChildren } from "preact";
 import type {
   Key as KeyType,
   KeyboardLayout,
@@ -151,7 +151,7 @@ export function computeStaticEmbedHeightPx(
   return TAB_BAR_HEIGHT_PX + gridHeightPx;
 }
 
-export function StaticKeyboardEmbed({
+function StaticKeyboardEmbedInner({
   layout,
   layers,
   initialLayer,
@@ -222,4 +222,36 @@ export function StaticKeyboardEmbed({
       )}
     />
   );
+}
+
+function shallowPropsEqual(
+  a: StaticKeyboardEmbedProps,
+  b: StaticKeyboardEmbedProps,
+): boolean {
+  const aKeys = Object.keys(a) as (keyof StaticKeyboardEmbedProps)[];
+  const bKeys = Object.keys(b) as (keyof StaticKeyboardEmbedProps)[];
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((key) => Object.is(a[key], b[key]));
+}
+
+/**
+ * `KeyboardPicker` renders every layout x platform combo simultaneously (the
+ * no-JS radio/:checked machinery needs all of them present), but only wires
+ * live typing/press state into the one that's actually checked — every other
+ * combo's props are therefore referentially stable across a re-render caused
+ * by, say, a keystroke in the active one. Without this, Preact would still
+ * re-invoke and re-diff every hidden combo's full layer x key tree on every
+ * keystroke, which is the dominant cost that made hardware typing feel slow
+ * once there could be several combos in the tree instead of just one.
+ */
+export class StaticKeyboardEmbed extends Component<StaticKeyboardEmbedProps> {
+  override shouldComponentUpdate(
+    nextProps: StaticKeyboardEmbedProps,
+  ): boolean {
+    return !shallowPropsEqual(this.props, nextProps);
+  }
+
+  override render() {
+    return <StaticKeyboardEmbedInner {...this.props} />;
+  }
 }

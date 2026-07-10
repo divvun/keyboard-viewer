@@ -217,3 +217,35 @@ Deno.test({
     assertEquals(textarea.value, "a1");
   },
 });
+
+Deno.test({
+  name: "inactive combos aren't wired for typing (only the checked one is)",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const host = setup();
+    await hydrate(host);
+
+    // layout-b starts inactive (layout-a/macOS is the initial combo).
+    // Clicking its key must NOT type — proving KeyboardPicker only wires
+    // live press/typing state into the checked combo, not every combo in
+    // the tree (see StaticKeyboardLayoutPicker/StaticKeyboardPlatformPicker's
+    // isActiveFile/checkedPlatform guards). Without that scoping, every
+    // combo would be wired and this click would type "b1".
+    const layoutBScope = host.querySelector(".kbd-layout-view-layout-b");
+    const inactiveKey = layoutBScope.querySelector('button[title="KeyA"]');
+    inactiveKey.click();
+    await new Promise((r) => setTimeout(r, 50));
+
+    const textarea = host.querySelector("textarea");
+    assertEquals(textarea.value, "");
+
+    // The active combo (layout-a/macOS) still works.
+    const layoutAScope = host.querySelector(".kbd-layout-view-layout-a");
+    const activeKey = layoutAScope.querySelector('button[title="KeyA"]');
+    activeKey.click();
+    await new Promise((r) => setTimeout(r, 50));
+
+    assertEquals(textarea.value, "a1");
+  },
+});

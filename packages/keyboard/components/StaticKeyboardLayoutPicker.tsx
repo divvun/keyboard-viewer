@@ -105,18 +105,25 @@ export function StaticKeyboardLayoutPicker({
         data: { "data-layout-file": c.file },
         value: c,
       }))}
-      renderView={({ value: c }) => (
-        <StaticKeyboardPlatformPicker
-          uidPrefix={`${kbd}-${c.file}`}
-          combos={c.platformCombos}
-          initialPlatform={initialPlatform}
-          initialLayer={initialLayer}
-          requestedWidth={requestedWidth}
-          checkedPlatform={checkedPlatform}
-          onPlatformChange={onPlatformChange}
-          embedHydration={embedHydration}
-        />
-      )}
+      renderView={({ value: c }) => {
+        // Only the checked layout file is ever visible — scope the live
+        // platform/typing wiring to it so switching layers/typing doesn't
+        // re-render every other layout file's whole platform x layer
+        // subtree on every keystroke.
+        const isActiveFile = c.file === checkedFile;
+        return (
+          <StaticKeyboardPlatformPicker
+            uidPrefix={`${kbd}-${c.file}`}
+            combos={c.platformCombos}
+            initialPlatform={initialPlatform}
+            initialLayer={initialLayer}
+            requestedWidth={requestedWidth}
+            checkedPlatform={isActiveFile ? checkedPlatform : undefined}
+            onPlatformChange={isActiveFile ? onPlatformChange : undefined}
+            embedHydration={isActiveFile ? embedHydration : undefined}
+          />
+        );
+      }}
     />
   );
 }

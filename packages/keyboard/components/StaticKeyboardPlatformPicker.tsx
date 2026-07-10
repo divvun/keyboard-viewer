@@ -107,7 +107,13 @@ export function StaticKeyboardPlatformPicker({
           layers={c.layers}
           initialLayer={initialLayer}
           requestedWidth={requestedWidth}
-          {...embedHydration}
+          {
+            // Only the checked platform is ever visible — wiring typing/press
+            // state into the others would make every keystroke re-render every
+            // hidden combo in the tree for nothing. See the equivalent guard
+            // in StaticKeyboardLayoutPicker for the layout dimension.
+            ...(c.platform === checkedPlatform ? embedHydration : undefined)
+          }
         />
       )}
     />

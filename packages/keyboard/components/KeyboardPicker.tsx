@@ -299,6 +299,11 @@ export function KeyboardPicker({
   // in the tree — only the surrounding radio id (prefixed by the layout's
   // synthetic id) is unique.
   const setLayer = (name: string) => {
+    // The overwhelming majority of keydown/keyup events don't change the
+    // layer (plain letters with no modifiers held) — bail before touching
+    // state or the DOM so typing doesn't pay for a layer switch it isn't
+    // making.
+    if (name === checkedLayer) return;
     setCheckedLayer(name);
     const root = rootRef.current;
     if (!root) return;
