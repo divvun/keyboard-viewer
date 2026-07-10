@@ -15,23 +15,30 @@ const BASE_WIDTH = 3.5; // rem — matches Key component
 const GAP = 0.25; // rem — matches KeyboardLayout row gap
 const KBD_PADDING = 1; // rem — p-4 on each side
 
-interface StaticKeyboardEmbedProps {
-  layout: KeyboardLayout;
-  layers: LayerState[];
-  initialLayer: string;
-  /** Scale keyboard to this pixel width. Never upscales beyond natural size. */
-  requestedWidth?: number;
-  /**
-   * Hydration pass-throughs, used by the unified <Keyboard> component
-   * (components/Keyboard.tsx). All optional — when absent (pure-static SSR
-   * usage, e.g. the picker components) the rendered markup is identical,
-   * since handlers never serialize to HTML.
-   */
+/**
+ * Hydration pass-throughs, used by the hydrated keyboard components
+ * (components/Keyboard.tsx, components/KeyboardPicker.tsx). All optional —
+ * when absent (pure-static SSR usage, e.g. the picker components on their
+ * own) the rendered markup is identical, since handlers never serialize to
+ * HTML. Bundled into one type so callers threading it through multiple
+ * nested picker levels (see StaticKeyboardPlatformPicker/
+ * StaticKeyboardLayoutPicker's `embedHydration` prop) don't repeat all 5
+ * field names at every level.
+ */
+export interface KeyboardEmbedHydration {
   checkedLayer?: string;
   onLayerChange?: (layerName: string) => void;
   onKeyClick?: (key: KeyType) => void;
   pressedKeyId?: string | null;
   pendingDeadkey?: string | null;
+}
+
+interface StaticKeyboardEmbedProps extends KeyboardEmbedHydration {
+  layout: KeyboardLayout;
+  layers: LayerState[];
+  initialLayer: string;
+  /** Scale keyboard to this pixel width. Never upscales beyond natural size. */
+  requestedWidth?: number;
 }
 
 interface ScaledEmbedProps {

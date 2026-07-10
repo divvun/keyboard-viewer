@@ -4,21 +4,15 @@ import type { PageProps, RouteConfig } from "fresh";
 import { define, getErrorMessage } from "../utils.ts";
 import KeyboardIsland from "../islands/Keyboard.tsx";
 import {
+  buildKeyboardComboTree,
   computeLayoutPickerHeightPx,
-  computePlatformPickerHeightPx,
-  computeStaticEmbedHeightPx,
   enumerateLayers,
   type KeyboardLayout,
-  type KeyboardParams,
   type LayerState,
   type LayoutCombo,
-  listLayoutFiles,
   loadKeyboardLayout,
   type Platform,
-  type PlatformCombo,
-  StaticKeyboardEmbed,
   StaticKeyboardLayoutPicker,
-  StaticKeyboardPlatformPicker,
 } from "@divvun/keyboard";
 import {
   parseKeyboardParams,
@@ -41,21 +35,81 @@ interface EmbedData {
   keyboardLayout?: KeyboardLayout;
   layers?: LayerState[];
   combos?: LayoutCombo[];
-  platformCombos?: PlatformCombo[];
   error?: string;
   staticUrl: string;
   requestedWidth?: number;
 }
 
-/**
- * Picks the layout file that should be selected by default when the caller
- * didn't pin one: just the first alphabetically (per `listLayoutFiles`'s
- * sort). A repo's "bare" file (e.g. sme's se.yaml) is often mobile-only —
- * preferring it isn't a representative default, so we don't special-case it.
- */
-function pickDefaultLayoutFile(files: { file: string }[]): string {
-  return files[0].file;
-}
+export const handler = define.handlers<EmbedData>({
+  async GET(ctx) {
+    const params = parseKeyboardParams(ctx.url.searchParams);
+    const interactive = ctx.url.searchParams.get("interactive") !== "false";
+    // parseKeyboardParams defaults `layout`/`platform` globally when absent,
+    // which is meaningless for kbds that don't have that file/platform.
+    // Detect absence from the raw query string instead of trusting params.
+    const hasExplicitLayout = ctx.url.searchParams.has("layout");
+    const hasExplicitPlatform = ctx.url.searchParams.has("platform");
+
+    const staticUrl = `/embed?${
+      serializeKeyboardParams(params)
+    }&interactive=false`;
+
+    const parsePositivePx = (raw: string | null): number | undefined => {
+      if (raw == null) return undefined;
+      const n = parseFloat(raw);
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    };
+    const requestedWidth = parsePositivePx(ctx.url.searchParams.get("width"));
+
+    const base = {
+      kbd: params.kbd,
+      layout: params.layout,
+      platform: params.platform as string,
+      variant: params.variant as string,
+      layer: params.layer ?? "default",
+      interactive,
+      staticUrl,
+      requestedWidth,
+    };
+
+    const cacheHeaders = {
+      "Cache-Control": "public, max-age=300, s-maxage=3600",
+    };
+
+    if (!interactive) {
+      try {
+        const tree = await buildKeyboardComboTree(params, {
+          layoutFile: hasExplicitLayout ? params.layout : undefined,
+          platform: hasExplicitPlatform ? params.platform : undefined,
+        });
+        return page<EmbedData>(
+          {
+            ...base,
+            layout: tree.defaultFile,
+            platform: tree.defaultPlatform,
+            combos: tree.combos,
+          },
+          { headers: cacheHeaders },
+        );
+      } catch (e) {
+        return page<EmbedData>({ ...base, error: getErrorMessage(e) });
+      }
+    }
+
+    // Interactive: same server-side load as the static path — the island
+    // receives the transformed layout as props and never fetches.
+    try {
+      const loaded = await loadKeyboardLayout(params);
+      const layers = enumerateLayers(loaded.layout);
+      return page<EmbedData>(
+        { ...base, keyboardLayout: loaded.layout, layers },
+        { headers: cacheHeaders },
+      );
+    } catch (e) {
+      return page<EmbedData>({ ...base, error: getErrorMessage(e) });
+    }
+  },
+});
 
 // Progressive enhancement for the no-JS static embed: without this, the
 // keyboard is a fixed size baked in at request time via `?width=`, so it
@@ -141,190 +195,6 @@ const POST_HEIGHT_SCRIPT = `(function () {
   post();
 })();`;
 
-/**
- * Loads every platform a single layout file declares, so a platform tab bar
- * has something to show. `loadKeyboardLayout` caches the underlying kbdgen
- * fetch+parse per (kbd, layout) — see the package's `fetch-kbdgen.ts` — so
- * this only costs one GitHub fetch regardless of how many platforms it
- * materializes.
- */
-async function buildPlatformCombosForLayout(
-  params: KeyboardParams,
-  layoutFile: string,
-): Promise<PlatformCombo[]> {
-  const probe = await loadKeyboardLayout({ ...params, layout: layoutFile });
-
-  return Promise.all(
-    probe.availablePlatforms.map(async (platform) => {
-      const loaded = platform === probe.selectedPlatform
-        ? probe
-        : await loadKeyboardLayout({
-          ...params,
-          layout: layoutFile,
-          platform,
-        });
-      return {
-        platform,
-        layout: loaded.layout,
-        layers: enumerateLayers(loaded.layout),
-      };
-    }),
-  );
-}
-
-export const handler = define.handlers<EmbedData>({
-  async GET(ctx) {
-    const params = parseKeyboardParams(ctx.url.searchParams);
-    const interactive = ctx.url.searchParams.get("interactive") !== "false";
-    // parseKeyboardParams defaults `layout`/`platform` globally when absent,
-    // which is meaningless for kbds that don't have that file/platform.
-    // Detect absence from the raw query string instead of trusting params.
-    const hasExplicitLayout = ctx.url.searchParams.has("layout");
-    const hasExplicitPlatform = ctx.url.searchParams.has("platform");
-
-    const staticUrl = `/embed?${
-      serializeKeyboardParams(params)
-    }&interactive=false`;
-
-    const parsePositivePx = (raw: string | null): number | undefined => {
-      if (raw == null) return undefined;
-      const n = parseFloat(raw);
-      return Number.isFinite(n) && n > 0 ? n : undefined;
-    };
-    const requestedWidth = parsePositivePx(ctx.url.searchParams.get("width"));
-
-    const base = {
-      kbd: params.kbd,
-      layout: params.layout,
-      platform: params.platform as string,
-      variant: params.variant as string,
-      layer: params.layer ?? "default",
-      interactive,
-      staticUrl,
-      requestedWidth,
-    };
-
-    const cacheHeaders = {
-      "Cache-Control": "public, max-age=300, s-maxage=3600",
-    };
-
-    if (!interactive) {
-      try {
-        if (hasExplicitLayout && hasExplicitPlatform) {
-          // Both pinned — existing fast path, unchanged.
-          const loaded = await loadKeyboardLayout(params);
-          const layers = enumerateLayers(loaded.layout);
-          return page<EmbedData>(
-            { ...base, keyboardLayout: loaded.layout, layers },
-            { headers: cacheHeaders },
-          );
-        }
-
-        if (hasExplicitLayout && !hasExplicitPlatform) {
-          // Layout pinned, platform absent: platform tabs for this one layout.
-          const platformCombos = await buildPlatformCombosForLayout(
-            params,
-            params.layout,
-          );
-          const initialPlatform = platformCombos.some((c) =>
-              c.platform === params.platform
-            )
-            ? params.platform
-            : platformCombos[0].platform;
-
-          return page<EmbedData>(
-            { ...base, platform: initialPlatform, platformCombos },
-            { headers: cacheHeaders },
-          );
-        }
-
-        // Layout absent: enumerate every layout file for this kbd.
-        const files = await listLayoutFiles(params.kbd);
-        if (files.length === 0) {
-          throw new Error("No layouts found for this keyboard");
-        }
-
-        if (!hasExplicitLayout && hasExplicitPlatform) {
-          // Layout absent, platform pinned: existing behavior. Some kbdgen
-          // repos declare a "bare" layout file for mobile only (e.g. sme's
-          // se.yaml is android/iOS-only; the desktop layouts are
-          // se-FI/se-NO/se-SE) — only offer files that actually support the
-          // pinned platform so every layout tab renders the same platform.
-          const loaded = await Promise.all(
-            files.map(async (f) => ({
-              file: f.file,
-              displayName: f.displayName,
-              loaded: await loadKeyboardLayout({ ...params, layout: f.file }),
-            })),
-          );
-
-          const combos: LayoutCombo[] = loaded
-            .filter((c) => c.loaded.selectedPlatform === params.platform)
-            .map((c) => ({
-              file: c.file,
-              displayName: c.displayName,
-              platformCombos: [{
-                platform: c.loaded.selectedPlatform,
-                layout: c.loaded.layout,
-                layers: enumerateLayers(c.loaded.layout),
-              }],
-            }));
-
-          if (combos.length === 0) {
-            throw new Error(
-              `No layouts available for platform ${params.platform}`,
-            );
-          }
-
-          const defaultFile = pickDefaultLayoutFile(combos);
-
-          return page<EmbedData>(
-            { ...base, layout: defaultFile, combos },
-            { headers: cacheHeaders },
-          );
-        }
-
-        // Both absent: full nested layout → platform tree. Each layout's
-        // platform set stands on its own — no cross-layout filtering, since
-        // switching layout tabs doesn't need to keep a single platform
-        // consistent across all of them anymore.
-        const combos: LayoutCombo[] = await Promise.all(
-          files.map(async (f) => ({
-            file: f.file,
-            displayName: f.displayName,
-            platformCombos: await buildPlatformCombosForLayout(
-              params,
-              f.file,
-            ),
-          })),
-        );
-
-        const defaultFile = pickDefaultLayoutFile(files);
-
-        return page<EmbedData>(
-          { ...base, layout: defaultFile, combos },
-          { headers: cacheHeaders },
-        );
-      } catch (e) {
-        return page<EmbedData>({ ...base, error: getErrorMessage(e) });
-      }
-    }
-
-    // Interactive: same server-side load as the static path — the island
-    // receives the transformed layout as props and never fetches.
-    try {
-      const loaded = await loadKeyboardLayout(params);
-      const layers = enumerateLayers(loaded.layout);
-      return page<EmbedData>(
-        { ...base, keyboardLayout: loaded.layout, layers },
-        { headers: cacheHeaders },
-      );
-    } catch (e) {
-      return page<EmbedData>({ ...base, error: getErrorMessage(e) });
-    }
-  },
-});
-
 export default function EmbedPage({ data }: PageProps<EmbedData>) {
   const {
     kbd,
@@ -335,17 +205,15 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
     keyboardLayout,
     layers,
     combos,
-    platformCombos,
     error,
     staticUrl,
     requestedWidth,
   } = data;
 
   let body;
-  // Total rendered height (tab bars + scaled grid) for whichever combination
-  // of pickers is about to render — read this off <body> below. Only set for
-  // the no-JS static paths; the interactive island reports its height via
-  // postMessage instead (see POST_HEIGHT_SCRIPT).
+  // Total rendered height (tab bars + scaled grid) for the no-JS static
+  // path — read this off <body> below. The interactive island reports its
+  // height via postMessage instead (see POST_HEIGHT_SCRIPT).
   let embedHeight: number | undefined;
   if (error) {
     body = (
@@ -361,67 +229,28 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
       </div>
     );
   } else if (!interactive) {
-    if (combos) {
-      embedHeight = computeLayoutPickerHeightPx(
-        combos,
-        layout,
-        platform as Platform,
-        requestedWidth,
-      );
-      body = (
-        <Fragment>
-          <StaticKeyboardLayoutPicker
-            kbd={kbd}
-            combos={combos}
-            initialFile={layout}
-            initialPlatform={platform as Platform}
-            initialLayer={layer}
-            requestedWidth={requestedWidth}
-          />
-          <script
-            // deno-lint-ignore react-no-danger
-            dangerouslySetInnerHTML={{ __html: RESIZE_SCRIPT }}
-          />
-        </Fragment>
-      );
-    } else if (platformCombos) {
-      embedHeight = computePlatformPickerHeightPx(
-        platformCombos,
-        platform as Platform,
-        requestedWidth,
-      );
-      body = (
-        <Fragment>
-          <StaticKeyboardPlatformPicker
-            uidPrefix={`${kbd}-${layout}`}
-            combos={platformCombos}
-            initialPlatform={platform as Platform}
-            initialLayer={layer}
-            requestedWidth={requestedWidth}
-          />
-          <script
-            // deno-lint-ignore react-no-danger
-            dangerouslySetInnerHTML={{ __html: RESIZE_SCRIPT }}
-          />
-        </Fragment>
-      );
-    } else {
-      embedHeight = computeStaticEmbedHeightPx(keyboardLayout!, requestedWidth);
-      body = (
-        <Fragment>
-          <StaticKeyboardEmbed
-            layout={keyboardLayout!}
-            layers={layers!}
-            initialLayer={layer}
-            requestedWidth={requestedWidth}
-          />
-          <script
-            // deno-lint-ignore react-no-danger
-            dangerouslySetInnerHTML={{ __html: RESIZE_SCRIPT }}
-          />
-        </Fragment>
-      );
-    }
+    embedHeight = computeLayoutPickerHeightPx(
+      combos!,
+      layout,
+      platform as Platform,
+      requestedWidth,
+    );
+    body = (
+      <Fragment>
+        <StaticKeyboardLayoutPicker
+          kbd={kbd}
+          combos={combos!}
+          initialFile={layout}
+          initialPlatform={platform as Platform}
+          initialLayer={layer}
+          requestedWidth={requestedWidth}
+        />
+        <script
+          // deno-lint-ignore react-no-danger
+          dangerouslySetInnerHTML={{ __html: RESIZE_SCRIPT }}
+        />
+      </Fragment>
+    );
   } else {
     // The island's server render is already a fully working no-JS keyboard
     // (radio/:checked machinery), so there is no <noscript> fallback — the

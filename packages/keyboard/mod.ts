@@ -9,7 +9,12 @@
 
 export { Keyboard, type KeyboardProps } from "./components/Keyboard.tsx";
 export {
+  KeyboardPicker,
+  type KeyboardPickerProps,
+} from "./components/KeyboardPicker.tsx";
+export {
   computeStaticEmbedHeightPx,
+  type KeyboardEmbedHydration,
   StaticKeyboardEmbed,
 } from "./components/StaticKeyboardEmbed.tsx";
 export {
@@ -37,6 +42,11 @@ export {
 } from "./utils/load-layout.ts";
 export type { KeyboardParams } from "./utils/params.ts";
 export { listLayoutFiles } from "./utils/list-layouts.ts";
+export {
+  type BuildComboTreeOptions,
+  buildKeyboardComboTree,
+  type KeyboardComboTree,
+} from "./utils/combo-tree.ts";
 export {
   getAvailablePlatforms,
   getMobileVariants,

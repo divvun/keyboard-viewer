@@ -5,6 +5,7 @@ import { slugifyId, TAB_BAR_HEIGHT_PX } from "../utils/tab-bar.ts";
 import { CssTabPicker } from "./CssTabPicker.tsx";
 import {
   computeStaticEmbedHeightPx,
+  type KeyboardEmbedHydration,
   StaticKeyboardEmbed,
 } from "./StaticKeyboardEmbed.tsx";
 
@@ -23,6 +24,15 @@ interface StaticKeyboardPlatformPickerProps {
   initialLayer: string;
   /** Scale keyboard to this pixel width. Never upscales beyond natural size. */
   requestedWidth?: number;
+  /** Hydration hooks: which platform is checked (overrides the initialPlatform
+   * fallback below) and a callback fired when the user switches platform tabs.
+   * Both optional — absent in pure-static SSR usage (the /embed route's
+   * non-interactive path), used by the hydrated KeyboardPicker component. */
+  checkedPlatform?: Platform;
+  onPlatformChange?: (platform: Platform) => void;
+  /** Forwarded straight into the nested StaticKeyboardEmbed's layer picker —
+   * see KeyboardEmbedHydration's doc comment. */
+  embedHydration?: KeyboardEmbedHydration;
 }
 
 const PLATFORM_LABELS: Record<Platform, string> = {
@@ -67,10 +77,14 @@ export function StaticKeyboardPlatformPicker({
   initialPlatform,
   initialLayer,
   requestedWidth,
+  checkedPlatform: checkedPlatformProp,
+  onPlatformChange,
+  embedHydration,
 }: StaticKeyboardPlatformPickerProps) {
-  const checkedPlatform = combos.some((c) => c.platform === initialPlatform)
-    ? initialPlatform
-    : combos[0].platform;
+  const checkedPlatform = checkedPlatformProp ??
+    (combos.some((c) => c.platform === initialPlatform)
+      ? initialPlatform
+      : combos[0].platform);
 
   return (
     <CssTabPicker
@@ -78,10 +92,13 @@ export function StaticKeyboardPlatformPicker({
       uid={slugifyId(uidPrefix)}
       caption="Platform:"
       checkedId={slugifyId(checkedPlatform)}
+      onCheck={onPlatformChange &&
+        ((item) => onPlatformChange(item.value.platform))}
       items={combos.map((c) => ({
         id: slugifyId(c.platform),
         label: PLATFORM_LABELS[c.platform] ?? c.platform,
         ariaLabel: `Platform: ${PLATFORM_LABELS[c.platform]}`,
+        data: { "data-platform": c.platform },
         value: c,
       }))}
       renderView={({ value: c }) => (
@@ -90,6 +107,7 @@ export function StaticKeyboardPlatformPicker({
           layers={c.layers}
           initialLayer={initialLayer}
           requestedWidth={requestedWidth}
+          {...embedHydration}
         />
       )}
     />

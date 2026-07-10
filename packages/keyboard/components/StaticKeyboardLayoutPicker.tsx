@@ -1,6 +1,7 @@
 import type { Platform } from "../constants/platforms.ts";
 import { slugifyId, TAB_BAR_HEIGHT_PX } from "../utils/tab-bar.ts";
 import { CssTabPicker } from "./CssTabPicker.tsx";
+import type { KeyboardEmbedHydration } from "./StaticKeyboardEmbed.tsx";
 import {
   computePlatformPickerHeightPx,
   type PlatformCombo,
@@ -25,6 +26,17 @@ interface StaticKeyboardLayoutPickerProps {
   initialLayer: string;
   /** Scale keyboard to this pixel width. Never upscales beyond natural size. */
   requestedWidth?: number;
+  /** Hydration hooks: which layout file is checked (overrides the
+   * initialFile fallback below) and a callback fired when the user switches
+   * layout tabs. Both optional — absent in pure-static SSR usage, used by
+   * the hydrated KeyboardPicker component. */
+  checkedFile?: string;
+  onFileChange?: (file: string) => void;
+  /** Forwarded straight into the nested StaticKeyboardPlatformPicker. */
+  checkedPlatform?: Platform;
+  onPlatformChange?: (platform: Platform) => void;
+  /** Forwarded through both nested levels into StaticKeyboardEmbed. */
+  embedHydration?: KeyboardEmbedHydration;
 }
 
 /**
@@ -70,10 +82,14 @@ export function StaticKeyboardLayoutPicker({
   initialPlatform,
   initialLayer,
   requestedWidth,
+  checkedFile: checkedFileProp,
+  onFileChange,
+  checkedPlatform,
+  onPlatformChange,
+  embedHydration,
 }: StaticKeyboardLayoutPickerProps) {
-  const checkedFile = combos.some((c) => c.file === initialFile)
-    ? initialFile
-    : combos[0].file;
+  const checkedFile = checkedFileProp ??
+    (combos.some((c) => c.file === initialFile) ? initialFile : combos[0].file);
 
   return (
     <CssTabPicker
@@ -81,10 +97,12 @@ export function StaticKeyboardLayoutPicker({
       uid={slugifyId(kbd)}
       caption="Layout:"
       checkedId={slugifyId(checkedFile)}
+      onCheck={onFileChange && ((item) => onFileChange(item.value.file))}
       items={combos.map((c) => ({
         id: slugifyId(c.file),
         label: c.displayName,
         ariaLabel: `Keyboard layout: ${c.displayName}`,
+        data: { "data-layout-file": c.file },
         value: c,
       }))}
       renderView={({ value: c }) => (
@@ -94,6 +112,9 @@ export function StaticKeyboardLayoutPicker({
           initialPlatform={initialPlatform}
           initialLayer={initialLayer}
           requestedWidth={requestedWidth}
+          checkedPlatform={checkedPlatform}
+          onPlatformChange={onPlatformChange}
+          embedHydration={embedHydration}
         />
       )}
     />
