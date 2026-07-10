@@ -1,4 +1,4 @@
-import type { ComponentChildren } from "preact";
+import { type ComponentChildren, h } from "preact";
 
 export interface CssTabPickerItem<T> {
   /** Sanitized, unique-within-this-tab-bar id fragment (see `slugifyId`). */
@@ -101,23 +101,31 @@ export function CssTabPicker<T>({
   return (
     <div class="dvk" style={{ position: "relative" }}>
       {/* Hidden radio buttons — must precede the tab bar and views as siblings */}
-      {items.map((item) => (
-        <input
-          type="radio"
-          name={groupName}
-          id={`${groupName}-${item.id}`}
-          class="dvk-radio"
-          {...(item.data ?? {})}
-          // Uncontrolled on purpose (defaultChecked, never checked): the DOM
-          // radios are the single source of truth for the visible view — the
-          // no-JS :checked machinery depends on that, and Preact
-          // force-applies a `checked` prop even during hydration, which
-          // would clobber a switch the user made before island JS loaded.
-          defaultChecked={item.id === checkedId}
-          onChange={onCheck && (() => onCheck(item))}
-          aria-label={item.ariaLabel}
-        />
-      ))}
+      {items.map((item) =>
+        // h() instead of JSX, deliberately. Two constraints meet here:
+        // 1. The radios must be uncontrolled (defaultChecked, never
+        //    checked): the DOM radios are the single source of truth for the
+        //    visible view — the no-JS :checked machinery depends on that,
+        //    and Preact force-applies a `checked` prop even during
+        //    hydration, which would clobber a switch the user made before
+        //    island JS loaded.
+        // 2. This package is compiled by its CONSUMER's JSX config, and
+        //    Deno's `jsx: "precompile"` (the Fresh default) serializes JSX
+        //    defaultChecked as a literal lowercase `defaultchecked`
+        //    attribute — never mapped to `checked`, so the initial tab
+        //    renders unchecked. The runtime factory maps it correctly under
+        //    every compiler.
+        h("input", {
+          type: "radio",
+          name: groupName,
+          id: `${groupName}-${item.id}`,
+          class: "dvk-radio",
+          ...(item.data ?? {}),
+          defaultChecked: item.id === checkedId,
+          onChange: onCheck && (() => onCheck(item)),
+          "aria-label": item.ariaLabel,
+        })
+      )}
 
       {/* Tab toolbar — unscaled, always full size */}
       <div
