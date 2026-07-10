@@ -11,7 +11,7 @@ import {
   isSymbolsKey,
 } from "../utils/key-helpers.ts";
 import { getActiveLayer, layerNameToModifiers } from "../utils/modifiers.ts";
-import { decodeUnicodeEscapes } from "../utils.ts";
+import { decodeUnicodeEscapes } from "../utils/text.ts";
 
 interface KeyProps {
   keyData: KeyType;
@@ -138,23 +138,15 @@ export function Key(
     touchAction: "manipulation", // Prevent 300ms tap delay on mobile
   };
 
-  const keyClass = `
-    relative
-    rounded-lg
-    border-2
-    border-solid
-    shadow-sm
-    hover:shadow-md
-    transition-shadow
-    font-mono
-    cursor-pointer
-    select-none
-    flex items-center justify-center
-    ${isActive ? "key-active" : "bg-white border-gray-300 hover:bg-gray-200"}
-    ${
-    isIconLabel ? "kbd-icon" : isFunctionKey(keyData.id) ? "text-sm" : "text-xl"
-  }
-  `;
+  const keyClass = [
+    "dvk-key",
+    isActive ? "dvk-key--active" : "",
+    isIconLabel
+      ? "dvk-key--icon"
+      : isFunctionKey(keyData.id)
+      ? "dvk-key--fn"
+      : "",
+  ].filter(Boolean).join(" ");
 
   // In static (no-JS) mode, render modifier keys as <label> elements
   if (labelForLayer) {

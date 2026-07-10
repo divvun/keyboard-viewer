@@ -3,7 +3,7 @@ import {
   DEFAULT_VARIANT,
   type DeviceVariant,
   type Platform,
-} from "../constants/platforms.ts";
+} from "@divvun/keyboard";
 
 // Shared parameter types
 export interface KeyboardParams {

@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import type { KeyboardLayout } from "../types/keyboard-simple.ts";
-import { KeyboardDisplay } from "../components/KeyboardDisplay.tsx";
+import type { KeyboardLayout } from "@divvun/keyboard";
+import { KeyboardDisplay } from "@divvun/keyboard";
 import {
   GitHubKeyboardSelector,
   type Repo,
@@ -12,16 +12,16 @@ import {
   getMobileVariants,
   type KbdgenLayout,
   transformKbdgenToLayout,
-} from "../utils/kbdgen-transform.ts";
+} from "@divvun/keyboard";
 import {
   DEFAULT_PLATFORM,
   DEFAULT_VARIANT,
   DeviceVariant,
   Platform,
   VariantDisplayNames,
-} from "../constants/platforms.ts";
+} from "@divvun/keyboard";
 import { getErrorMessage } from "../utils.ts";
-import { getEffectiveLayer, getLayerDisplayName } from "../utils/modifiers.ts";
+import { getEffectiveLayer, getLayerDisplayName } from "@divvun/keyboard";
 import { useKeyboard } from "../hooks/useKeyboard.ts";
 import { useKeyboardScaling } from "../hooks/useKeyboardScaling.ts";
 import {

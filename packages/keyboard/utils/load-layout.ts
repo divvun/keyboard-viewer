@@ -9,7 +9,7 @@ import {
   type Platform,
 } from "../constants/platforms.ts";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
-import type { KeyboardParams } from "./keyboard-params.ts";
+import type { KeyboardParams } from "./params.ts";
 import { fetchKbdgenData, LayoutNotFoundError } from "./fetch-kbdgen.ts";
 
 export { LayoutNotFoundError };

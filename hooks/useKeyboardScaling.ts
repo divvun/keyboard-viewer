@@ -1,6 +1,6 @@
 import { useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
-import type { KeyboardLayout } from "../types/keyboard-simple.ts";
+import type { KeyboardLayout } from "@divvun/keyboard";
 
 interface UseKeyboardScalingOptions {
   layout: KeyboardLayout | null;

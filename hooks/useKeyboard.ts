@@ -1,7 +1,7 @@
 import { useComputed, useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import type { Key, KeyboardLayout } from "../types/keyboard-simple.ts";
-import { getActiveLayer, type ModifierState } from "../utils/modifiers.ts";
+import type { Key, KeyboardLayout } from "@divvun/keyboard";
+import { getActiveLayer, type ModifierState } from "@divvun/keyboard";
 import {
   getKeyOutput,
   isAltKey,
@@ -10,8 +10,8 @@ import {
   isCtrlKey,
   isShiftKey,
   isSymbolsKey,
-} from "../utils/key-helpers.ts";
-import { BACKSPACE_KEY, ENTER_KEY, TAB_KEY } from "../constants/key-ids.ts";
+} from "@divvun/keyboard";
+import { BACKSPACE_KEY, ENTER_KEY, TAB_KEY } from "@divvun/keyboard";
 
 export interface UseKeyboardOptions {
   layout: KeyboardLayout | null;

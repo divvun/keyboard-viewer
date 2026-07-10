@@ -1,5 +1,8 @@
 import type { ComponentChildren } from "preact";
-import type { KeyboardLayout } from "../types/keyboard-simple.ts";
+import type {
+  Key as KeyType,
+  KeyboardLayout,
+} from "../types/keyboard-simple.ts";
 import type { LayerState } from "../utils/layer-state.ts";
 import { layerNameToId } from "../utils/layer-state.ts";
 import { REM_TO_PX, slugifyId, TAB_BAR_HEIGHT_PX } from "../utils/tab-bar.ts";
@@ -18,6 +21,17 @@ interface StaticKeyboardEmbedProps {
   initialLayer: string;
   /** Scale keyboard to this pixel width. Never upscales beyond natural size. */
   requestedWidth?: number;
+  /**
+   * Hydration pass-throughs, used by the unified <Keyboard> component
+   * (components/Keyboard.tsx). All optional — when absent (pure-static SSR
+   * usage, e.g. the picker components) the rendered markup is identical,
+   * since handlers never serialize to HTML.
+   */
+  checkedLayer?: string;
+  onLayerChange?: (layerName: string) => void;
+  onKeyClick?: (key: KeyType) => void;
+  pressedKeyId?: string | null;
+  pendingDeadkey?: string | null;
 }
 
 interface ScaledEmbedProps {
@@ -135,12 +149,16 @@ export function StaticKeyboardEmbed({
   layers,
   initialLayer,
   requestedWidth,
+  checkedLayer: checkedLayerProp,
+  onLayerChange,
+  onKeyClick,
+  pressedKeyId,
+  pendingDeadkey,
 }: StaticKeyboardEmbedProps) {
   const uid = slugifyId(layout.id);
 
-  const checkedLayer = layers.some((l) => l.name === initialLayer)
-    ? initialLayer
-    : "default";
+  const checkedLayer = checkedLayerProp ??
+    (layers.some((l) => l.name === initialLayer) ? initialLayer : "default");
 
   const labelForLayer = (layerName: string): string | null => {
     if (!layers.some((l) => l.name === layerName)) return null;
@@ -157,10 +175,14 @@ export function StaticKeyboardEmbed({
       caption="Layer:"
       alwaysShowTabBar
       checkedId={layerNameToId(checkedLayer)}
+      onCheck={onLayerChange && ((item) => onLayerChange(item.value.name))}
       items={layers.map((l) => ({
         id: layerNameToId(l.name),
         label: l.label,
         ariaLabel: `Keyboard layer: ${l.label}`,
+        // Lets the hydrated <Keyboard> map a layer NAME (e.g. "caps+shift")
+        // back to its radio — ids are slugified and not reversible.
+        data: { "data-layer": l.name },
         value: l,
       }))}
       wrapViews={(className, children) => (
@@ -186,6 +208,9 @@ export function StaticKeyboardEmbed({
           isSymbols2Active={l.isSymbols2Active}
           showChrome={false}
           labelForLayer={labelForLayer}
+          onKeyClick={onKeyClick}
+          pressedKeyId={pressedKeyId}
+          pendingDeadkey={pendingDeadkey}
         />
       )}
     />

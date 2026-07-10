@@ -1,14 +1,11 @@
 import { define, getErrorMessage } from "../../../utils.ts";
-import {
-  LayoutNotFoundError,
-  loadKeyboardLayout,
-} from "../../../utils/load-layout.ts";
+import { LayoutNotFoundError, loadKeyboardLayout } from "@divvun/keyboard";
 import {
   DEFAULT_PLATFORM,
   DEFAULT_VARIANT,
   DeviceVariant,
   Platform,
-} from "../../../constants/platforms.ts";
+} from "@divvun/keyboard";
 
 export const handler = define.handlers({
   async GET(req) {

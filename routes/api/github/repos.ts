@@ -1,5 +1,5 @@
 import { define, getErrorMessage } from "../../../utils.ts";
-import { githubApiHeaders } from "../../../utils/github.ts";
+import { githubApiHeaders } from "@divvun/keyboard";
 
 export const handler = define.handlers({
   async GET() {

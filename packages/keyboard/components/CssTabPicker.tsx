@@ -1,9 +1,4 @@
 import type { ComponentChildren } from "preact";
-import {
-  TAB_BAR_LABEL_STYLE,
-  TAB_BAR_STYLE,
-  TAB_LABEL_STYLE,
-} from "../utils/tab-bar.ts";
 
 export interface CssTabPickerItem<T> {
   /** Sanitized, unique-within-this-tab-bar id fragment (see `slugifyId`). */
@@ -12,6 +7,10 @@ export interface CssTabPickerItem<T> {
   label: ComponentChildren;
   /** aria-label for the item's (hidden) radio input. */
   ariaLabel: string;
+  /** Extra data-* attributes for the radio input — e.g. the layer tab bar
+   * sets data-layer so the hydrated <Keyboard> can find and drive the radio
+   * that corresponds to a layer name. */
+  data?: Record<string, string>;
   /** Whatever domain object this tab represents — handed back to
    * `renderView` so callers don't need to re-look it up by `id`. */
   value: T;
@@ -29,6 +28,10 @@ interface CssTabPickerProps<T> {
   caption: string;
   items: CssTabPickerItem<T>[];
   checkedId: string;
+  /** Hydration hook: called when the user checks an item's radio. Absent in
+   * pure-static SSR usage — handlers never serialize to HTML, so the markup
+   * is identical either way. */
+  onCheck?: (item: CssTabPickerItem<T>) => void;
   /** Renders one item's content. `hidden` is for `aria-hidden` only —
    * visibility itself is driven by the generated `:checked` CSS below. */
   renderView: (
@@ -60,9 +63,6 @@ function generateTabCss(
   rules.push(
     `.kbd-${dimension}-views-${uid} .kbd-${dimension}-view { display: none; }`,
   );
-  rules.push(
-    `.kbd-${dimension}-tabs-${uid} [data-tab-id] { background: #e5e7eb; color: #374151; }`,
-  );
   for (const id of itemIds) {
     rules.push(
       `#${dimension}-${uid}-${id}:checked ~ .kbd-${dimension}-tabs-${uid} [data-tab-id='${id}'] { background: #374151; color: #f9fafb; }`,
@@ -86,6 +86,7 @@ export function CssTabPicker<T>({
   caption,
   items,
   checkedId,
+  onCheck,
   renderView,
   wrapViews = (className, children) => <div class={className}>{children}</div>,
   alwaysShowTabBar = false,
@@ -98,29 +99,35 @@ export function CssTabPicker<T>({
   const viewsClassName = `kbd-${dimension}-views-${uid}`;
 
   return (
-    <div style={{ position: "relative" }}>
+    <div class="dvk" style={{ position: "relative" }}>
       {/* Hidden radio buttons — must precede the tab bar and views as siblings */}
       {items.map((item) => (
         <input
           type="radio"
           name={groupName}
           id={`${groupName}-${item.id}`}
-          class={`kbd-${dimension}-radio`}
-          checked={item.id === checkedId}
+          class="dvk-radio"
+          {...(item.data ?? {})}
+          // Uncontrolled on purpose (defaultChecked, never checked): the DOM
+          // radios are the single source of truth for the visible view — the
+          // no-JS :checked machinery depends on that, and Preact
+          // force-applies a `checked` prop even during hydration, which
+          // would clobber a switch the user made before island JS loaded.
+          defaultChecked={item.id === checkedId}
+          onChange={onCheck && (() => onCheck(item))}
           aria-label={item.ariaLabel}
         />
       ))}
 
       {/* Tab toolbar — unscaled, always full size */}
       <div
-        class={`kbd-${dimension}-tabs-${uid}`}
+        class={`dvk-tabs kbd-${dimension}-tabs-${uid}`}
         role="tablist"
         aria-labelledby={`${dimension}-tabs-label-${uid}`}
-        style={TAB_BAR_STYLE}
       >
         <span
           id={`${dimension}-tabs-label-${uid}`}
-          style={TAB_BAR_LABEL_STYLE}
+          class="dvk-tabs-caption"
         >
           {caption}
         </span>
@@ -128,9 +135,9 @@ export function CssTabPicker<T>({
           <label
             for={`${groupName}-${item.id}`}
             role="tab"
+            class="dvk-tab"
             aria-selected={item.id === checkedId ? "true" : "false"}
             data-tab-id={item.id}
-            style={TAB_LABEL_STYLE}
           >
             {item.label}
           </label>

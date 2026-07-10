@@ -144,12 +144,6 @@ html {
   );
 }
 
-/* Keyboard key styles */
-.key-active {
-  background-color: #e5e7eb;
-  color: #1f2937;
-  border-color: #9ca3af;
-}
 .border-gray-300 {
   border-color: #d1d5db;
 }
@@ -311,10 +305,6 @@ html {
   font-size: 1.5rem;
   line-height: 1.75rem;
 }
-.kbd-icon {
-  font-size: 1.5rem;
-}
-
 /* Font weight utilities */
 .font-semibold {
   font-weight: 600;
@@ -392,17 +382,6 @@ html {
 /* Border style utilities */
 .border-solid {
   border-style: solid;
-}
-
-/* Static keyboard embed — hides layer-switching radios from layout and assistive tech */
-.kbd-layer-radio,
-.kbd-layout-radio,
-.kbd-platform-radio {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  width: 0;
-  height: 0;
 }
 
 /* Resize utilities */

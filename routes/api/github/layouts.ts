@@ -1,5 +1,5 @@
 import { define, getErrorMessage } from "../../../utils.ts";
-import { listLayoutFiles } from "../../../utils/list-layouts.ts";
+import { listLayoutFiles } from "@divvun/keyboard";
 
 export const handler = define.handlers({
   async GET(req) {

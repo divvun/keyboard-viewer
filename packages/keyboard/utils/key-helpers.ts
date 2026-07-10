@@ -11,7 +11,7 @@ import {
   SYMBOLS_KEYS,
   TAB_KEY,
 } from "../constants/key-ids.ts";
-import { decodeUnicodeEscapes } from "../utils.ts";
+import { decodeUnicodeEscapes } from "./text.ts";
 import { getLayerFallbackChain } from "./modifiers.ts";
 
 export function isShiftKey(keyId: string): boolean {

@@ -1,33 +1,35 @@
 import { Fragment } from "preact";
 import { page } from "fresh";
-import type { PageProps } from "fresh";
+import type { PageProps, RouteConfig } from "fresh";
 import { define, getErrorMessage } from "../utils.ts";
-import { KeyboardEmbed } from "../islands/KeyboardEmbed.tsx";
-import {
-  computeStaticEmbedHeightPx,
-  StaticKeyboardEmbed,
-} from "../components/StaticKeyboardEmbed.tsx";
+import KeyboardIsland from "../islands/Keyboard.tsx";
 import {
   computeLayoutPickerHeightPx,
-  type LayoutCombo,
-  type PlatformCombo,
-  StaticKeyboardLayoutPicker,
-} from "../components/StaticKeyboardLayoutPicker.tsx";
-import {
   computePlatformPickerHeightPx,
+  computeStaticEmbedHeightPx,
+  enumerateLayers,
+  type KeyboardLayout,
+  type KeyboardParams,
+  type LayerState,
+  type LayoutCombo,
+  listLayoutFiles,
+  loadKeyboardLayout,
+  type Platform,
+  type PlatformCombo,
+  StaticKeyboardEmbed,
+  StaticKeyboardLayoutPicker,
   StaticKeyboardPlatformPicker,
-} from "../components/StaticKeyboardPlatformPicker.tsx";
+} from "@divvun/keyboard";
 import {
   parseKeyboardParams,
   serializeKeyboardParams,
 } from "../utils/keyboard-params.ts";
-import { loadKeyboardLayout } from "../utils/load-layout.ts";
-import { listLayoutFiles } from "../utils/list-layouts.ts";
-import { enumerateLayers } from "../utils/layer-state.ts";
-import type { KeyboardLayout } from "../types/keyboard-simple.ts";
-import type { LayerState } from "../utils/layer-state.ts";
-import type { KeyboardParams } from "../utils/keyboard-params.ts";
-import type { Platform } from "../constants/platforms.ts";
+
+// The embed page renders a complete document for iframing — never wrap it
+// in the app shell (that used to nest a full <html> inside _app's <body>).
+export const config: RouteConfig = {
+  skipAppWrapper: true,
+};
 
 interface EmbedData {
   kbd: string;
@@ -59,11 +61,11 @@ function pickDefaultLayoutFile(files: { file: string }[]): string {
 // keyboard is a fixed size baked in at request time via `?width=`, so it
 // gets clipped on viewports narrower than that. With JS, re-fit every
 // ScaledEmbed block (marked by data-natural-width/height — see
-// components/StaticKeyboardEmbed.tsx) to the iframe's *actual* rendered
+// @divvun/keyboard's StaticKeyboardEmbed) to the iframe's *actual* rendered
 // width on load/resize, then report the real height to the parent page via
 // the same `giellalt-keyboard-resize` postMessage the interactive embed
-// (islands/KeyboardEmbed.tsx + hooks/useKeyboardScaling.ts) already sends,
-// so existing listener scripts on embedding sites work unchanged.
+// already sends, so existing listener scripts on embedding sites work
+// unchanged.
 //
 // Uses ResizeObserver, not a `resize` listener: iframes don't reliably fire
 // `resize` when their size changes via CSS (e.g. width:100% reacting to the
@@ -122,11 +124,29 @@ const RESIZE_SCRIPT = `(function () {
   rescaleAndPost();
 })();`;
 
+// Height reporting for the hydrated island embed. The island re-fits its
+// keyboard to the iframe width itself (ResizeObserver in
+// @divvun/keyboard's <Keyboard>), so unlike RESIZE_SCRIPT this only
+// measures and posts — same `giellalt-keyboard-resize` contract legacy
+// listener scripts already understand.
+const POST_HEIGHT_SCRIPT = `(function () {
+  function post() {
+    window.parent.postMessage({
+      type: "giellalt-keyboard-resize",
+      height: document.documentElement.scrollHeight,
+    }, "*");
+  }
+  if (window.ResizeObserver) new ResizeObserver(post).observe(document.body);
+  else window.addEventListener("resize", post);
+  post();
+})();`;
+
 /**
  * Loads every platform a single layout file declares, so a platform tab bar
  * has something to show. `loadKeyboardLayout` caches the underlying kbdgen
- * fetch+parse per (kbd, layout) — see `utils/fetch-kbdgen.ts` — so this only
- * costs one GitHub fetch regardless of how many platforms it materializes.
+ * fetch+parse per (kbd, layout) — see the package's `fetch-kbdgen.ts` — so
+ * this only costs one GitHub fetch regardless of how many platforms it
+ * materializes.
  */
 async function buildPlatformCombosForLayout(
   params: KeyboardParams,
@@ -184,11 +204,11 @@ export const handler = define.handlers<EmbedData>({
       requestedWidth,
     };
 
-    if (!interactive) {
-      const cacheHeaders = {
-        "Cache-Control": "public, max-age=300, s-maxage=3600",
-      };
+    const cacheHeaders = {
+      "Cache-Control": "public, max-age=300, s-maxage=3600",
+    };
 
+    if (!interactive) {
       try {
         if (hasExplicitLayout && hasExplicitPlatform) {
           // Both pinned — existing fast path, unchanged.
@@ -290,7 +310,18 @@ export const handler = define.handlers<EmbedData>({
       }
     }
 
-    return page<EmbedData>(base);
+    // Interactive: same server-side load as the static path — the island
+    // receives the transformed layout as props and never fetches.
+    try {
+      const loaded = await loadKeyboardLayout(params);
+      const layers = enumerateLayers(loaded.layout);
+      return page<EmbedData>(
+        { ...base, keyboardLayout: loaded.layout, layers },
+        { headers: cacheHeaders },
+      );
+    } catch (e) {
+      return page<EmbedData>({ ...base, error: getErrorMessage(e) });
+    }
   },
 });
 
@@ -299,7 +330,6 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
     kbd,
     layout,
     platform,
-    variant,
     layer,
     interactive,
     keyboardLayout,
@@ -314,24 +344,24 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
   let body;
   // Total rendered height (tab bars + scaled grid) for whichever combination
   // of pickers is about to render — read this off <body> below. Only set for
-  // the no-JS static paths; the interactive JS embed reports its height via
-  // postMessage instead (see islands/KeyboardEmbed.tsx).
+  // the no-JS static paths; the interactive island reports its height via
+  // postMessage instead (see POST_HEIGHT_SCRIPT).
   let embedHeight: number | undefined;
-  if (!interactive) {
-    if (error) {
-      body = (
-        <div
-          style={{
-            padding: "1rem",
-            color: "#b91c1c",
-            fontFamily: "sans-serif",
-          }}
-        >
-          <p>Error loading keyboard: {error}</p>
-          <a href={staticUrl}>Try again</a>
-        </div>
-      );
-    } else if (combos) {
+  if (error) {
+    body = (
+      <div
+        style={{
+          padding: "1rem",
+          color: "#b91c1c",
+          fontFamily: "sans-serif",
+        }}
+      >
+        <p>Error loading keyboard: {error}</p>
+        <a href={staticUrl}>Try again</a>
+      </div>
+    );
+  } else if (!interactive) {
+    if (combos) {
       embedHeight = computeLayoutPickerHeightPx(
         combos,
         layout,
@@ -393,26 +423,22 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
       );
     }
   } else {
+    // The island's server render is already a fully working no-JS keyboard
+    // (radio/:checked machinery), so there is no <noscript> fallback — the
+    // fallback IS the page. Hydration adds the test text area and typing.
     body = (
-      <>
-        <KeyboardEmbed
-          kbd={kbd}
-          layout={layout}
-          platform={platform}
-          variant={variant}
+      <Fragment>
+        <KeyboardIsland
+          layout={keyboardLayout!}
+          layers={layers!}
+          initialLayer={layer}
+          requestedWidth={requestedWidth}
         />
-        <noscript>
-          <div
-            style={{
-              padding: "0.5rem",
-              fontFamily: "sans-serif",
-              fontSize: "0.875rem",
-            }}
-          >
-            <a href={staticUrl}>View keyboard without JavaScript</a>
-          </div>
-        </noscript>
-      </>
+        <script
+          // deno-lint-ignore react-no-danger
+          dangerouslySetInnerHTML={{ __html: POST_HEIGHT_SCRIPT }}
+        />
+      </Fragment>
     );
   }
 

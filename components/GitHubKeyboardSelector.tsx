@@ -1,6 +1,6 @@
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import type { KeyboardLayout } from "../types/keyboard-simple.ts";
+import type { KeyboardLayout } from "@divvun/keyboard";
 import { getErrorMessage } from "../utils.ts";
 import {
   DEFAULT_PLATFORM,
@@ -8,7 +8,7 @@ import {
   DeviceVariant,
   Platform,
   VariantDisplayNames,
-} from "../constants/platforms.ts";
+} from "@divvun/keyboard";
 import { buildKeyboardApiUrl } from "../utils/keyboard-params.ts";
 
 export interface Repo {

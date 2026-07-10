@@ -1,0 +1,16 @@
+{
+  "name": "@divvun/keyboard",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./mod.ts",
+    "./keyboard.css": "./keyboard.css"
+  },
+  "imports": {
+    "preact": "npm:preact@^10.29.1"
+  },
+  "compilerOptions": {
+    "lib": ["dom", "dom.asynciterable", "dom.iterable", "deno.ns"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}
