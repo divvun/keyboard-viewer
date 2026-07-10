@@ -13,6 +13,10 @@ export interface BuildComboTreeOptions {
    * single-combo tree with one fetch. Alone (layoutFile absent), filters the
    * kbd's layout files down to ones that actually support this platform. */
   platform?: Platform;
+  /** Language codes to try, most preferred first, when picking each layout
+   * file's display name out of its kbdgen `displayNames` map — e.g. a site's
+   * current UI language plus its own fallback chain. Defaults to English. */
+  preferredLangs?: string[];
 }
 
 export interface KeyboardComboTree {
@@ -93,7 +97,7 @@ export async function buildKeyboardComboTree(
   params: KeyboardParams,
   options?: BuildComboTreeOptions,
 ): Promise<KeyboardComboTree> {
-  const { layoutFile, platform } = options ?? {};
+  const { layoutFile, platform, preferredLangs } = options ?? {};
 
   if (layoutFile != null) {
     const platformCombos = await buildPlatformCombosForLayout(
@@ -113,7 +117,7 @@ export async function buildKeyboardComboTree(
     };
   }
 
-  const files = await listLayoutFiles(params.kbd);
+  const files = await listLayoutFiles(params.kbd, preferredLangs);
   if (files.length === 0) {
     throw new Error("No layouts found for this keyboard");
   }

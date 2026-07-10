@@ -6,34 +6,50 @@ export interface LayoutFile {
   displayName: string;
 }
 
-interface CacheEntry {
-  data: LayoutFile[];
+interface FileListCacheEntry {
+  /** Layout file names, without the .yaml extension. Language-independent —
+   * kept separate from display-name resolution below so that requesting a
+   * different `preferredLangs` never re-hits the (rate-limited) GitHub
+   * directory-listing API, only the already-cached kbdgen YAML lookups. */
+  files: string[];
   expiresAt: number;
 }
 
-const listCache = new Map<string, CacheEntry>();
+const fileListCache = new Map<string, FileListCacheEntry>();
 const CACHE_TTL_MS = 60 * 60 * 1000;
+
+/** Picks the best available display name: the first `preferredLangs` entry
+ * present in `displayNames`, falling back to English, then undefined
+ * (callers fall back further to the layout file name itself). */
+export function pickDisplayName(
+  displayNames: Record<string, string> | undefined,
+  preferredLangs: string[],
+): string | undefined {
+  if (!displayNames) return undefined;
+  for (const lang of preferredLangs) {
+    if (displayNames[lang]) return displayNames[lang];
+  }
+  return displayNames.en;
+}
 
 async function fetchDisplayName(
   kbd: string,
   layoutFile: string,
+  preferredLangs: string[],
 ): Promise<string> {
   try {
     const { kbdgenData } = await fetchKbdgenData(kbd, layoutFile);
-    return kbdgenData.displayNames?.en || layoutFile;
+    return pickDisplayName(kbdgenData.displayNames, preferredLangs) ??
+      layoutFile;
   } catch {
     return layoutFile;
   }
 }
 
-/**
- * List the available kbdgen layout files for a keyboard repo, along with a
- * human-readable display name read from each file's `displayNames.en`.
- */
-export async function listLayoutFiles(kbd: string): Promise<LayoutFile[]> {
-  const cached = listCache.get(kbd);
+async function listLayoutFileNames(kbd: string): Promise<string[]> {
+  const cached = fileListCache.get(kbd);
   if (cached && cached.expiresAt > Date.now()) {
-    return cached.data;
+    return cached.files;
   }
 
   const response = await fetch(
@@ -52,19 +68,29 @@ export async function listLayoutFiles(kbd: string): Promise<LayoutFile[]> {
 
   const files = (contents as { name: string; type: string }[])
     .filter((entry) => entry.type === "file" && entry.name.endsWith(".yaml"))
-    .map((entry) => entry.name)
+    .map((entry) => entry.name.replace(/\.yaml$/, ""))
     .sort((a, b) => a.localeCompare(b));
 
-  const result = await Promise.all(
-    files.map(async (file) => {
-      const layoutFile = file.replace(/\.yaml$/, "");
-      return {
-        file: layoutFile,
-        displayName: await fetchDisplayName(kbd, layoutFile),
-      };
-    }),
-  );
+  fileListCache.set(kbd, { files, expiresAt: Date.now() + CACHE_TTL_MS });
+  return files;
+}
 
-  listCache.set(kbd, { data: result, expiresAt: Date.now() + CACHE_TTL_MS });
-  return result;
+/**
+ * List the available kbdgen layout files for a keyboard repo, along with a
+ * human-readable display name for each — the first of `preferredLangs`
+ * (e.g. a site's current UI language plus its own fallback chain) present in
+ * the layout file's `displayNames`, falling back to English, then the file
+ * name itself. Defaults to English-only when `preferredLangs` is omitted.
+ */
+export async function listLayoutFiles(
+  kbd: string,
+  preferredLangs: string[] = ["en"],
+): Promise<LayoutFile[]> {
+  const files = await listLayoutFileNames(kbd);
+  return Promise.all(
+    files.map(async (layoutFile) => ({
+      file: layoutFile,
+      displayName: await fetchDisplayName(kbd, layoutFile, preferredLangs),
+    })),
+  );
 }
