@@ -32,6 +32,20 @@ export function pickDisplayName(
   return displayNames.en;
 }
 
+/**
+ * Sorts raw ".yaml" directory-listing entry names and strips the extension —
+ * in that order. localeCompare's collation weighs punctuation enough that
+ * comparing "se" vs "se-FI" sorts the bare file first, while comparing
+ * "se.yaml" vs "se-FI.yaml" sorts it last; the kbdgen convention (bare files
+ * are mobile-only, not representative — see `pickDefaultLayoutFile`) relies
+ * on sorting with the extension still attached.
+ */
+export function sortLayoutFileNames(entryNames: string[]): string[] {
+  return [...entryNames]
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => name.replace(/\.yaml$/, ""));
+}
+
 async function fetchDisplayName(
   kbd: string,
   layoutFile: string,
@@ -66,10 +80,11 @@ async function listLayoutFileNames(kbd: string): Promise<string[]> {
 
   const contents = await response.json();
 
-  const files = (contents as { name: string; type: string }[])
-    .filter((entry) => entry.type === "file" && entry.name.endsWith(".yaml"))
-    .map((entry) => entry.name.replace(/\.yaml$/, ""))
-    .sort((a, b) => a.localeCompare(b));
+  const files = sortLayoutFileNames(
+    (contents as { name: string; type: string }[])
+      .filter((entry) => entry.type === "file" && entry.name.endsWith(".yaml"))
+      .map((entry) => entry.name),
+  );
 
   fileListCache.set(kbd, { files, expiresAt: Date.now() + CACHE_TTL_MS });
   return files;
