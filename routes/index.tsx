@@ -7,9 +7,6 @@ import defaultLayout from "../data/layouts/iso-qwerty.json" with {
 };
 
 export default define.page(function Home() {
-  // Use embedded default QWERTY layout
-  const layouts: KeyboardLayout[] = [defaultLayout as KeyboardLayout];
-
   return (
     <div class="px-2 py-4 md:px-4 md:py-8 mx-auto min-h-screen bg-gray-50">
       <Head>
@@ -25,7 +22,7 @@ export default define.page(function Home() {
           </p>
         </div>
 
-        <KeyboardViewer layouts={layouts} />
+        <KeyboardViewer defaultLayout={defaultLayout as KeyboardLayout} />
       </div>
     </div>
   );

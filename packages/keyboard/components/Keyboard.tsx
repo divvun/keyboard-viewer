@@ -1,8 +1,8 @@
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import type { LayerState } from "../utils/layer-state.ts";
-import { DEFAULT_PLATFORM } from "../constants/platforms.ts";
+import { DEFAULT_PLATFORM, DEFAULT_VARIANT } from "../constants/platforms.ts";
 import { KeyboardPicker } from "./KeyboardPicker.tsx";
-import type { LayoutCombo } from "./StaticKeyboardLayoutPicker.tsx";
+import type { LayoutCombo } from "../types/combo-tree.ts";
 
 export interface KeyboardProps {
   layout: KeyboardLayout;
@@ -20,17 +20,21 @@ export interface KeyboardProps {
  * tab-bar chrome whenever a dimension has only one item, so this renders
  * byte-identical markup to a direct single-combo render — use this when you
  * already know exactly which layout/platform to show and don't need
- * layout/platform tabs; use `KeyboardPicker` directly for the full picker
- * tree.
+ * layout/platform/variant tabs; use `KeyboardPicker` directly for the full
+ * picker tree.
  */
 export function Keyboard(
   { layout, layers, initialLayer = "default", requestedWidth }: KeyboardProps,
 ) {
   const platform = layout.platform ?? DEFAULT_PLATFORM;
+  const variant = layout.variant ?? DEFAULT_VARIANT;
   const combos: LayoutCombo[] = [{
     file: layout.id,
     displayName: layout.name,
-    platformCombos: [{ platform, layout, layers }],
+    platformCombos: [{
+      platform,
+      variantCombos: [{ variant, layout, layers }],
+    }],
   }];
 
   return (
@@ -39,6 +43,7 @@ export function Keyboard(
       combos={combos}
       initialFile={layout.id}
       initialPlatform={platform}
+      initialVariant={variant}
       initialLayer={initialLayer}
       requestedWidth={requestedWidth}
     />

@@ -6,6 +6,7 @@ import KeyboardIsland from "../islands/Keyboard.tsx";
 import {
   buildKeyboardComboTree,
   computeLayoutPickerHeightPx,
+  type DeviceVariant,
   enumerateLayers,
   type KeyboardLayout,
   type LayerState,
@@ -49,6 +50,7 @@ export const handler = define.handlers<EmbedData>({
     // Detect absence from the raw query string instead of trusting params.
     const hasExplicitLayout = ctx.url.searchParams.has("layout");
     const hasExplicitPlatform = ctx.url.searchParams.has("platform");
+    const hasExplicitVariant = ctx.url.searchParams.has("variant");
 
     const staticUrl = `/embed?${
       serializeKeyboardParams(params)
@@ -81,12 +83,14 @@ export const handler = define.handlers<EmbedData>({
         const tree = await buildKeyboardComboTree(params, {
           layoutFile: hasExplicitLayout ? params.layout : undefined,
           platform: hasExplicitPlatform ? params.platform : undefined,
+          variant: hasExplicitVariant ? params.variant : undefined,
         });
         return page<EmbedData>(
           {
             ...base,
             layout: tree.defaultFile,
             platform: tree.defaultPlatform,
+            variant: tree.defaultVariant,
             combos: tree.combos,
           },
           { headers: cacheHeaders },
@@ -123,8 +127,8 @@ export const handler = define.handlers<EmbedData>({
 //
 // Uses ResizeObserver, not a `resize` listener: iframes don't reliably fire
 // `resize` when their size changes via CSS (e.g. width:100% reacting to the
-// parent window resizing) — a well-known cross-browser gotcha, and the
-// reason useKeyboardScaling.ts uses ResizeObserver too.
+// parent window resizing) — a well-known cross-browser gotcha, and the same
+// reason KeyboardPicker's own resize-refit effect uses ResizeObserver too.
 const RESIZE_SCRIPT = `(function () {
   function remToPx(rem) {
     var base = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -200,6 +204,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
     kbd,
     layout,
     platform,
+    variant,
     layer,
     interactive,
     keyboardLayout,
@@ -233,6 +238,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
       combos!,
       layout,
       platform as Platform,
+      variant as DeviceVariant,
       requestedWidth,
     );
     body = (
@@ -242,6 +248,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
           combos={combos!}
           initialFile={layout}
           initialPlatform={platform as Platform}
+          initialVariant={variant as DeviceVariant}
           initialLayer={layer}
           requestedWidth={requestedWidth}
         />

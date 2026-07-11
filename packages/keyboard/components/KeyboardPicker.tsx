@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { Key, KeyboardLayout } from "../types/keyboard-simple.ts";
-import type { Platform } from "../constants/platforms.ts";
+import type { DeviceVariant, Platform } from "../constants/platforms.ts";
+import type { LayoutCombo, PlatformCombo } from "../types/combo-tree.ts";
 import { slugifyId } from "../utils/tab-bar.ts";
 import {
   findKeyByCode,
@@ -10,20 +11,31 @@ import {
 import { getActiveLayer } from "../utils/modifiers.ts";
 import { deleteBackward } from "../utils/textarea.ts";
 import { BACKSPACE_KEY, ENTER_KEY, TAB_KEY } from "../constants/key-ids.ts";
-import {
-  type LayoutCombo,
-  StaticKeyboardLayoutPicker,
-} from "./StaticKeyboardLayoutPicker.tsx";
+import { StaticKeyboardLayoutPicker } from "./StaticKeyboardLayoutPicker.tsx";
+
+export interface KeyboardSelection {
+  file: string;
+  platform: Platform;
+  variant: DeviceVariant;
+  layer: string;
+}
 
 export interface KeyboardPickerProps {
   kbd: string;
   combos: LayoutCombo[];
   initialFile: string;
   initialPlatform: Platform;
+  initialVariant: DeviceVariant;
   initialLayer?: string;
   /** Scale keyboard to this pixel width for the no-JS render. Once hydrated,
    * the keyboard re-fits itself to its container via ResizeObserver. */
   requestedWidth?: number;
+  /** Fired whenever the live file/platform/variant/layer selection changes
+   * (including once on mount with the initial selection) — lets a host page
+   * track what's currently showing, e.g. to build an "embed this" URL or
+   * fetch the raw YAML for the active layout file. Optional; has no effect
+   * on rendering. */
+  onSelectionChange?: (selection: KeyboardSelection) => void;
 }
 
 function resolveFile(combos: LayoutCombo[], initialFile: string): string {
@@ -41,65 +53,90 @@ function resolvePlatform(
     : combo.platformCombos[0].platform;
 }
 
+function resolveVariant(
+  combo: PlatformCombo,
+  initialVariant: DeviceVariant,
+): DeviceVariant {
+  return combo.variantCombos.some((c) => c.variant === initialVariant)
+    ? initialVariant
+    : combo.variantCombos[0].variant;
+}
+
 function resolveLayer(layerNames: string[], initialLayer: string): string {
   return layerNames.includes(initialLayer) ? initialLayer : "default";
 }
 
-/** Narrows `scope` down to the DOM subtree for one tab item at `dimension`
- * ("layout" | "platform"), matching the `kbd-${dimension}-view-${id}` class
- * CssTabPicker's `generateTabCss` emits on each view wrapper. Falls back to
- * `scope` unchanged when that dimension collapsed to a single item (no tab
- * bar, no wrapper — see CssTabPicker's `items.length <= 1` shortcut). */
+/** Narrows `scope` down to the DOM subtree for one tab item at `dimension`,
+ * matching the `kbd-${dimension}-view-${id}` class CssTabPicker's
+ * `generateTabCss` emits on each view wrapper. Falls back to `scope`
+ * unchanged when that dimension collapsed to a single item (no tab bar, no
+ * wrapper — see CssTabPicker's `items.length <= 1` shortcut).
+ *
+ * Callers MUST chain each call through the previously-narrowed scope (never
+ * call this against `root` directly for anything but the layout level) —
+ * the view-wrapper class isn't uid-qualified, so it's only unambiguous
+ * within an already-narrowed ancestor. */
 function narrowScope(
   scope: Element,
-  dimension: "layout" | "platform",
+  dimension: "layout" | "platform" | "variant",
   id: string,
 ): Element {
   return scope.querySelector(`.kbd-${dimension}-view-${slugifyId(id)}`) ??
     scope;
 }
 
-/** Finds the DOM subtree currently showing (file, platform) — the scope a
- * layer radio for that combo must live inside. Used both by the mount-time
- * DOM-adoption effect and by `setLayer`'s hardware-driven radio write. */
+/** Finds the DOM subtree currently showing (file, platform, variant) — the
+ * scope a layer radio for that combo must live inside. Used both by the
+ * mount-time DOM-adoption effect and by `setLayer`'s hardware-driven radio
+ * write. */
 function findActiveScope(
   root: Element,
   combos: LayoutCombo[],
   file: string,
   platform: Platform,
+  variant: DeviceVariant,
 ): Element {
   const layoutScope = combos.length > 1
     ? narrowScope(root, "layout", file)
     : root;
   const layoutCombo = combos.find((c) => c.file === file);
-  return (layoutCombo?.platformCombos.length ?? 0) > 1
+  const platformCombo = layoutCombo?.platformCombos.find((c) =>
+    c.platform === platform
+  );
+  const platformScope = (layoutCombo?.platformCombos.length ?? 0) > 1
     ? narrowScope(layoutScope, "platform", platform)
     : layoutScope;
+  return (platformCombo?.variantCombos.length ?? 0) > 1
+    ? narrowScope(platformScope, "variant", variant)
+    : platformScope;
 }
 
 /**
- * Hydratable renderer for the FULL layout → platform → layer tab tree —
- * generalizes <Keyboard>'s single-pinned-layout typing/hardware-capture/
- * resize behavior across every combo `StaticKeyboardLayoutPicker` renders.
- * <Keyboard> itself is a thin wrapper over this component with a one-entry
- * `combos` array (see Keyboard.tsx).
+ * Hydratable renderer for the FULL layout → platform → variant → layer tab
+ * tree — generalizes <Keyboard>'s single-pinned-layout typing/hardware-
+ * capture/resize behavior across every combo `StaticKeyboardLayoutPicker`
+ * renders. <Keyboard> itself is a thin wrapper over this component with a
+ * one-entry `combos` array (see Keyboard.tsx).
  *
  * Server-rendered, the whole tree is a complete zero-JS keyboard (every
- * layout/platform/layer combo pre-rendered, switched by hidden radios and
- * :checked CSS — see CssTabPicker), plus a test text area that only becomes
- * visible under `@media (scripting: enabled)`. Hydrated, wires are attached:
- * key clicks and deadkey composition type into the text area (dispatched
- * against whichever combo is currently active), hardware keys are captured
- * only while the text area is focused, held hardware modifiers switch the
- * visible layer, and a ResizeObserver re-fits the keyboard to its container.
+ * layout/platform/variant/layer combo pre-rendered, switched by hidden
+ * radios and :checked CSS — see CssTabPicker), plus a test text area that
+ * only becomes visible under `@media (scripting: enabled)`. Hydrated, wires
+ * are attached: key clicks and deadkey composition type into the text area
+ * (dispatched against whichever combo is currently active), hardware keys
+ * are captured only while the text area is focused, held hardware modifiers
+ * switch the visible layer, and a ResizeObserver re-fits the keyboard to its
+ * container.
  */
 export function KeyboardPicker({
   kbd,
   combos,
   initialFile,
   initialPlatform,
+  initialVariant,
   initialLayer = "default",
   requestedWidth,
+  onSelectionChange,
 }: KeyboardPickerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -111,13 +148,22 @@ export function KeyboardPicker({
     const combo = combos.find((c) => c.file === checkedFile) ?? combos[0];
     return resolvePlatform(combo, initialPlatform);
   });
+  const [checkedVariant, setCheckedVariant] = useState(() => {
+    const combo = combos.find((c) => c.file === checkedFile) ?? combos[0];
+    const pCombo = combo.platformCombos.find((c) =>
+      c.platform === checkedPlatform
+    ) ?? combo.platformCombos[0];
+    return resolveVariant(pCombo, initialVariant);
+  });
   const [checkedLayer, setCheckedLayer] = useState(() => {
     const combo = combos.find((c) => c.file === checkedFile) ?? combos[0];
-    const platformCombo = combo.platformCombos.find((c) =>
+    const pCombo = combo.platformCombos.find((c) =>
       c.platform === checkedPlatform
-    ) ??
-      combo.platformCombos[0];
-    return resolveLayer(platformCombo.layers.map((l) => l.name), initialLayer);
+    ) ?? combo.platformCombos[0];
+    const vCombo = pCombo.variantCombos.find((c) =>
+      c.variant === checkedVariant
+    ) ?? pCombo.variantCombos[0];
+    return resolveLayer(vCombo.layers.map((l) => l.name), initialLayer);
   });
   const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
   const [pendingDeadkey, setPendingDeadkey] = useState<string | null>(null);
@@ -133,14 +179,21 @@ export function KeyboardPicker({
         layoutCombo.platformCombos[0],
     [layoutCombo, checkedPlatform],
   );
-  const activeLayout: KeyboardLayout = platformCombo.layout;
-  const activeLayers = platformCombo.layers;
+  const variantCombo = useMemo(
+    () =>
+      platformCombo.variantCombos.find((c) => c.variant === checkedVariant) ??
+        platformCombo.variantCombos[0],
+    [platformCombo, checkedVariant],
+  );
+  const activeLayout: KeyboardLayout = variantCombo.layout;
+  const activeLayers = variantCombo.layers;
 
-  // Adopt whatever layout/platform/layer radio the user checked between
-  // paint and hydration — generalizes <Keyboard>'s single-dimension version
-  // of this trick to all three tab levels. Preact's hydrate pass doesn't
-  // diff attributes, but the first state-driven re-render would reset every
-  // `checked` back to our initial state, so read the DOM's truth first.
+  // Adopt whatever layout/platform/variant/layer radio the user checked
+  // between paint and hydration — generalizes <Keyboard>'s single-dimension
+  // version of this trick to all four tab levels. Preact's hydrate pass
+  // doesn't diff attributes, but the first state-driven re-render would
+  // reset every `checked` back to our initial state, so read the DOM's
+  // truth first.
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -179,17 +232,41 @@ export function KeyboardPicker({
       ? narrowScope(layoutScope, "platform", pCombo.platform)
       : layoutScope;
 
-    const checkedLayerRadio = platformScope.querySelector<HTMLInputElement>(
+    let variant = checkedVariant;
+    if (pCombo.variantCombos.length > 1) {
+      const checked = platformScope.querySelector<HTMLInputElement>(
+        "input.dvk-radio[data-variant]:checked",
+      );
+      const domVariant = checked?.getAttribute("data-variant") as
+        | DeviceVariant
+        | undefined;
+      if (
+        domVariant &&
+        pCombo.variantCombos.some((c) => c.variant === domVariant)
+      ) {
+        variant = domVariant;
+      }
+    }
+    const vCombo = pCombo.variantCombos.find((c) => c.variant === variant) ??
+      pCombo.variantCombos[0];
+    const variantScope = pCombo.variantCombos.length > 1
+      ? narrowScope(platformScope, "variant", vCombo.variant)
+      : platformScope;
+
+    const checkedLayerRadio = variantScope.querySelector<HTMLInputElement>(
       "input.dvk-radio[data-layer]:checked",
     );
     const domLayer = checkedLayerRadio?.getAttribute("data-layer");
-    const layer = domLayer && pCombo.layers.some((l) => l.name === domLayer)
+    const layer = domLayer && vCombo.layers.some((l) => l.name === domLayer)
       ? domLayer
       : checkedLayer;
 
     if (file !== checkedFile) setCheckedFile(file);
     if (pCombo.platform !== checkedPlatform) {
       setCheckedPlatform(pCombo.platform);
+    }
+    if (vCombo.variant !== checkedVariant) {
+      setCheckedVariant(vCombo.variant);
     }
     if (layer !== checkedLayer) setCheckedLayer(layer);
   }, []);
@@ -206,13 +283,28 @@ export function KeyboardPicker({
     return () => ro.disconnect();
   }, []);
 
+  // Let a host page track the live selection (e.g. to build an embed URL or
+  // fetch raw YAML for the active file) without needing to reach into the
+  // DOM itself.
+  useEffect(() => {
+    onSelectionChange?.({
+      file: checkedFile,
+      platform: checkedPlatform,
+      variant: checkedVariant,
+      layer: checkedLayer,
+    });
+  }, [checkedFile, checkedPlatform, checkedVariant, checkedLayer]);
+
   const handleFileChange = (file: string) => {
     const combo = combos.find((c) => c.file === file) ?? combos[0];
     const platform = resolvePlatform(combo, checkedPlatform);
     const pCombo = combo.platformCombos.find((c) => c.platform === platform)!;
-    const layer = resolveLayer(pCombo.layers.map((l) => l.name), checkedLayer);
+    const variant = resolveVariant(pCombo, checkedVariant);
+    const vCombo = pCombo.variantCombos.find((c) => c.variant === variant)!;
+    const layer = resolveLayer(vCombo.layers.map((l) => l.name), checkedLayer);
     setCheckedFile(file);
     setCheckedPlatform(platform);
+    setCheckedVariant(variant);
     setCheckedLayer(layer);
   };
 
@@ -220,8 +312,20 @@ export function KeyboardPicker({
     const pCombo = layoutCombo.platformCombos.find((c) =>
       c.platform === platform
     )!;
-    const layer = resolveLayer(pCombo.layers.map((l) => l.name), checkedLayer);
+    const variant = resolveVariant(pCombo, checkedVariant);
+    const vCombo = pCombo.variantCombos.find((c) => c.variant === variant)!;
+    const layer = resolveLayer(vCombo.layers.map((l) => l.name), checkedLayer);
     setCheckedPlatform(platform);
+    setCheckedVariant(variant);
+    setCheckedLayer(layer);
+  };
+
+  const handleVariantChange = (variant: DeviceVariant) => {
+    const vCombo = platformCombo.variantCombos.find((c) =>
+      c.variant === variant
+    )!;
+    const layer = resolveLayer(vCombo.layers.map((l) => l.name), checkedLayer);
+    setCheckedVariant(variant);
     setCheckedLayer(layer);
   };
 
@@ -294,10 +398,10 @@ export function KeyboardPicker({
   // Switch layers by driving the same DOM radio the no-JS machinery uses.
   // The radios are uncontrolled (see StaticKeyboardEmbed), so JS writes the
   // DOM directly and mirrors the value into state for aria attributes and
-  // key-output computation. Scoped to the currently active layout/platform
-  // subtree, since `data-layer` values collide textually across every leaf
-  // in the tree — only the surrounding radio id (prefixed by the layout's
-  // synthetic id) is unique.
+  // key-output computation. Scoped to the currently active layout/platform/
+  // variant subtree, since `data-layer` values collide textually across
+  // every leaf in the tree — only the surrounding radio id (prefixed by the
+  // layout's synthetic id) is unique.
   const setLayer = (name: string) => {
     // The overwhelming majority of keydown/keyup events don't change the
     // layer (plain letters with no modifiers held) — bail before touching
@@ -307,7 +411,13 @@ export function KeyboardPicker({
     setCheckedLayer(name);
     const root = rootRef.current;
     if (!root) return;
-    const scope = findActiveScope(root, combos, checkedFile, checkedPlatform);
+    const scope = findActiveScope(
+      root,
+      combos,
+      checkedFile,
+      checkedPlatform,
+      checkedVariant,
+    );
     const radio = scope.querySelector<HTMLInputElement>(
       `input.dvk-radio[data-layer="${name}"]`,
     );
@@ -391,12 +501,15 @@ export function KeyboardPicker({
         combos={combos}
         initialFile={initialFile}
         initialPlatform={initialPlatform}
+        initialVariant={initialVariant}
         initialLayer={initialLayer}
         requestedWidth={fitWidth}
         checkedFile={checkedFile}
         onFileChange={handleFileChange}
         checkedPlatform={checkedPlatform}
         onPlatformChange={handlePlatformChange}
+        checkedVariant={checkedVariant}
+        onVariantChange={handleVariantChange}
         embedHydration={{
           checkedLayer,
           onLayerChange: setCheckedLayer,

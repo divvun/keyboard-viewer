@@ -11,6 +11,7 @@ export { Keyboard, type KeyboardProps } from "./components/Keyboard.tsx";
 export {
   KeyboardPicker,
   type KeyboardPickerProps,
+  type KeyboardSelection,
 } from "./components/KeyboardPicker.tsx";
 export {
   computeStaticEmbedHeightPx,
@@ -19,16 +20,23 @@ export {
 } from "./components/StaticKeyboardEmbed.tsx";
 export {
   computeLayoutPickerHeightPx,
-  type LayoutCombo,
-  type PlatformCombo,
   StaticKeyboardLayoutPicker,
 } from "./components/StaticKeyboardLayoutPicker.tsx";
 export {
   computePlatformPickerHeightPx,
   StaticKeyboardPlatformPicker,
 } from "./components/StaticKeyboardPlatformPicker.tsx";
+export {
+  computeVariantPickerHeightPx,
+  StaticKeyboardVariantPicker,
+} from "./components/StaticKeyboardVariantPicker.tsx";
 export { KeyboardDisplay } from "./components/KeyboardDisplay.tsx";
 export { githubApiHeaders, githubRawHeaders } from "./utils/github.ts";
+export type {
+  LayoutCombo,
+  PlatformCombo,
+  VariantCombo,
+} from "./types/combo-tree.ts";
 
 // Server-side data layer: fetch + transform kbdgen layouts
 export {
@@ -47,6 +55,7 @@ export {
   buildKeyboardComboTree,
   type KeyboardComboTree,
 } from "./utils/combo-tree.ts";
+export { buildLayoutComboFromKbdgenData } from "./utils/build-layout-combo.ts";
 export {
   getAvailablePlatforms,
   getMobileVariants,

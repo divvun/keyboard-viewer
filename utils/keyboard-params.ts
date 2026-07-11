@@ -33,11 +33,6 @@ export function parseKeyboardParams(
   };
 }
 
-// Build API URL for fetching keyboard
-export function buildKeyboardApiUrl(params: KeyboardParams): string {
-  return `/api/github/layout?repo=${params.kbd}&file=${params.layout}.yaml&platform=${params.platform}&variant=${params.variant}`;
-}
-
 // Serialize params back to URL string (for viewer)
 export function serializeKeyboardParams(
   params: Partial<KeyboardParams>,

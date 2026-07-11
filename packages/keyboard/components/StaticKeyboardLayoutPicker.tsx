@@ -1,28 +1,21 @@
-import type { Platform } from "../constants/platforms.ts";
+import type { DeviceVariant, Platform } from "../constants/platforms.ts";
 import { slugifyId, TAB_BAR_HEIGHT_PX } from "../utils/tab-bar.ts";
 import { CssTabPicker } from "./CssTabPicker.tsx";
 import type { KeyboardEmbedHydration } from "./StaticKeyboardEmbed.tsx";
+import type { LayoutCombo, PlatformCombo } from "../types/combo-tree.ts";
 import {
   computePlatformPickerHeightPx,
-  type PlatformCombo,
   StaticKeyboardPlatformPicker,
 } from "./StaticKeyboardPlatformPicker.tsx";
 
-export type { PlatformCombo };
-
-export interface LayoutCombo {
-  /** Layout file name without the .yaml extension, e.g. "smj-NO". */
-  file: string;
-  /** Human-readable label, e.g. from the file's displayNames.en. */
-  displayName: string;
-  platformCombos: PlatformCombo[];
-}
+export type { LayoutCombo, PlatformCombo };
 
 interface StaticKeyboardLayoutPickerProps {
   kbd: string;
   combos: LayoutCombo[];
   initialFile: string;
   initialPlatform: Platform;
+  initialVariant: DeviceVariant;
   initialLayer: string;
   /** Scale keyboard to this pixel width. Never upscales beyond natural size. */
   requestedWidth?: number;
@@ -35,7 +28,10 @@ interface StaticKeyboardLayoutPickerProps {
   /** Forwarded straight into the nested StaticKeyboardPlatformPicker. */
   checkedPlatform?: Platform;
   onPlatformChange?: (platform: Platform) => void;
-  /** Forwarded through both nested levels into StaticKeyboardEmbed. */
+  /** Forwarded through into the nested StaticKeyboardVariantPicker. */
+  checkedVariant?: DeviceVariant;
+  onVariantChange?: (variant: DeviceVariant) => void;
+  /** Forwarded through all nested levels into StaticKeyboardEmbed. */
   embedHydration?: KeyboardEmbedHydration;
 }
 
@@ -49,12 +45,14 @@ export function computeLayoutPickerHeightPx(
   combos: LayoutCombo[],
   initialFile: string,
   initialPlatform: Platform,
+  initialVariant: DeviceVariant,
   requestedWidth?: number,
 ): number {
   if (combos.length === 1) {
     return computePlatformPickerHeightPx(
       combos[0].platformCombos,
       initialPlatform,
+      initialVariant,
       requestedWidth,
     );
   }
@@ -63,6 +61,7 @@ export function computeLayoutPickerHeightPx(
     computePlatformPickerHeightPx(
       checked.platformCombos,
       initialPlatform,
+      initialVariant,
       requestedWidth,
     );
 }
@@ -80,12 +79,15 @@ export function StaticKeyboardLayoutPicker({
   combos,
   initialFile,
   initialPlatform,
+  initialVariant,
   initialLayer,
   requestedWidth,
   checkedFile: checkedFileProp,
   onFileChange,
   checkedPlatform,
   onPlatformChange,
+  checkedVariant,
+  onVariantChange,
   embedHydration,
 }: StaticKeyboardLayoutPickerProps) {
   const checkedFile = checkedFileProp ??
@@ -107,19 +109,22 @@ export function StaticKeyboardLayoutPicker({
       }))}
       renderView={({ value: c }) => {
         // Only the checked layout file is ever visible — scope the live
-        // platform/typing wiring to it so switching layers/typing doesn't
-        // re-render every other layout file's whole platform x layer
-        // subtree on every keystroke.
+        // platform/variant/typing wiring to it so switching layers/typing
+        // doesn't re-render every other layout file's whole platform x
+        // variant x layer subtree on every keystroke.
         const isActiveFile = c.file === checkedFile;
         return (
           <StaticKeyboardPlatformPicker
             uidPrefix={`${kbd}-${c.file}`}
             combos={c.platformCombos}
             initialPlatform={initialPlatform}
+            initialVariant={initialVariant}
             initialLayer={initialLayer}
             requestedWidth={requestedWidth}
             checkedPlatform={isActiveFile ? checkedPlatform : undefined}
             onPlatformChange={isActiveFile ? onPlatformChange : undefined}
+            checkedVariant={isActiveFile ? checkedVariant : undefined}
+            onVariantChange={isActiveFile ? onVariantChange : undefined}
             embedHydration={isActiveFile ? embedHydration : undefined}
           />
         );
