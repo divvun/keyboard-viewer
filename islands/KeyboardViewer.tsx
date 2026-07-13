@@ -19,7 +19,10 @@ import {
   type Repo,
 } from "../components/GitHubKeyboardSelector.tsx";
 import { getErrorMessage } from "../utils.ts";
-import { serializeKeyboardParams } from "../utils/keyboard-params.ts";
+import {
+  parseKeyboardParams,
+  serializeKeyboardParams,
+} from "../utils/keyboard-params.ts";
 
 interface KeyboardViewerProps {
   defaultLayout: KeyboardLayout;
@@ -77,8 +80,6 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
 
   const source = useSignal<Source>(wrapSingleLayout("qwerty", defaultLayout));
   const selection = useSignal<KeyboardSelection | null>(null);
-  const rawYaml = useSignal<string | null>(null);
-  const rawYamlLoading = useSignal<boolean>(false);
 
   useEffect(() => {
     reposLoading.value = true;
@@ -92,10 +93,39 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
       .finally(() => reposLoading.value = false);
   }, []);
 
-  const handleRepoSelected = async (repo: string) => {
+  /** A URL-supplied layout/platform/variant only pins the initial selection
+   * if it's actually present in the repo's combo tree — same graceful
+   * fallback-to-default the server-side combo-tree builder uses for its own
+   * pins, so a stale or hand-edited URL never breaks the load. */
+  const resolvePin = (
+    combos: LayoutCombo[],
+    defaults: Pick<
+      Source,
+      "initialFile" | "initialPlatform" | "initialVariant"
+    >,
+    pin?: { file: string; platform: Platform; variant: DeviceVariant },
+  ): Pick<Source, "initialFile" | "initialPlatform" | "initialVariant"> => {
+    const combo = pin && combos.find((c) => c.file === pin.file);
+    const pCombo = combo?.platformCombos.find((p) =>
+      p.platform === pin!.platform
+    );
+    const vCombo = pCombo?.variantCombos.find((v) =>
+      v.variant === pin!.variant
+    );
+    if (!pin || !combo || !pCombo || !vCombo) return defaults;
+    return {
+      initialFile: pin.file,
+      initialPlatform: pin.platform,
+      initialVariant: pin.variant,
+    };
+  };
+
+  const handleRepoSelected = async (
+    repo: string,
+    pin?: { file: string; platform: Platform; variant: DeviceVariant },
+  ) => {
     selectedRepo.value = repo;
     repoLoadError.value = null;
-    rawYaml.value = null;
     if (!repo) return;
 
     repoLoading.value = true;
@@ -109,9 +139,11 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
         key: `github:${repo}`,
         kbd: repo,
         combos: data.combos,
-        initialFile: data.defaultFile,
-        initialPlatform: data.defaultPlatform,
-        initialVariant: data.defaultVariant,
+        ...resolvePin(data.combos, {
+          initialFile: data.defaultFile,
+          initialPlatform: data.defaultPlatform,
+          initialVariant: data.defaultVariant,
+        }, pin),
       };
     } catch (e) {
       repoLoadError.value = getErrorMessage(e);
@@ -119,6 +151,44 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
       repoLoading.value = false;
     }
   };
+
+  // Deep-link support: a URL like `?kbd=sme&layout=se&platform=macOS&variant=
+  // primary` loads that exact repo/layout/platform/variant on mount, mirroring
+  // what the URL-sync effect below writes out. Only triggers when `kbd` is
+  // actually present — `parseKeyboardParams` otherwise fills in defaults for
+  // every field, which would hijack the default QWERTY view on a bare visit.
+  useEffect(() => {
+    const searchParams = new URLSearchParams(globalThis.location.search);
+    if (!searchParams.has("kbd")) return;
+    const params = parseKeyboardParams(searchParams);
+    handleRepoSelected(params.kbd, {
+      file: params.layout,
+      platform: params.platform,
+      variant: params.variant,
+    });
+  }, []);
+
+  // Keep the URL in sync with the live GitHub-sourced selection so the
+  // address bar always reflects a shareable link to what's on screen —
+  // replaceState rather than pushState since platform/variant/layer tab
+  // clicks fire this on every change and would otherwise flood browser
+  // history with an entry per click.
+  useEffect(() => {
+    if (
+      activeTab.value !== "github" || !selectedRepo.value || !selection.value
+    ) {
+      return;
+    }
+    const query = serializeKeyboardParams({
+      kbd: selectedRepo.value,
+      layout: selection.value.file,
+      platform: selection.value.platform,
+      variant: selection.value.variant,
+    });
+    const url = new URL(globalThis.location.href);
+    url.search = query;
+    globalThis.history.replaceState({}, "", url.toString());
+  }, [activeTab.value, selectedRepo.value, selection.value]);
 
   const handleYamlChange = (text: string) => {
     yamlContent.value = text;
@@ -191,25 +261,6 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
     };
   }, [activeTab.value]);
 
-  const handleViewYaml = async () => {
-    if (!selectedRepo.value || !selection.value) return;
-    rawYamlLoading.value = true;
-    try {
-      const res = await fetch(
-        `/api/github/raw-yaml?repo=${
-          encodeURIComponent(selectedRepo.value)
-        }&file=${encodeURIComponent(selection.value.file)}`,
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to load YAML");
-      rawYaml.value = data.rawYaml;
-    } catch (e) {
-      rawYaml.value = `Error: ${getErrorMessage(e)}`;
-    } finally {
-      rawYamlLoading.value = false;
-    }
-  };
-
   const handleCopyEmbedCode = () => {
     if (!selectedRepo.value || !selection.value) return;
     const query = serializeKeyboardParams({
@@ -267,21 +318,6 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
             >
               📋 Get Embed Code
             </button>
-            <button
-              type="button"
-              onClick={handleViewYaml}
-              class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-xs font-semibold"
-            >
-              {rawYamlLoading.value ? "Loading…" : "View YAML"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {rawYaml.value && (
-        <div class="flex justify-center">
-          <div class="keyboard-width-container">
-            <pre class="p-3 bg-gray-900 text-gray-100 rounded text-xs overflow-auto max-h-96">{rawYaml.value}</pre>
           </div>
         </div>
       )}
