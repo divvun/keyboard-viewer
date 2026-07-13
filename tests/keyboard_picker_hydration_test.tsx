@@ -52,6 +52,15 @@ async function hydrate(host: Anything, props: KeyboardPickerProps) {
   await new Promise((r) => setTimeout(r, 250));
 }
 
+/** Re-renders an already-hydrated tree with new props, simulating a host
+ * page passing updated `combos` (e.g. live-editing pasted YAML) without
+ * remounting — the actual scenario the combos-change effect exists for. */
+async function updateProps(host: Anything, props: KeyboardPickerProps) {
+  const { render } = await import("preact");
+  render(h(KeyboardPicker, props as Anything), host);
+  await new Promise((r) => setTimeout(r, 100));
+}
+
 function fireChange(radio: Anything) {
   radio.checked = true;
   const event = new (globalThis as Anything).window.Event("change", {
@@ -431,5 +440,104 @@ Deno.test({
 
     const textarea = host.querySelector("textarea");
     assertEquals(textarea.value, "ios-i");
+  },
+});
+
+Deno.test({
+  name:
+    "combos update removing the checked platform re-resolves to a valid one, not a stale/mismatched one",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    // Regression test: a host page live-editing pasted YAML re-parses on
+    // every keystroke and passes updated `combos` as a prop (deliberately
+    // NOT remounting KeyboardPicker — remounting would flash the keyboard
+    // to full natural size for a frame, see KeyboardPicker's combos-change
+    // effect doc comment). If the user's checked platform disappears from
+    // an edit, the DOM's uncontrolled radios don't self-correct just
+    // because state does (defaultChecked is never re-applied by Preact
+    // post-mount) — without the effect's explicit DOM write, Preact's
+    // un-keyed, position-based list reconciliation can leave a *different*
+    // platform's DOM node inheriting the removed one's "checked" state,
+    // which then disagrees with what hardware typing dispatches against.
+    const macLayout = makeLayout("switch-mac", "mac-out");
+    const winLayout = makeLayout("switch-win", "win-out");
+    const twoPlatformCombos: LayoutCombo[] = [{
+      file: "f",
+      displayName: "F",
+      platformCombos: [
+        {
+          platform: Platform.MacOS,
+          variantCombos: [{
+            variant: DeviceVariant.Primary,
+            layout: macLayout,
+            layers: enumerateLayers(macLayout),
+          }],
+        },
+        {
+          platform: Platform.Windows,
+          variantCombos: [{
+            variant: DeviceVariant.Primary,
+            layout: winLayout,
+            layers: enumerateLayers(winLayout),
+          }],
+        },
+      ],
+    }];
+    const initialProps: KeyboardPickerProps = {
+      kbd: "switch",
+      combos: twoPlatformCombos,
+      initialFile: "f",
+      initialPlatform: Platform.MacOS,
+      initialVariant: DeviceVariant.Primary,
+      initialLayer: "default",
+    };
+
+    const host = setup(initialProps);
+    await hydrate(host, initialProps);
+
+    // Select Windows post-hydration, same as a real user clicking the tab.
+    const winRadio = host.querySelector(
+      'input.dvk-radio[data-platform="windows"]',
+    );
+    fireChange(winRadio);
+    await new Promise((r) => setTimeout(r, 50));
+    assertEquals(winRadio.checked, true);
+
+    // Now the host "edits the YAML": windows disappears from combos, same
+    // object identity for macOS's combo otherwise unchanged.
+    const macOnlyCombos: LayoutCombo[] = [{
+      file: "f",
+      displayName: "F",
+      platformCombos: [twoPlatformCombos[0].platformCombos[0]],
+    }];
+    const updatedProps: KeyboardPickerProps = {
+      ...initialProps,
+      combos: macOnlyCombos,
+    };
+    await updateProps(host, updatedProps);
+
+    const platformRadios = [
+      ...host.querySelectorAll("input.dvk-radio[data-platform]"),
+    ] as Anything[];
+    assertEquals(platformRadios.length, 0); // single item now — tab bar collapses entirely
+
+    // Clicking the key in whatever's actually visible must match what
+    // hardware typing dispatches against — both must agree, and both must
+    // be macOS's output, not blank and not windows'.
+    const visibleKey = host.querySelector('button[title="KeyA"]');
+    visibleKey.click();
+    await new Promise((r) => setTimeout(r, 50));
+    const textarea = host.querySelector("textarea");
+    assertEquals(textarea.value, "mac-out");
+
+    textarea.value = "";
+    const keydown = new (globalThis as Anything).window.KeyboardEvent(
+      "keydown",
+      { code: "KeyA", key: "a", bubbles: true, cancelable: true },
+    );
+    textarea.dispatchEvent(keydown);
+    await new Promise((r) => setTimeout(r, 50));
+    assertEquals(textarea.value, "mac-out");
   },
 });

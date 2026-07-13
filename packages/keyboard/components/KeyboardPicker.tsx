@@ -271,6 +271,100 @@ export function KeyboardPicker({
     if (layer !== checkedLayer) setCheckedLayer(layer);
   }, []);
 
+  // Re-validate checked state whenever `combos` itself changes (e.g. a host
+  // page live-editing pasted YAML and re-parsing it into new combos on every
+  // keystroke, without remounting this component — remounting would reset
+  // fitWidth and flash the keyboard to full natural size for a frame).
+  // Without this, if the specific file/platform/variant/layer the user has
+  // selected disappears from the new combos (edited away), the DERIVED
+  // activeLayout/activeLayers above still safely fall back — but the raw
+  // checkedFile/checkedPlatform/checkedVariant/checkedLayer state passed
+  // down to the picker tree for tab-highlighting and click-wiring does not,
+  // since StaticKeyboardLayoutPicker etc. use `checkedXProp ?? fallback`
+  // and always receive a defined value once mounted. Left unhandled, the
+  // checked radio's item would no longer exist at all — and since those
+  // radios aren't given a `key` prop, Preact's position-based list
+  // reconciliation can leave a *different*, arbitrary item's DOM node
+  // inheriting the stale "checked" state, which then diverges from what
+  // hardware typing actually dispatches against (each independently
+  // resolved). For the unchanged (embed.tsx, borealium) case where `combos`
+  // is a stable prop set once, this effect only fires on mount and is a
+  // no-op there too, matching what the lazy useState initializers already
+  // computed. Skips its own first run: on initial mount, this and the
+  // DOM-adoption effect above both fire in the same commit, but this one
+  // would use THIS render's (pre-adoption) checkedLayer closure rather than
+  // whatever the adoption effect just read from the DOM — its DOM-forcing
+  // step below would then immediately clobber a pre-hydration layer switch
+  // the adoption effect just adopted, since combos doesn't change again to
+  // give this effect a second chance to reconcile. The adoption effect
+  // already fully owns getting the very first commit right; this one only
+  // needs to matter for genuine post-mount combos changes.
+  const isFirstCombosRun = useRef(true);
+  useEffect(() => {
+    if (isFirstCombosRun.current) {
+      isFirstCombosRun.current = false;
+      return;
+    }
+
+    const file = resolveFile(combos, checkedFile);
+    const combo = combos.find((c) => c.file === file) ?? combos[0];
+    const platform = resolvePlatform(combo, checkedPlatform);
+    const pCombo = combo.platformCombos.find((c) => c.platform === platform) ??
+      combo.platformCombos[0];
+    const variant = resolveVariant(pCombo, checkedVariant);
+    const vCombo = pCombo.variantCombos.find((c) => c.variant === variant) ??
+      pCombo.variantCombos[0];
+    const layer = resolveLayer(vCombo.layers.map((l) => l.name), checkedLayer);
+
+    if (file !== checkedFile) setCheckedFile(file);
+    if (platform !== checkedPlatform) setCheckedPlatform(platform);
+    if (variant !== checkedVariant) setCheckedVariant(variant);
+    if (layer !== checkedLayer) setCheckedLayer(layer);
+
+    // The radios are uncontrolled (defaultChecked, never re-applied by
+    // Preact on prop updates — see CssTabPicker's own comment on why), so
+    // correcting the state above doesn't by itself fix what's visibly
+    // checked: if the previously-checked item's radio no longer exists at
+    // all, a *different* item's DOM node can end up inheriting its
+    // "checked" state via the position-based reconciliation above. Force
+    // the DOM to match, the same way setLayer already does below for
+    // hardware-driven layer switches — checking a radio natively unchecks
+    // its same-`name` siblings, so nothing needs manually unchecking here.
+    const root = rootRef.current;
+    if (!root) return;
+    if (combos.length > 1) {
+      const radio = root.querySelector<HTMLInputElement>(
+        `input.dvk-radio[data-layout-file="${file}"]`,
+      );
+      if (radio && !radio.checked) radio.checked = true;
+    }
+    const layoutScope = combos.length > 1
+      ? narrowScope(root, "layout", file)
+      : root;
+    if (combo.platformCombos.length > 1) {
+      const radio = layoutScope.querySelector<HTMLInputElement>(
+        `input.dvk-radio[data-platform="${platform}"]`,
+      );
+      if (radio && !radio.checked) radio.checked = true;
+    }
+    const platformScope = combo.platformCombos.length > 1
+      ? narrowScope(layoutScope, "platform", platform)
+      : layoutScope;
+    if (pCombo.variantCombos.length > 1) {
+      const radio = platformScope.querySelector<HTMLInputElement>(
+        `input.dvk-radio[data-variant="${variant}"]`,
+      );
+      if (radio && !radio.checked) radio.checked = true;
+    }
+    const variantScope = pCombo.variantCombos.length > 1
+      ? narrowScope(platformScope, "variant", variant)
+      : platformScope;
+    const layerRadio = variantScope.querySelector<HTMLInputElement>(
+      `input.dvk-radio[data-layer="${layer}"]`,
+    );
+    if (layerRadio && !layerRadio.checked) layerRadio.checked = true;
+  }, [combos]);
+
   // Re-fit the keyboard to the container it actually landed in.
   useEffect(() => {
     const root = rootRef.current;
