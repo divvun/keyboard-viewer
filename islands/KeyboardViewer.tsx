@@ -137,7 +137,15 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
         throw new Error("No supported platforms found in YAML");
       }
       source.value = {
-        key: `yaml:${text.length}:${text.slice(0, 40)}`,
+        // Stable across edits, deliberately — KeyboardPicker's own derived
+        // state already falls back safely when the previously-checked
+        // file/platform/variant/layer no longer exists in updated combos,
+        // so re-parsing on every keystroke only needs a prop update, not a
+        // remount. A key that changed per-keystroke (e.g. derived from the
+        // text itself) forced a full remount on every character typed,
+        // which reset fitWidth and made the keyboard flash to full natural
+        // size for a frame before ResizeObserver corrected it back down.
+        key: "yaml",
         kbd: "custom",
         combos: [combo],
         initialFile: combo.file,
