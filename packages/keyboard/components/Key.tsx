@@ -36,6 +36,16 @@ function getTargetLayer(keyId: string, currentLayer: string): string | null {
       ? "default"
       : "symbols-1";
   }
+  // Within symbols mode, the shift key is repurposed as the "#+=" / "123"
+  // toggle between the two symbols pages (see the isSymbolsActive label
+  // branch below) — it has no modifier-state equivalent, so it must be
+  // special-cased here before falling through to layerNameToModifiers,
+  // which returns null for "symbols-1"/"symbols-2" by design.
+  if (currentLayer === "symbols-1" || currentLayer === "symbols-2") {
+    return isShiftKey(keyId)
+      ? (currentLayer === "symbols-1" ? "symbols-2" : "symbols-1")
+      : null;
+  }
   const modifiers = layerNameToModifiers(currentLayer);
   if (!modifiers) return null;
   if (isShiftKey(keyId)) {

@@ -541,3 +541,112 @@ Deno.test({
     assertEquals(textarea.value, "mac-out");
   },
 });
+
+// --- iOS symbols-1/symbols-2 fixture. The physical key that's "Shift" on
+// the letter layers is repurposed as the "#+=" / "123" toggle between the
+// two symbols pages (see Key.tsx's isSymbolsActive label branch) — it has
+// no modifier-state equivalent, so getTargetLayer must special-case it for
+// "symbols-1"/"symbols-2" rather than falling through to
+// layerNameToModifiers, which returns null for both by design. ---
+
+function makeIOSSymbolsLayout(id: string): KeyboardLayout {
+  return {
+    id,
+    name: id,
+    deadkeys: {},
+    isMobile: true,
+    platform: Platform.IOS,
+    rows: [{
+      keys: [
+        {
+          id: "ShiftLeft",
+          label: "⇧",
+          layers: { default: "" },
+          type: "modifier",
+        },
+        {
+          id: "KeyA",
+          layers: { default: "1", "symbols-1": "@", "symbols-2": "$" },
+          width: 1,
+        },
+      ],
+    }],
+  };
+}
+
+const iosSymbolsLayout = makeIOSSymbolsLayout("ios-symbols");
+
+const symbolsCombos: LayoutCombo[] = [{
+  file: "symbols-file",
+  displayName: "Symbols File",
+  platformCombos: [{
+    platform: Platform.IOS,
+    variantCombos: [{
+      variant: DeviceVariant.Primary,
+      layout: iosSymbolsLayout,
+      layers: enumerateLayers(iosSymbolsLayout),
+    }],
+  }],
+}];
+
+const symbolsProps: KeyboardPickerProps = {
+  kbd: "test-symbols",
+  combos: symbolsCombos,
+  initialFile: "symbols-file",
+  initialPlatform: Platform.IOS,
+  initialVariant: DeviceVariant.Primary,
+  initialLayer: "default",
+};
+
+Deno.test({
+  name:
+    "the relabeled shift key links to symbols-2 while on symbols-1, and back while on symbols-2",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const host = setup(symbolsProps);
+    await hydrate(host, symbolsProps);
+
+    // Switch to the symbols-1 ("Symbols") layer, same as a user tapping the
+    // "123" key.
+    const symbols1Radio = host.querySelector(
+      'input.dvk-radio[data-layer="symbols-1"]',
+    );
+    fireChange(symbols1Radio);
+    await new Promise((r) => setTimeout(r, 50));
+
+    const symbols1Scope = host.querySelector(".kbd-layer-view-symbols-1");
+    const shiftInSymbols1 = symbols1Scope.querySelector(
+      '[title="ShiftLeft"]',
+    );
+    // Before the fix, getTargetLayer returned null for the shift key while
+    // on symbols-1/symbols-2, so Key.tsx rendered it as an inert <span>
+    // instead of a <label> — this is what made "#+=" a dead button.
+    assertEquals(
+      shiftInSymbols1.tagName,
+      "LABEL",
+      "the '#+=' key must be an interactive label, not an inert span",
+    );
+    const targetId = shiftInSymbols1.getAttribute("for");
+    const targetRadio = host.querySelector(`#${targetId}`);
+    assertEquals(targetRadio.getAttribute("data-layer"), "symbols-2");
+
+    // Follow the link to symbols-2, same as a user tapping "#+=".
+    fireChange(targetRadio);
+    await new Promise((r) => setTimeout(r, 50));
+
+    const symbols2Tab = host.querySelector('label[data-tab-id="symbols-2"]');
+    assertEquals(symbols2Tab.getAttribute("aria-selected"), "true");
+
+    // And back: on symbols-2, the same key (now labeled "123") must link
+    // back to symbols-1.
+    const symbols2Scope = host.querySelector(".kbd-layer-view-symbols-2");
+    const shiftInSymbols2 = symbols2Scope.querySelector(
+      '[title="ShiftLeft"]',
+    );
+    assertEquals(shiftInSymbols2.tagName, "LABEL");
+    const backTargetId = shiftInSymbols2.getAttribute("for");
+    const backTargetRadio = host.querySelector(`#${backTargetId}`);
+    assertEquals(backTargetRadio.getAttribute("data-layer"), "symbols-1");
+  },
+});
