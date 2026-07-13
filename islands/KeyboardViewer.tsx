@@ -149,6 +149,40 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
     }
   };
 
+  // Populate the YAML editor with the active layout file's raw YAML the
+  // first time the user switches to that tab. The old cascading-select
+  // picker got this "for free" — /api/github/layout's response bundled
+  // rawYaml alongside the parsed layout — but /api/github/keyboard only
+  // returns parsed combos (a repo can have several layout files, so there's
+  // no single "the" YAML to bundle), so this needs its own fetch here.
+  useEffect(() => {
+    if (activeTab.value !== "yaml") return;
+    if (yamlContent.value.trim()) return; // don't clobber an in-progress edit
+    if (!selectedRepo.value || !selection.value) return;
+
+    let cancelled = false;
+    const repo = selectedRepo.value;
+    const file = selection.value.file;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/github/raw-yaml?repo=${encodeURIComponent(repo)}&file=${
+            encodeURIComponent(file)
+          }`,
+        );
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Failed to load YAML");
+        if (!cancelled) handleYamlChange(data.rawYaml);
+      } catch (e) {
+        if (!cancelled) yamlError.value = getErrorMessage(e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab.value]);
+
   const handleViewYaml = async () => {
     if (!selectedRepo.value || !selection.value) return;
     rawYamlLoading.value = true;
