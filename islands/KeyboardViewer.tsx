@@ -241,6 +241,16 @@ export default function KeyboardViewer({ defaultLayout }: KeyboardViewerProps) {
             initialFile={source.value.initialFile}
             initialPlatform={source.value.initialPlatform}
             initialVariant={source.value.initialVariant}
+            // Matches .keyboard-width-container's own `width: 50rem` (see
+            // assets/styles.css) — without this, requestedWidth defaults to
+            // undefined, so ScaledEmbed applies no scaling at all (scale=1)
+            // on the server-rendered first paint, since there's no way to
+            // know the real viewport server-side. That rendered the
+            // keyboard at its full natural width (924px for the default
+            // QWERTY layout) before ResizeObserver corrected it down after
+            // hydration — a much bigger, more visible flash than a properly
+            // seeded guess leaves.
+            requestedWidth={800}
             onSelectionChange={(sel) => selection.value = sel}
           />
         </div>
