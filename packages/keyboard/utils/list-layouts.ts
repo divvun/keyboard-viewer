@@ -46,10 +46,17 @@ export function sortLayoutFileNames(entryNames: string[]): string[] {
     .map((name) => name.replace(/\.yaml$/, ""));
 }
 
-async function fetchDisplayName(
+/**
+ * Resolves a single layout file's display name the same way `listLayoutFiles`
+ * does for every file in a repo — exported so callers that already have one
+ * specific `layoutFile` pinned (e.g. `buildKeyboardComboTree`'s layout-pinned
+ * path) can resolve its real display name instead of falling back to the raw
+ * filename.
+ */
+export async function fetchDisplayName(
   kbd: string,
   layoutFile: string,
-  preferredLangs: string[],
+  preferredLangs: string[] = ["en"],
 ): Promise<string> {
   try {
     const { kbdgenData } = await fetchKbdgenData(kbd, layoutFile);

@@ -1,7 +1,7 @@
 import type { DeviceVariant, Platform } from "../constants/platforms.ts";
 import type { KeyboardParams } from "./params.ts";
 import { fetchKbdgenData } from "./fetch-kbdgen.ts";
-import { listLayoutFiles } from "./list-layouts.ts";
+import { fetchDisplayName, listLayoutFiles } from "./list-layouts.ts";
 import { buildLayoutComboFromKbdgenData } from "./build-layout-combo.ts";
 import type { LayoutCombo, PlatformCombo } from "../types/combo-tree.ts";
 
@@ -111,10 +111,15 @@ export async function buildKeyboardComboTree(
   const { layoutFile, platform, variant, preferredLangs } = options ?? {};
 
   if (layoutFile != null) {
+    const displayName = await fetchDisplayName(
+      params.kbd,
+      layoutFile,
+      preferredLangs,
+    );
     const combo = await buildLayoutCombo(
       params.kbd,
       layoutFile,
-      layoutFile,
+      displayName,
       platform,
     );
     if (combo.platformCombos.length === 0) {
