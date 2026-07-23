@@ -61,7 +61,15 @@ export function GitHubKeyboardSelector(
             const cleanDescription = repo.description
               .split(/\s+/)
               .filter((word) =>
-                !["keyboards", "for", "the", "language", "layouts", "layout", "keyboard"]
+                ![
+                  "keyboards",
+                  "for",
+                  "the",
+                  "language",
+                  "layouts",
+                  "layout",
+                  "keyboard",
+                ]
                   .includes(word.toLowerCase())
               )
               .join(" ")
