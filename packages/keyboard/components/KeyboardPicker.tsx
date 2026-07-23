@@ -30,6 +30,13 @@ export interface KeyboardPickerProps {
   /** Scale keyboard to this pixel width for the no-JS render. Once hydrated,
    * the keyboard re-fits itself to its container via ResizeObserver. */
   requestedWidth?: number;
+  /** Whether to render the click/type test textarea above the keyboard.
+   * Defaults to true. The textarea is otherwise always in the markup and
+   * only ever revealed by a `@media (scripting: enabled)` CSS rule (see
+   * keyboard.css) — this prop skips rendering it at all, for hosts that
+   * want a keyboard-only view (e.g. a reference/documentation embed) rather
+   * than a typing test. */
+  showInput?: boolean;
   /** Fired whenever the live file/platform/variant/layer selection changes
    * (including once on mount with the initial selection) — lets a host page
    * track what's currently showing, e.g. to build an "embed this" URL or
@@ -136,6 +143,7 @@ export function KeyboardPicker({
   initialVariant,
   initialLayer = "default",
   requestedWidth,
+  showInput = true,
   onSelectionChange,
 }: KeyboardPickerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -576,20 +584,22 @@ export function KeyboardPicker({
 
   return (
     <div ref={rootRef} class="dvk dvk-keyboard">
-      <div class="dvk-input">
-        <textarea
-          ref={taRef}
-          class="dvk-input-field"
-          placeholder="Click keys or type here to test the keyboard"
-          aria-label="Keyboard test area"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck={false}
-          onKeyDown={handleKeyDown}
-          onKeyUp={handleKeyUp}
-        />
-      </div>
+      {showInput && (
+        <div class="dvk-input">
+          <textarea
+            ref={taRef}
+            class="dvk-input-field"
+            placeholder="Click keys or type here to test the keyboard"
+            aria-label="Keyboard test area"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck={false}
+            onKeyDown={handleKeyDown}
+            onKeyUp={handleKeyUp}
+          />
+        </div>
+      )}
       <StaticKeyboardLayoutPicker
         kbd={kbd}
         combos={combos}

@@ -86,6 +86,9 @@ in other websites. The embed URL supports these parameters:
 - `platform`: Target platform (macOS, iOS, android, windows, chromeOS)
 - `variant`: Device variant (primary, phone, tablet)
 - `interactive`: Enable/disable interaction (default: true)
+- `input`: Show/hide the click/type test textarea (default: true). Only
+  meaningful when `interactive=true` — the no-JS static embed never renders one
+  regardless.
 
 Example embed URL:
 

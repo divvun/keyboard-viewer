@@ -33,6 +33,10 @@ interface EmbedData {
   variant: string;
   layer: string;
   interactive: boolean;
+  /** Whether to render the click/type test textarea above the keyboard —
+   * only meaningful for the interactive path; the no-JS static path never
+   * renders one regardless. See `KeyboardPicker`'s own doc comment. */
+  showInput: boolean;
   keyboardLayout?: KeyboardLayout;
   layers?: LayerState[];
   combos?: LayoutCombo[];
@@ -45,6 +49,7 @@ export const handler = define.handlers<EmbedData>({
   async GET(ctx) {
     const params = parseKeyboardParams(ctx.url.searchParams);
     const interactive = ctx.url.searchParams.get("interactive") !== "false";
+    const showInput = ctx.url.searchParams.get("input") !== "false";
     // parseKeyboardParams defaults `layout`/`platform` globally when absent,
     // which is meaningless for kbds that don't have that file/platform.
     // Detect absence from the raw query string instead of trusting params.
@@ -70,6 +75,7 @@ export const handler = define.handlers<EmbedData>({
       variant: params.variant as string,
       layer: params.layer ?? "default",
       interactive,
+      showInput,
       staticUrl,
       requestedWidth,
     };
@@ -207,6 +213,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
     variant,
     layer,
     interactive,
+    showInput,
     keyboardLayout,
     layers,
     combos,
@@ -261,7 +268,8 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
   } else {
     // The island's server render is already a fully working no-JS keyboard
     // (radio/:checked machinery), so there is no <noscript> fallback — the
-    // fallback IS the page. Hydration adds the test text area and typing.
+    // fallback IS the page. Hydration adds typing (and, unless showInput is
+    // false, the test text area itself).
     body = (
       <Fragment>
         <KeyboardIsland
@@ -269,6 +277,7 @@ export default function EmbedPage({ data }: PageProps<EmbedData>) {
           layers={layers!}
           initialLayer={layer}
           requestedWidth={requestedWidth}
+          showInput={showInput}
         />
         <script
           // deno-lint-ignore react-no-danger

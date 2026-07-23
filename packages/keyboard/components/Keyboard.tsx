@@ -11,6 +11,9 @@ export interface KeyboardProps {
   /** Scale keyboard to this pixel width for the no-JS render. Once hydrated,
    * the keyboard re-fits itself to its container via ResizeObserver. */
   requestedWidth?: number;
+  /** Whether to render the click/type test textarea above the keyboard.
+   * Defaults to true — see `KeyboardPicker`'s own doc comment on this prop. */
+  showInput?: boolean;
 }
 
 /**
@@ -24,7 +27,13 @@ export interface KeyboardProps {
  * picker tree.
  */
 export function Keyboard(
-  { layout, layers, initialLayer = "default", requestedWidth }: KeyboardProps,
+  {
+    layout,
+    layers,
+    initialLayer = "default",
+    requestedWidth,
+    showInput,
+  }: KeyboardProps,
 ) {
   const platform = layout.platform ?? DEFAULT_PLATFORM;
   const variant = layout.variant ?? DEFAULT_VARIANT;
@@ -46,6 +55,7 @@ export function Keyboard(
       initialVariant={variant}
       initialLayer={initialLayer}
       requestedWidth={requestedWidth}
+      showInput={showInput}
     />
   );
 }
