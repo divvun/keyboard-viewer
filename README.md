@@ -95,20 +95,21 @@ Example embed URL:
 
 ### No-JS layout and platform picker mode
 
-Add `&interactive=false` and omit `layout` and/or `platform` to get a fully
-server-rendered, JS-free embed with tab-bar pickers built in for whichever of
-the two you leave out — useful for embedding documentation without needing to
-know a kbd's layout filenames or supported platforms in advance.
+Add `&interactive=false` and omit `layout`, `platform`, and/or `variant` to get
+a fully server-rendered, JS-free embed with tab-bar pickers built in for
+whichever of the three you leave out — useful for embedding documentation
+without needing to know a kbd's layout filenames, supported platforms, or device
+variants in advance.
 
 ```
 /embed?kbd=smj&interactive=false
 ```
 
-**Rule:** each of `layout` and `platform` is independent. If present, it's
-pinned (no tab bar for that dimension, exactly like the pinned example above).
-If absent, every option for that dimension is loaded and a CSS-only tab bar
-appears — no JavaScript or extra network requests involved in switching, same
-mechanism as the layer tabs.
+**Rule:** each of `layout`, `platform`, and `variant` is independent. If
+present, it's pinned (no tab bar for that dimension, exactly like the pinned
+example above). If absent, every option for that dimension is loaded and a
+CSS-only tab bar appears — no JavaScript or extra network requests involved in
+switching, same mechanism as the layer tabs.
 
 - **`layout` absent:** every layout file in the kbd's repo is loaded (e.g.
   `smj-NO` / `smj-SE`).
@@ -127,22 +128,31 @@ mechanism as the layer tabs.
     defaulted to macOS only. It now shows a picker for every platform the layout
     declares. If you want today's old macOS-only behavior, pass `platform=macOS`
     explicitly.
-- If a kbd only has one layout, or a layout only has one platform, no tab bar is
-  shown for that dimension at all — this mode then collapses toward the
-  fully-pinned example above.
+- **`variant` absent:** only matters for mobile platforms (iOS, Android) that
+  declare more than one device variant — e.g. iOS's Primary/iPad-9in/iPad-12in,
+  Android's Primary/Tablet-600. Desktop platforms always have exactly one
+  variant, so this tab bar only appears once a multi-variant mobile platform is
+  the checked (or pinned) one.
+- If a kbd only has one layout, a layout only has one platform, or a platform
+  only has one variant, no tab bar is shown for that dimension at all — this
+  mode then collapses toward the fully-pinned example above.
 
 Tab bars are deliberately **not** scaled down along with the keyboard — they're
 UI chrome, and shrinking them together with a width-constrained keyboard made
 them inconsistent in size and less obviously clickable. Only the keyboard
-key-grid itself scales to fit `width`; every tab bar (layer, platform, layout)
-always renders at full size.
+key-grid itself scales to fit `width`; every tab bar (layer, platform, layout,
+variant) always renders at full size.
 
 **Recommended iframe height:** budget for one full, fixed-size tab-bar row
 (layer tabs are always present) plus one more _per additional dimension_ left
-unpinned (layout, platform) — up to three tab-bar rows stacked above the
-(possibly scaled-down) keyboard when both `layout` and `platform` are omitted,
-since you can't know in advance how many options either dimension will end up
-with.
+unpinned (layout, platform, variant) — up to four tab-bar rows stacked above the
+(possibly scaled-down) keyboard, e.g. when `layout`/`platform`/`variant` are all
+omitted and the checked layout+platform combo turns out to be a multi-variant
+mobile one, since you can't know in advance how many options any dimension will
+end up with. If your embedding context can run JavaScript, read
+`data-embed-height` off the response instead of hardcoding a budget — it's
+exact, and the embed also self-corrects via a `postMessage` resize event as a
+progressive enhancement on top.
 
 ### URL Parameters
 
