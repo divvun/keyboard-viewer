@@ -1,5 +1,5 @@
-import { define, getErrorMessage } from "../../../utils.ts";
-import { fetchKbdgenData, LayoutNotFoundError } from "@divvun/keyboard";
+import { define, getErrorMessage, getErrorStatus } from "../../../utils.ts";
+import { fetchKbdgenData } from "@divvun/keyboard";
 
 /** Returns a single layout file's raw kbdgen YAML text, for an on-demand
  * "View YAML" panel. Backed by fetchKbdgenData's own cache, so this never
@@ -22,8 +22,10 @@ export const handler = define.handlers({
       const { rawYaml } = await fetchKbdgenData(repo, file);
       return Response.json({ rawYaml });
     } catch (error) {
-      const status = error instanceof LayoutNotFoundError ? 404 : 500;
-      return Response.json({ error: getErrorMessage(error) }, { status });
+      return Response.json(
+        { error: getErrorMessage(error) },
+        { status: getErrorStatus(error) },
+      );
     }
   },
 });

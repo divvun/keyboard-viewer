@@ -1,5 +1,12 @@
 import { fetchKbdgenData } from "./fetch-kbdgen.ts";
 import { githubApiHeaders } from "./github.ts";
+import { HttpError } from "./http-error.ts";
+
+export class LayoutsDirectoryNotFoundError extends HttpError {
+  constructor() {
+    super("Layouts directory not found", 404);
+  }
+}
 
 export interface LayoutFile {
   file: string;
@@ -80,7 +87,7 @@ async function listLayoutFileNames(kbd: string): Promise<string[]> {
 
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error("Layouts directory not found");
+      throw new LayoutsDirectoryNotFoundError();
     }
     throw new Error(`GitHub API error: ${response.statusText}`);
   }

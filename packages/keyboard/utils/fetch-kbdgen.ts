@@ -1,12 +1,11 @@
 import { parse as parseYaml } from "jsr:@std/yaml@^1.0.0";
 import type { KbdgenLayout } from "./kbdgen-transform.ts";
 import { githubRawHeaders } from "./github.ts";
+import { HttpError } from "./http-error.ts";
 
-export class LayoutNotFoundError extends Error {
-  readonly status = 404;
+export class LayoutNotFoundError extends HttpError {
   constructor() {
-    super("Layout file not found");
-    this.name = "LayoutNotFoundError";
+    super("Layout file not found", 404);
   }
 }
 

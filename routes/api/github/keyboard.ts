@@ -1,4 +1,4 @@
-import { define, getErrorMessage } from "../../../utils.ts";
+import { define, getErrorMessage, getErrorStatus } from "../../../utils.ts";
 import {
   buildKeyboardComboTree,
   DEFAULT_PLATFORM,
@@ -32,10 +32,10 @@ export const handler = define.handlers({
       });
       return Response.json(tree);
     } catch (error) {
-      const status = getErrorMessage(error) === "Layouts directory not found"
-        ? 404
-        : 500;
-      return Response.json({ error: getErrorMessage(error) }, { status });
+      return Response.json(
+        { error: getErrorMessage(error) },
+        { status: getErrorStatus(error) },
+      );
     }
   },
 });

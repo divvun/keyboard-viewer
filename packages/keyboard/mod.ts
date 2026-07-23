@@ -39,6 +39,7 @@ export type {
 } from "./types/combo-tree.ts";
 
 // Server-side data layer: fetch + transform kbdgen layouts
+export { HttpError } from "./utils/http-error.ts";
 export {
   fetchKbdgenData,
   type KbdgenFetchResult,
@@ -49,7 +50,10 @@ export {
   loadKeyboardLayout,
 } from "./utils/load-layout.ts";
 export type { KeyboardParams } from "./utils/params.ts";
-export { listLayoutFiles } from "./utils/list-layouts.ts";
+export {
+  LayoutsDirectoryNotFoundError,
+  listLayoutFiles,
+} from "./utils/list-layouts.ts";
 export {
   type BuildComboTreeOptions,
   buildKeyboardComboTree,
