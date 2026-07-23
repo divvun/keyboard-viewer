@@ -4,6 +4,18 @@ import type {
   KeyLayers,
 } from "../types/keyboard-simple.ts";
 import { DeviceVariant, Platform } from "../constants/platforms.ts";
+import { HttpError } from "./http-error.ts";
+
+/** A kbdgen YAML file fetched fine but declares none of the platforms this
+ * viewer supports — thrown by both `load-layout.ts` (single pinned layout)
+ * and `combo-tree.ts` (layout-pinned combo tree) after each independently
+ * finds `getAvailablePlatforms` empty, so they share one typed error instead
+ * of duplicating the same message string. */
+export class NoPlatformsInLayoutError extends HttpError {
+  constructor() {
+    super("No platforms found in layout file", 404);
+  }
+}
 
 /**
  * Transforms keyboard layouts from kbdgen format (used by giellalt)

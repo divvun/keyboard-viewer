@@ -1,6 +1,7 @@
 import {
   getAvailablePlatforms,
   getMobileVariants,
+  NoPlatformsInLayoutError,
   transformKbdgenToLayout,
 } from "./kbdgen-transform.ts";
 import {
@@ -33,7 +34,7 @@ export async function loadKeyboardLayout(
 
   const availablePlatforms = getAvailablePlatforms(kbdgenData);
   if (availablePlatforms.length === 0) {
-    throw new Error("No platforms found in layout file");
+    throw new NoPlatformsInLayoutError();
   }
 
   const selectedPlatform = availablePlatforms.includes(params.platform)

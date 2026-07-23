@@ -3,7 +3,30 @@ import type { KeyboardParams } from "./params.ts";
 import { fetchKbdgenData } from "./fetch-kbdgen.ts";
 import { fetchDisplayName, listLayoutFiles } from "./list-layouts.ts";
 import { buildLayoutComboFromKbdgenData } from "./build-layout-combo.ts";
+import { HttpError } from "./http-error.ts";
+import { NoPlatformsInLayoutError } from "./kbdgen-transform.ts";
 import type { LayoutCombo, PlatformCombo } from "../types/combo-tree.ts";
+
+export { NoPlatformsInLayoutError };
+
+/** A kbd's repo has a layouts directory, but it's empty — no `.yaml` layout
+ * files at all. Distinct from `LayoutsDirectoryNotFoundError` (the directory
+ * itself is missing) and `LayoutNotFoundError` (one specific pinned file is
+ * missing). */
+export class NoLayoutsFoundError extends HttpError {
+  constructor() {
+    super("No layouts found for this keyboard", 404);
+  }
+}
+
+/** The layout file(s) in scope exist, but none of them declare the pinned
+ * platform — e.g. a kbd whose only layouts are Android/iOS-only, with
+ * `platform=macOS` pinned. */
+export class PlatformNotSupportedError extends HttpError {
+  constructor(readonly platform: Platform) {
+    super(`No layouts available for platform ${platform}`, 404);
+  }
+}
 
 export interface BuildComboTreeOptions {
   /** Pin to exactly this layout file (its .yaml basename, e.g. "smj-NO"). */
@@ -123,11 +146,9 @@ export async function buildKeyboardComboTree(
       platform,
     );
     if (combo.platformCombos.length === 0) {
-      throw new Error(
-        platform != null
-          ? `No layouts available for platform ${platform}`
-          : "No platforms found in layout file",
-      );
+      throw platform != null
+        ? new PlatformNotSupportedError(platform)
+        : new NoPlatformsInLayoutError();
     }
 
     const defaultPlatform = platform ??
@@ -151,7 +172,7 @@ export async function buildKeyboardComboTree(
 
   const files = await listLayoutFiles(params.kbd, preferredLangs);
   if (files.length === 0) {
-    throw new Error("No layouts found for this keyboard");
+    throw new NoLayoutsFoundError();
   }
 
   if (platform != null) {
@@ -168,7 +189,7 @@ export async function buildKeyboardComboTree(
     const combos = built.filter((c) => c.platformCombos.length > 0);
 
     if (combos.length === 0) {
-      throw new Error(`No layouts available for platform ${platform}`);
+      throw new PlatformNotSupportedError(platform);
     }
 
     const defaultFile = pickDefaultLayoutFile(combos);

@@ -58,12 +58,15 @@ export {
   type BuildComboTreeOptions,
   buildKeyboardComboTree,
   type KeyboardComboTree,
+  NoLayoutsFoundError,
+  PlatformNotSupportedError,
 } from "./utils/combo-tree.ts";
 export { buildLayoutComboFromKbdgenData } from "./utils/build-layout-combo.ts";
 export {
   getAvailablePlatforms,
   getMobileVariants,
   type KbdgenLayout,
+  NoPlatformsInLayoutError,
   transformKbdgenToLayout,
 } from "./utils/kbdgen-transform.ts";
 
