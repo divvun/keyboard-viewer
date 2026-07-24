@@ -181,10 +181,6 @@ You can share specific keyboard configurations by including URL parameters:
 
 The main interactive keyboard viewer with GitHub loader and YAML editor.
 
-### KeyboardEmbed
-
-Lightweight embeddable keyboard component for use in iframes.
-
 ### StaticKeyboardEmbed
 
 Server-rendered, JS-free keyboard for one pinned layout, with CSS-only layer
@@ -208,14 +204,6 @@ chrome when only one platform is in scope for that layout.
 ### KeyboardDisplay
 
 Renders the visual keyboard layout with key state management.
-
-### useKeyboard
-
-Custom hook that manages keyboard state, layer switching, and key combinations.
-
-### useKeyboardScaling
-
-Custom hook that handles responsive scaling of the keyboard display.
 
 ## Supported Platforms
 
