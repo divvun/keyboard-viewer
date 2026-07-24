@@ -26,6 +26,13 @@ layouts across multiple platforms. Built with Fresh (Deno), Preact, and Vite.
 Make sure to install Deno:
 <https://docs.deno.com/runtime/getting_started/installation>
 
+Copy `.env.example` to `.env` and set `GITHUB_TOKEN` to a GitHub personal access
+token (no scopes needed for public repos —
+<https://github.com/settings/tokens>). This app calls the GitHub API to list
+keyboard repos and fetch/parse kbdgen YAML; without a token you'll hit GitHub's
+unauthenticated rate limit (60 requests/hour) almost immediately during
+development.
+
 ## Development
 
 Start the project in development mode:
@@ -53,28 +60,30 @@ This will start the Vite development server and watch for changes.
 Navigate to the root URL to access the main keyboard viewer interface. The
 viewer includes:
 
-1. **Output Area**: Displays text as you type on the virtual or physical
-   keyboard
-2. **Virtual Keyboard**: Interactive visual representation of the keyboard
-   layout
-3. **Layer Information**: Shows the currently active keyboard layer
-4. **Load from GitHub**: Select from available Divvun keyboard repositories
-5. **YAML Editor**: Paste and test custom kbdgen YAML layouts
+1. **Keyboard**: An interactive keyboard — click keys or use your physical
+   keyboard to type into its built-in test area. If the loaded kbd has more than
+   one layout file, platform, device variant, or layer, the keyboard itself
+   grows the matching tab bar(s) for switching between them; there's no separate
+   selection UI for these.
+2. **Load from GitHub**: Pick which Divvun keyboard repository to view — the
+   only choice made outside the keyboard itself
+3. **YAML Editor**: Paste and test custom kbdgen YAML layouts
 
 ### Loading Keyboards from GitHub
 
-1. Select a repository from the dropdown (e.g., keyboard-sme, keyboard-fin)
-2. Choose a layout file
-3. Select the target platform (macOS, iOS, Android, etc.)
-4. For mobile platforms, optionally select device variant (phone/tablet)
+1. Select a language from the dropdown (e.g., keyboard-sme, keyboard-fin)
+2. The keyboard above updates to that repo's combo tree — switch between its
+   layout files, platforms, device variants, and layers using the keyboard's own
+   tab bars
+3. Once you're showing the combination you want, click "Get Embed Code" to copy
+   an iframe snippet for it
 
 ### Using the YAML Editor
 
 1. Switch to the "YAML Editor" tab
 2. Paste a kbdgen YAML layout definition
-3. Select the platform to preview
-4. The keyboard shows a live preview, making it easy to edit a keyboard
-   definition and see the result in real time.
+3. The keyboard above shows a live preview as you type, with its usual tab bars
+   for any platforms/variants/layers the pasted YAML declares
 
 ### Embedding Keyboards
 
@@ -175,33 +184,66 @@ You can share specific keyboard configurations by including URL parameters:
 - **Styling**: Tailwind-style CSS (not actually Tailwind)
 - **Data Format**: kbdgen YAML layouts
 
+## Package Structure
+
+The keyboard itself — rendering, kbdgen parsing/transforms, and the tab-bar
+picker components — lives in `packages/keyboard`, a Deno workspace member
+published as `@divvun/keyboard` (see its `deno.json`). It's built to be reusable
+outside this app: it has no dependency on Fresh, exposes its public API through
+`mod.ts`, and ships its own stylesheet as a separate export
+(`@divvun/keyboard/keyboard.css`). Other sites (e.g. borealium.org) consume it
+directly rather than going through `keyboard-viewer`'s own routes/islands, which
+are just one consumer of it — the app-level `routes/`, `islands/`, and
+`components/` directories hold everything specific to _this_ site (the
+GitHub/YAML-editor page, the `/embed` route, the GitHub API proxy routes).
+
 ## Key Components
 
 ### KeyboardViewer
 
-The main interactive keyboard viewer with GitHub loader and YAML editor.
+The root page's island: the always-visible `KeyboardPicker`, the "Load from
+GitHub" / "YAML Editor" tab switcher, and the "Get Embed Code" button.
 
-### StaticKeyboardEmbed
+### GitHubKeyboardSelector
 
-Server-rendered, JS-free keyboard for one pinned layout, with CSS-only layer
-switching (used by `/embed?...&interactive=false`).
+Picks which `keyboard-xxx` GitHub repo to view — nothing else. Once a repo is
+chosen, `KeyboardPicker` owns layout/platform/variant/layer selection itself via
+its own tab bars.
 
-### StaticKeyboardLayoutPicker
+### KeyboardPicker (`@divvun/keyboard`)
 
-Wraps `StaticKeyboardPlatformPicker` (one per layout) with an optional outer
-layout tab bar, used by `/embed?...&interactive=false` when `layout` is omitted
-from the URL. Renders directly with no extra chrome when only one layout is in
-scope.
+Hydratable renderer for the full layout → platform → variant → layer tab tree:
+server-rendered as a complete zero-JS keyboard (every combo pre-rendered,
+switched by CSS-only radio tabs), then hydrated to wire up click/hardware typing
+and a live test textarea. Used directly wherever more than one
+layout/platform/variant might need to be shown (`KeyboardViewer`, the
+interactive `/embed` island when hydrated).
 
-### StaticKeyboardPlatformPicker
+### Keyboard (`@divvun/keyboard`)
 
-Wraps `StaticKeyboardEmbed` (one per platform) with an optional outer platform
-tab bar, used by `/embed?...&interactive=false` when `platform` is omitted from
-the URL. Nested inside `StaticKeyboardLayoutPicker` since available platforms
-differ per layout file. Renders `StaticKeyboardEmbed` directly with no extra
-chrome when only one platform is in scope for that layout.
+A thin wrapper over `KeyboardPicker` with a single-entry combo — use this when
+you already know exactly which layout/platform/variant to show and only need
+layer tabs, e.g. `/embed`'s pinned interactive path.
 
-### KeyboardDisplay
+### CssTabPicker (`@divvun/keyboard`)
+
+The generic CSS-only (no JS) radio-driven tab bar shared by every dimension —
+layer, platform, layout, and variant tabs are all one `CssTabPicker` under the
+hood, parameterized by dimension name.
+
+### StaticKeyboardLayoutPicker / StaticKeyboardPlatformPicker / StaticKeyboardVariantPicker (`@divvun/keyboard`)
+
+The no-JS picker tree used by `/embed?...&interactive=false`, nested in that
+order (layout → platform → variant), each wrapping the next with an optional tab
+bar for its own dimension — omitted entirely when only one option is in scope.
+See "No-JS layout and platform picker mode" above for the full behavior.
+
+### StaticKeyboardEmbed (`@divvun/keyboard`)
+
+The innermost piece of that tree: one pinned layout/platform/variant,
+server-rendered with CSS-only layer switching, no JS required.
+
+### KeyboardDisplay (`@divvun/keyboard`)
 
 Renders the visual keyboard layout with key state management.
 
