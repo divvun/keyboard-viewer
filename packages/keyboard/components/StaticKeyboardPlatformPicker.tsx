@@ -1,3 +1,4 @@
+import type { JSX } from "preact";
 import type { DeviceVariant, Platform } from "../constants/platforms.ts";
 import { slugifyId, TAB_BAR_HEIGHT_PX } from "../utils/tab-bar.ts";
 import { CssTabPicker } from "./CssTabPicker.tsx";
@@ -91,7 +92,7 @@ export function StaticKeyboardPlatformPicker({
   checkedVariant,
   onVariantChange,
   embedHydration,
-}: StaticKeyboardPlatformPickerProps) {
+}: StaticKeyboardPlatformPickerProps): JSX.Element {
   const checkedPlatform = checkedPlatformProp ??
     (combos.some((c) => c.platform === initialPlatform)
       ? initialPlatform

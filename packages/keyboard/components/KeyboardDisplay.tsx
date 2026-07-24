@@ -1,3 +1,4 @@
+import type { JSX } from "preact";
 import { KeyboardLayout } from "./KeyboardLayout.tsx";
 import type {
   Key,
@@ -40,7 +41,7 @@ export function KeyboardDisplay({
   pendingDeadkey,
   showChrome = true,
   labelForLayer,
-}: KeyboardDisplayProps) {
+}: KeyboardDisplayProps): JSX.Element | null {
   if (loading) {
     return (
       <div class="dvk dvk-status">

@@ -1,4 +1,4 @@
-import { Component, type ComponentChildren } from "preact";
+import { Component, type ComponentChildren, type JSX } from "preact";
 import type {
   Key as KeyType,
   KeyboardLayout,
@@ -251,7 +251,7 @@ export class StaticKeyboardEmbed extends Component<StaticKeyboardEmbedProps> {
     return !shallowPropsEqual(this.props, nextProps);
   }
 
-  override render() {
+  override render(): JSX.Element {
     return <StaticKeyboardEmbedInner {...this.props} />;
   }
 }

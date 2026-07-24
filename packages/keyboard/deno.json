@@ -1,9 +1,9 @@
 {
   "name": "@divvun/keyboard",
   "version": "0.1.0",
+  "license": "MIT OR Apache-2.0",
   "exports": {
-    ".": "./mod.ts",
-    "./keyboard.css": "./keyboard.css"
+    ".": "./mod.ts"
   },
   "imports": {
     "preact": "npm:preact@^10.29.1"

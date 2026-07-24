@@ -3,10 +3,11 @@
  * borealium. Server-rendered it is a complete zero-JS keyboard
  * (radio/:checked layer machinery); hydrated inside an island it gains
  * typing, deadkey composition, textarea-scoped hardware capture, and
- * container refit. Import `@divvun/keyboard/keyboard.css` once per host —
+ * container refit. Render `keyboardCss` into a <style> tag once per host —
  * every rule is scoped under .dvk-*, no global resets.
  */
 
+export { keyboardCss } from "./keyboard-css.ts";
 export { Keyboard, type KeyboardProps } from "./components/Keyboard.tsx";
 export {
   KeyboardPicker,

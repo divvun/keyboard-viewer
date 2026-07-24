@@ -1,3 +1,4 @@
+import type { JSX } from "preact";
 import {
   type DeviceVariant,
   VariantDisplayNames,
@@ -75,7 +76,7 @@ export function StaticKeyboardVariantPicker({
   checkedVariant: checkedVariantProp,
   onVariantChange,
   embedHydration,
-}: StaticKeyboardVariantPickerProps) {
+}: StaticKeyboardVariantPickerProps): JSX.Element {
   const checkedVariant = checkedVariantProp ??
     (combos.some((c) => c.variant === initialVariant)
       ? initialVariant

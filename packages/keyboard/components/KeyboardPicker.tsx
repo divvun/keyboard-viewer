@@ -1,3 +1,4 @@
+import type { JSX } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { Key, KeyboardLayout } from "../types/keyboard-simple.ts";
 import type { DeviceVariant, Platform } from "../constants/platforms.ts";
@@ -145,7 +146,7 @@ export function KeyboardPicker({
   requestedWidth,
   showInput = true,
   onSelectionChange,
-}: KeyboardPickerProps) {
+}: KeyboardPickerProps): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
 

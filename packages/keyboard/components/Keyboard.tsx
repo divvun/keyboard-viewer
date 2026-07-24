@@ -1,3 +1,4 @@
+import type { JSX } from "preact";
 import type { KeyboardLayout } from "../types/keyboard-simple.ts";
 import type { LayerState } from "../utils/layer-state.ts";
 import { DEFAULT_PLATFORM, DEFAULT_VARIANT } from "../constants/platforms.ts";
@@ -34,7 +35,7 @@ export function Keyboard(
     requestedWidth,
     showInput,
   }: KeyboardProps,
-) {
+): JSX.Element {
   const platform = layout.platform ?? DEFAULT_PLATFORM;
   const variant = layout.variant ?? DEFAULT_VARIANT;
   const combos: LayoutCombo[] = [{

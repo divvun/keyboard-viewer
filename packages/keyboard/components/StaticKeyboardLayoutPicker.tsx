@@ -1,3 +1,4 @@
+import type { JSX } from "preact";
 import type { DeviceVariant, Platform } from "../constants/platforms.ts";
 import { slugifyId, TAB_BAR_HEIGHT_PX } from "../utils/tab-bar.ts";
 import { CssTabPicker } from "./CssTabPicker.tsx";
@@ -89,7 +90,7 @@ export function StaticKeyboardLayoutPicker({
   checkedVariant,
   onVariantChange,
   embedHydration,
-}: StaticKeyboardLayoutPickerProps) {
+}: StaticKeyboardLayoutPickerProps): JSX.Element {
   const checkedFile = checkedFileProp ??
     (combos.some((c) => c.file === initialFile) ? initialFile : combos[0].file);
 

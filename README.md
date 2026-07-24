@@ -190,12 +190,14 @@ The keyboard itself — rendering, kbdgen parsing/transforms, and the tab-bar
 picker components — lives in `packages/keyboard`, a Deno workspace member
 published as `@divvun/keyboard` (see its `deno.json`). It's built to be reusable
 outside this app: it has no dependency on Fresh, exposes its public API through
-`mod.ts`, and ships its own stylesheet as a separate export
-(`@divvun/keyboard/keyboard.css`). Other sites (e.g. borealium.org) consume it
-directly rather than going through `keyboard-viewer`'s own routes/islands, which
-are just one consumer of it — the app-level `routes/`, `islands/`, and
-`components/` directories hold everything specific to _this_ site (the
-GitHub/YAML-editor page, the `/embed` route, the GitHub API proxy routes).
+`mod.ts`, and ships its stylesheet as the `keyboardCss` string export (JSR can't
+publish a raw `.css` file as a module, so it's generated from `keyboard.css` by
+`scripts/generate-css-module.ts` — run that task after editing styles, before
+publishing). Other sites (e.g. borealium.org) consume it directly rather than
+going through `keyboard-viewer`'s own routes/islands, which are just one
+consumer of it — the app-level `routes/`, `islands/`, and `components/`
+directories hold everything specific to _this_ site (the GitHub/YAML-editor
+page, the `/embed` route, the GitHub API proxy routes).
 
 ## Key Components
 
