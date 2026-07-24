@@ -1,5 +1,6 @@
 {
   "nodeModulesDir": "manual",
+  "workspace": ["packages/keyboard"],
   "tasks": {
     "check": "deno fmt --check . && deno lint . && deno check",
     "dev": "vite",
@@ -17,28 +18,14 @@
     "preact": "npm:preact@^10.29.1",
     "@preact/signals": "npm:@preact/signals@^2.9.0",
     "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.1.0",
-    "vite": "npm:vite@^7.1.4"
+    "vite": "npm:vite@^7.1.4",
+    "preact-render-to-string": "npm:preact-render-to-string@^6.6.7",
+    "happy-dom": "npm:happy-dom@^20.0.2"
   },
   "compilerOptions": {
     "lib": ["dom", "dom.asynciterable", "dom.iterable", "deno.ns"],
-    "jsx": "precompile",
+    "jsx": "react-jsx",
     "jsxImportSource": "preact",
-    "jsxPrecompileSkipElements": [
-      "a",
-      "img",
-      "source",
-      "body",
-      "html",
-      "head",
-      "title",
-      "meta",
-      "script",
-      "link",
-      "style",
-      "base",
-      "noscript",
-      "template"
-    ],
     "types": ["vite/client"]
   }
 }

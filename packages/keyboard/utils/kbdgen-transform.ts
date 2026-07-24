@@ -4,6 +4,18 @@ import type {
   KeyLayers,
 } from "../types/keyboard-simple.ts";
 import { DeviceVariant, Platform } from "../constants/platforms.ts";
+import { HttpError } from "./http-error.ts";
+
+/** A kbdgen YAML file fetched fine but declares none of the platforms this
+ * viewer supports — thrown by both `load-layout.ts` (single pinned layout)
+ * and `combo-tree.ts` (layout-pinned combo tree) after each independently
+ * finds `getAvailablePlatforms` empty, so they share one typed error instead
+ * of duplicating the same message string. */
+export class NoPlatformsInLayoutError extends HttpError {
+  constructor() {
+    super("No platforms found in layout file", 404);
+  }
+}
 
 /**
  * Transforms keyboard layouts from kbdgen format (used by giellalt)
@@ -470,6 +482,7 @@ function createMobileKey(
   rowIndex: number,
   keyIndex: number,
   allLayers: { [layerName: string]: ParsedMobileKey[][] },
+  rowKeys: ParsedMobileKey[],
 ): Key {
   const keyId = `mobile-r${rowIndex}-k${keyIndex}`;
 
@@ -501,10 +514,26 @@ function createMobileKey(
   if (parsedKey.specialType) {
     const specialType = parsedKey.specialType;
 
+    // A split mobile row can have a shift key on both sides (e.g. iPad's
+    // bottom row: \s{shift} ... letters ... \s{shift}) -- kbdgen represents
+    // both with the identical `\s{shift}` token, so disambiguate by which
+    // one comes first in the row. Without this, both keys collide on id
+    // "ShiftLeft": Preact's key-based reconciliation warns/misbehaves on the
+    // duplicate, and isPressed/getTargetLayer (keyed by id) treat the two
+    // physically distinct keys as one, so pressing either lights up both.
+    const shiftOccurrence = specialType === "shift"
+      ? rowKeys.slice(0, keyIndex + 1).filter((k) => k.specialType === "shift")
+        .length
+      : 0;
+
     // Map mobile special keys to standard key properties
     const specialKeyMap: Record<string, Partial<Key>> = {
       "shift": {
-        id: "ShiftLeft", // Use standard shift ID so it works with existing logic
+        // Use the same ShiftLeft/ShiftRight ids as desktop layouts (see
+        // SHIFT_KEYS in key-ids.ts) so existing isShiftKey()-based logic
+        // (getTargetLayer's iOS symbols-1/symbols-2 toggle, isModifierKey,
+        // ...) treats either physical shift key the same way.
+        id: shiftOccurrence > 1 ? "ShiftRight" : "ShiftLeft",
         label: "⇧",
         layers: { default: "" },
         type: "modifier",
@@ -601,7 +630,7 @@ function transformMobileLayout(
 
   const rows = defaultLayer.map((rowKeys, rowIndex) => {
     const keys = rowKeys.map((parsedKey, keyIndex) =>
-      createMobileKey(parsedKey, rowIndex, keyIndex, parsedLayers)
+      createMobileKey(parsedKey, rowIndex, keyIndex, parsedLayers, rowKeys)
     );
 
     return { keys };

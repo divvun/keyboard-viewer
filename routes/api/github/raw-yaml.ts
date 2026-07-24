@@ -1,0 +1,31 @@
+import { define, getErrorMessage, getErrorStatus } from "../../../utils.ts";
+import { fetchKbdgenData } from "@divvun/keyboard";
+
+/** Returns a single layout file's raw kbdgen YAML text, for an on-demand
+ * "View YAML" panel. Backed by fetchKbdgenData's own cache, so this never
+ * costs an extra GitHub fetch beyond what building the combo tree already
+ * did for the same (repo, file). */
+export const handler = define.handlers({
+  async GET(req) {
+    const url = new URL(req.url);
+    const repo = url.searchParams.get("repo");
+    const file = url.searchParams.get("file");
+
+    if (!repo || !file) {
+      return Response.json(
+        { error: "Missing 'repo' or 'file' parameter" },
+        { status: 400 },
+      );
+    }
+
+    try {
+      const { rawYaml } = await fetchKbdgenData(repo, file);
+      return Response.json({ rawYaml });
+    } catch (error) {
+      return Response.json(
+        { error: getErrorMessage(error) },
+        { status: getErrorStatus(error) },
+      );
+    }
+  },
+});

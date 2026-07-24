@@ -43,16 +43,16 @@ export function KeyboardDisplay({
 }: KeyboardDisplayProps) {
   if (loading) {
     return (
-      <div class="flex items-center justify-center p-8">
-        <div class="text-gray-600">Loading keyboard...</div>
+      <div class="dvk dvk-status">
+        <div>Loading keyboard...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div class="flex items-center justify-center p-8">
-        <div class="text-red-600">Error: {error}</div>
+      <div class="dvk dvk-status dvk-status--error">
+        <div>Error: {error}</div>
       </div>
     );
   }
@@ -62,7 +62,7 @@ export function KeyboardDisplay({
   }
 
   return (
-    <div class={showChrome ? "flex justify-center items-center" : ""}>
+    <div class={showChrome ? "dvk dvk-center" : "dvk"}>
       <KeyboardLayout
         layout={layout}
         onKeyClick={onKeyClick}

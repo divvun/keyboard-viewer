@@ -101,7 +101,7 @@ export function KeyboardLayout({
   }
 
   return (
-    <div class="inline-block p-4 bg-gray-200 rounded-b-lg">
+    <div class="dvk dvk-board">
       <div
         style={{
           display: "flex",
@@ -113,9 +113,9 @@ export function KeyboardLayout({
         {layout.rows.map((row, rowIndex) => (
           <div
             key={rowIndex}
-            class={`flex ${
+            class={`dvk-row ${
               layout.isMobile || rowIndex === layout.rows.length - 1
-                ? "justify-center"
+                ? "dvk-row--center"
                 : ""
             }`}
             style={{

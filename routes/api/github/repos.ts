@@ -1,19 +1,10 @@
 import { define, getErrorMessage } from "../../../utils.ts";
+import { githubApiHeaders } from "@divvun/keyboard";
 
 export const handler = define.handlers({
   async GET() {
     try {
-      // Get GitHub token from environment if available
-      const githubToken = Deno.env.get("GITHUB_TOKEN");
-      const headers: Record<string, string> = {
-        "Accept": "application/vnd.github+json",
-        "User-Agent": "keyboard-viewer",
-      };
-
-      // Add authorization header if token is available
-      if (githubToken) {
-        headers["Authorization"] = `Bearer ${githubToken}`;
-      }
+      const headers = githubApiHeaders();
 
       // Use Search API to find all keyboard-* repos
       const allRepos = [];

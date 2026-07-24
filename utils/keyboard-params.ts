@@ -3,7 +3,7 @@ import {
   DEFAULT_VARIANT,
   type DeviceVariant,
   type Platform,
-} from "../constants/platforms.ts";
+} from "@divvun/keyboard";
 
 // Shared parameter types
 export interface KeyboardParams {
@@ -31,11 +31,6 @@ export function parseKeyboardParams(
     variant: (searchParams.get("variant") as DeviceVariant) || DEFAULT_VARIANT,
     layer,
   };
-}
-
-// Build API URL for fetching keyboard
-export function buildKeyboardApiUrl(params: KeyboardParams): string {
-  return `/api/github/layout?repo=${params.kbd}&file=${params.layout}.yaml&platform=${params.platform}&variant=${params.variant}`;
 }
 
 // Serialize params back to URL string (for viewer)

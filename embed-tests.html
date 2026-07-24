@@ -11,22 +11,19 @@
       src="http://localhost:5173/embed?kbd=sme&layout=se-FI&platform=macOS"
       width="100%"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <iframe
       src="http://localhost:5173/embed?kbd=mhr&layout=mhr&platform=macOS"
       width="100%"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <iframe
       src="http://localhost:5173/embed?kbd=liv&layout=liv&platform=iOS"
       width="100%"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <hr>
     <h3 style="font-family: sans-serif">No-JS (interactive=false)</h3>
@@ -36,32 +33,28 @@
       width="100%"
       height="400"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <iframe
       src="http://localhost:5173/embed?kbd=sme&layout=se-FI&platform=macOS&interactive=false"
       width="100%"
       height="400"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <iframe
       src="http://localhost:5173/embed?kbd=liv&layout=liv&platform=iOS&interactive=false"
       width="100%"
       height="500"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <iframe
       src="http://localhost:5173/embed?kbd=sme&layout=se-FI&platform=macOS&interactive=false&layer=shift"
       width="100%"
       height="400"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <hr>
     <h3 style="font-family: sans-serif">No-JS scaled by width</h3>
@@ -76,8 +69,7 @@
       width="400"
       height="230"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <p style="font-family: sans-serif">width=700</p>
     <iframe
@@ -85,8 +77,7 @@
       width="700"
       height="350"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <p style="font-family: sans-serif">
       width=1000 (at or above natural size — renders at natural size)
@@ -96,8 +87,7 @@
       width="960"
       height="390"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <hr>
     <h3 style="font-family: sans-serif">
@@ -110,8 +100,7 @@
       width="100%"
       height="400"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <p style="font-family: sans-serif">
       mhr at width=500 (many tabs, should scroll)
@@ -121,8 +110,7 @@
       width="500"
       height="290"
       frameborder="0"
-    >
-    </iframe>
+    ></iframe>
 
     <div style="background-color: #333">
       <iframe
@@ -130,23 +118,22 @@
         width="100%"
         height="400"
         frameborder="0"
-      >
-      </iframe>
+      ></iframe>
     </div>
   </body>
 
   <script>
-    window.addEventListener("message", (event) => {
-      if (event.data.type === "giellalt-keyboard-resize") {
-        // Find the iframe that sent this message
-        const iframes = document.querySelectorAll("iframe");
-        for (const iframe of iframes) {
-          if (iframe.contentWindow === event.source) {
-            iframe.style.height = event.data.height + "px";
-            break;
-          }
+  window.addEventListener("message", (event) => {
+    if (event.data.type === "giellalt-keyboard-resize") {
+      // Find the iframe that sent this message
+      const iframes = document.querySelectorAll("iframe");
+      for (const iframe of iframes) {
+        if (iframe.contentWindow === event.source) {
+          iframe.style.height = event.data.height + "px";
+          break;
         }
       }
-    });
+    }
+  });
   </script>
 </html>

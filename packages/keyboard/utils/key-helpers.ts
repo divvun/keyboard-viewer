@@ -1,4 +1,4 @@
-import type { Key } from "../types/keyboard-simple.ts";
+import type { Key, KeyboardLayout } from "../types/keyboard-simple.ts";
 import {
   ALT_KEYS,
   BACKSPACE_KEY,
@@ -11,7 +11,7 @@ import {
   SYMBOLS_KEYS,
   TAB_KEY,
 } from "../constants/key-ids.ts";
-import { decodeUnicodeEscapes } from "../utils.ts";
+import { decodeUnicodeEscapes } from "./text.ts";
 import { getLayerFallbackChain } from "./modifiers.ts";
 
 export function isShiftKey(keyId: string): boolean {
@@ -60,6 +60,17 @@ export function isFunctionKey(keyId: string): boolean {
     keyId === ENTER_KEY ||
     keyId === BACKSPACE_KEY
   );
+}
+
+export function findKeyByCode(
+  layout: KeyboardLayout,
+  code: string,
+): Key | undefined {
+  for (const row of layout.rows) {
+    const key = row.keys.find((k) => k.id === code);
+    if (key) return key;
+  }
+  return undefined;
 }
 
 export function getKeyOutput(key: Key, layer: string): string {
