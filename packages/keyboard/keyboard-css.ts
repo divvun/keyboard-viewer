@@ -36,6 +36,17 @@ export const keyboardCss: string = `
   margin: 0;
 }
 
+/* Wraps a tab bar together with the view(s) it switches between. A
+ * single-column grid, rather than the default block flow, so the tab bar
+ * row is sized to match the other row (the keyboard) instead of stretching
+ * to whatever width the surrounding page happens to give this block — the
+ * tab bar itself has no intrinsic width, so it just fills the column track
+ * the keyboard row established. */
+.dvk-tab-picker {
+  display: inline-grid;
+  max-width: 100%;
+}
+
 /* Tab bars (layer / platform / layout pickers). Unscaled UI chrome — these
  * stay legible regardless of how much the keyboard shrinks to fit. */
 .dvk-tabs {

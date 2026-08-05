@@ -99,7 +99,7 @@ export function CssTabPicker<T>({
   const viewsClassName = `kbd-${dimension}-views-${uid}`;
 
   return (
-    <div class="dvk" style={{ position: "relative" }}>
+    <div class="dvk dvk-tab-picker" style={{ position: "relative" }}>
       {/* Hidden radio buttons — must precede the tab bar and views as siblings */}
       {items.map((item) =>
         // h() instead of JSX, deliberately. Two constraints meet here:
